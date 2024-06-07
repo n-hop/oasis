@@ -1,0 +1,23 @@
+{
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.formatOnSave": true
+  },
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": [
+      "*.github/workflows/*.yaml",
+      "*.github/workflows/*.yml"
+    ],
+    "https://json.schemastore.org/github-action.json": [
+      "action.yaml",
+      "action.yml"
+    ]
+  },
+  "pylint.args": ["--rcfile=${workspaceFolder}/.pylintrc"]
+}

@@ -1,0 +1,57 @@
+[MASTER]
+# Specify the directory of Python source code for the project
+init-hook='import sys; sys.path.append("./containernet_test")'
+# Maximum number of lines Python code can execute
+max-line-length=80
+ignore=cpplint.py
+
+[MESSAGES CONTROL]
+# Disabled message numbers or message names
+disable=
+    C0103, # Variable name does not conform to naming convention
+    C0111, # Missing function docstring
+    R0903, # Too few methods in class, not recommended to define class
+    R0902, # Too many instance attributes
+    W0703, # Caught too broad an exception
+    R0801, # similar line in 2 file
+    E0611, # no name in module
+    R0915, # Too many statements 
+    R0912, # Too many branches
+    R0914, # Too many local variables
+    W1309, # Using an f-string that does not have any interpolated variables
+    C0209, # Formatting a regular string which could be a f-string
+    F0001, # No module
+    W0105, # String statement has no effect
+    C0201, # Consider iterating the dictionary directly instead of calling .keys()
+    E1111, # Assigning result of a function call, where the function has no return
+    W0622, # Redefining built-in 'type'
+    R0911, # Too many return statements
+    C0200, # Consider using enumerate instead of iterating with range and len
+    R1702, # Too many nested blocks
+    E0401, # Unable to import
+    W0719, # Raising too general exception
+
+# Enabled message numbers or message names
+enable=
+    W0611, # Unused import
+    W0612, # Unused variable
+
+[REPORTS]
+# Output reports
+reports=false
+# Output score (0-10)
+score=yes
+
+[REFACTORING]
+# Number of members in a class
+max-attributes=20
+# Number of arguments in a function or method
+max-args=10
+
+[FORMAT]
+# Maximum number of lines allowed in a module
+max-module-lines=2000
+# Maximum number of attributes allowed in a class
+max-attributes=60
+# Type of indent for multi-line comments
+indent-string='    '
