@@ -1,0 +1,97 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+!libelf.so
+
+# Fortran module files
+*.mod
+*.smod
+!go.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+!libbatscode_library*.a
+!libbpf.a
+!libxdp.a
+!libelf.a
+!af_xdp_kern.o
+!libbats-licence*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Cmake Build
+build*
+!.gitlab/jobs/build*
+cmake/open-cpp-coverage.cmake
+cmake-build-*/
+prefix/
+CMakeLists.txt.user
+CMakeUserPresets.json
+
+# IDE
+.idea/
+.vs/
+.vscode/
+.clangd/
+
+# Google Test
+bld*
+
+# temp dir
+tmp*
+
+# tag files
+*tags*
+
+# patch files
+*patch
+*.log
+
+# history
+.mininet_history
+.viminfo
+.bash_history
+.cmake/*
+
+# containernet test
+.cache
+.config
+containernet_test/multihopnet/__pycache__/*
+containernet_test/tests/__pycache__/*
+containernet_test/batssocket/__pycache__/*
+containernet_test/results*/*
+containernet_test/utils/__pycache__/*
+containernet_test/tool/__pycache__/*
+containernet_test/tool/*report/*
+containernet_test/*report/*
+**/__pycache__/*
+
+# gcovr tmp config
+gcovr.cfg
+
+# version h
+src/include/version.h 
+
+# FlameGraph 
+tools/FlameGraph
+containernet_test/tool/FlameGraph

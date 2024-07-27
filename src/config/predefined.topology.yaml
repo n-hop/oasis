@@ -1,0 +1,22 @@
+# **init_value**: initial value, must be set. if all same, give one value; other wise, give the whole value list.
+# **json_description**: path to json file which contains the description of the topology in details.
+# **array_description**: the array_description of the topology, only available for the linear topology.
+topology:
+  - name: linear_network_6
+    topology_type: linear
+    nodes: 6
+    array_description:
+      - link_loss:
+        init_value: [0]
+      - link_latency:
+        init_value: [1]
+      - link_jitter:
+        init_value: [0]
+      - link_bandwidth_forward:
+        init_value: [100]
+      - link_bandwidth_backward:
+        init_value: [100]
+  - name: 4-hops-linear-network
+    topology_type: linear
+    nodes: 5
+    json_description: src/config/4-hops-linear-network.json

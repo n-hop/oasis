@@ -19,5 +19,6 @@
       "action.yml"
     ]
   },
-  "pylint.args": ["--rcfile=${workspaceFolder}/.pylintrc"]
+  "pylint.args": ["--rcfile=${workspaceFolder}/.pylintrc"],
+  "cSpell.words": ["Containernet", "dimage"]
 }
