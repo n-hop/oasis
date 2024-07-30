@@ -54,19 +54,34 @@ class TopologyConfig:
 
 class ITopology(ABC):
     def __init__(self) -> None:
-        self.all_mats = []
+        self.all_mats = {}
+        self.top_config = None
+        self.adj_matrix = None
 
     @abstractmethod
     def generate_adj_matrix(self, num_of_nodes: int):
         pass
 
     @abstractmethod
-    def get_matrix(self, mat_type: MatrixType):
+    def generate_other_matrices(self, adj_matrix):
         pass
 
-    @abstractmethod
+    def get_matrix(self, mat_type: MatrixType):
+        return self.all_mats[mat_type]
+
     def init_all_matrices(self):
-        pass
+        # init from json_description or array_description
+        if self.top_config.json_description is not None:
+            logging.info(
+                'Load the matrix from json_description')
+            self.load_all_mats(
+                self.top_config.json_description)
+        elif self.top_config.array_description is not None:
+            logging.info(
+                'Load the matrix from array_description')
+            self.adj_matrix = self.generate_adj_matrix(self.top_config.nodes)
+            self.all_mats[MatrixType.ADJACENCY_MATRIX] = self.adj_matrix
+            self.generate_other_matrices(self.adj_matrix)
 
     def load_yaml_config(self, yaml_description: str):
         # load it directly from the yaml_description or

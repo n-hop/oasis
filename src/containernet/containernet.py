@@ -2,9 +2,9 @@ import logging
 from mininet.net import Containernet
 from mininet.util import ipStr, netParse
 from mininet.link import TCLink
-from node_config import NodeConfig
 from containernet.topology import ITopology
 from containernet.matrix import MatrixType
+from .node_config import NodeConfig
 
 
 def subnets(base_ip, parent_ip):

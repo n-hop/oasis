@@ -9,7 +9,8 @@ import yaml
 @dataclass
 class NestedConfig:
     """
-    NestedConfig is a dataclass that holds the configuration for the Nested Containernet.
+    NestedConfig is a dataclass that holds
+    the configuration for the Nested Containernet.
     """
     image: str
     privileged: Optional[bool] = field(default=True)
@@ -26,18 +27,24 @@ def load_nested_config(nested_config_file: str, nested_containernet: str) -> Nes
     if nested_config_file == "" or nested_containernet == "":
         return None
     containernet_list = []
+    logging.info(
+        f"process yaml file: %s", {nested_config_file})
     with open(nested_config_file, 'r', encoding='utf-8') as stream:
         try:
             nested_config = yaml.safe_load(stream)
+            logging.info(
+                f"loaded nested_config: %s", nested_config)
             containernet_list = nested_config["containernet"]
         except yaml.YAMLError as exc:
             logging.error(exc)
             return None
     containernet_names = containernet_list.keys()
+    logging.info(
+        f"loaded containernet: %s", containernet_list)
     for containernet in containernet_names:
         if containernet == nested_containernet:
             logging.info(
-                f"loaded containernet: %s", {containernet_list[containernet]})
+                f"loaded containernet: %s", containernet_list[containernet])
             return NestedConfig(**containernet_list[containernet])
     return None
 
@@ -53,8 +60,8 @@ class NestedContainernet():
 
     def setUp(self) -> None:
         logging.info(
-            "########################## Test Framework setup \
-            NestedContainernet##########################")
+            "########################## Test Framework setup"
+            "NestedContainernet##########################")
         self.formatted_mounts = self.get_formatted_mnt()
 
     def tearDown(self) -> None:
@@ -65,8 +72,8 @@ class NestedContainernet():
             "docker stop $(docker ps -a -q -fname=nested_containernet) || true")
         os.system("docker container prune --force || true")
         logging.info(
-            "########################## Test Framework teardown \
-            NestedContainernet##########################")
+            "########################## Test Framework teardown"
+            "NestedContainernet##########################")
 
     def stop(self):
         self.tearDown()
@@ -77,20 +84,22 @@ class NestedContainernet():
             str(random.randint(0, 1000)) + "_" + self.test_name
         logging.info(
             "NestedContainernet start the Containernet.")
-        start_cmd = "docker run -d -t --rm "
-        start_cmd += f" --name '{self.test_container_name}' "
-        start_cmd += f" --hostname '{self.test_container_name}' "
+        start_cmd = "docker run -d -t --rm"
+        # strip spaces in the name
+        self.test_container_name = self.test_container_name.replace(" ", "")
+        start_cmd += f" --name '{self.test_container_name}'"
+        start_cmd += f" --hostname '{self.test_container_name}'"
         if self.config.dns_server is not None:
             for dns_server in self.config.dns_server:
-                start_cmd += f" --dns='{dns_server}' "
+                start_cmd += f" --dns='{dns_server}'"
         if self.config.dns_resolve is not None:
             for dns_resolve in self.config.dns_resolve:
-                start_cmd += f" --add-host='{dns_resolve}' "
+                start_cmd += f" --add-host='{dns_resolve}'"
         if self.config.privileged:
             start_cmd += " --privileged "
-        start_cmd += f" --network {self.config.network_mode} "
-        start_cmd += f" --pid {self.config.network_mode} "
-        start_cmd += f" {self.formatted_mounts} "
+        start_cmd += f" --network {self.config.network_mode}"
+        start_cmd += f" --pid {self.config.network_mode}"
+        start_cmd += f" {self.formatted_mounts}"
         start_cmd += f" {self.config.image}"
         logging.info(
             f"NestedContainernet start_cmd: %s", start_cmd)
@@ -98,13 +107,13 @@ class NestedContainernet():
         return ret == 0
 
     def execute(self, cmd):
-        test_case_cmd = f"docker exec {self.test_container_name} \
-            /bin/bash -c \"{cmd}\""
-        clean_cmd = f"docker exec {self.test_container_name} \
-            /bin/bash -c \"mn --clean >/dev/null 2>&1\" || true"
+        test_case_cmd = f"docker exec {self.test_container_name} "\
+            f"/bin/bash -c \"{cmd}\""
+        clean_cmd = f"docker exec {self.test_container_name} "\
+            f"/bin/bash -c \"mn --clean >/dev/null 2>&1\" || true"
         logging.info(
-            "########################## Test Framework \
-            NestedContainernet Executing... ##########################")
+            "########################## Test Framework"
+            "NestedContainernet Executing... ##########################")
         logging.info(
             f"execute with \" %s \"", test_case_cmd)
         os.system(clean_cmd)
@@ -116,19 +125,19 @@ class NestedContainernet():
             f"NestedContainernet config mounts: %s", self.config.mounts)
         if self.config.mounts is None:
             return ""
-        self.formatted_mounts = f" --mount \
-            type=bind,source={self.workspace},\
-            target=/root,bind-propagation=shared "
+        self.formatted_mounts = f" --mount "\
+            f"type=bind,source={self.workspace},"\
+            f"target=/root,bind-propagation=shared "
         for mount in self.config.mounts:
             source, target, *readonly = mount.split(":")
             if len(readonly) == 0:
-                mount_cmd = f"--mount \
-                    type=bind,source={source},\
-                    target={target},bind-propagation=shared "
+                mount_cmd = f"--mount "\
+                    f"type=bind,source={source},"\
+                    f"target={target},bind-propagation=shared "
             else:
-                mount_cmd = f"--mount \
-                    type=bind,source={source},\
-                    target={target},readonly,bind-propagation=shared "
+                mount_cmd = f"--mount "\
+                    f"type=bind,source={source},"\
+                    f"target={target},readonly,bind-propagation=shared "
             self.formatted_mounts += mount_cmd
         logging.info(
             f"NestedContainernet formatted mounts: %s", self.formatted_mounts)

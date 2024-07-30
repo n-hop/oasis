@@ -15,22 +15,6 @@ class LinearNet(ITopology):
         self.top_config = self.load_yaml_config(yaml_description)
         self.init_all_matrices()
 
-    def get_matrix(self, mat_type: MatrixType):
-        return self.all_mats[mat_type]
-
-    def init_all_matrices(self):
-        # init from json_description or array_description
-        if self.top_config.json_description is not None:
-            logging.info(
-                'Load the matrix from json_description')
-            self.load_all_mats(
-                self.top_config.json_description)
-        elif self.top_config.array_description is not None:
-            logging.info(
-                'Load the matrix from array_description')
-            self.adj_matrix = self.generate_adj_matrix(self.top_config.nodes)
-            self.generate_other_matrices(self.adj_matrix)
-
     def generate_adj_matrix(self, num_of_nodes: int):
         """
         Generate the adjacency matrix to describe a linear chain topology.
@@ -61,7 +45,8 @@ class LinearNet(ITopology):
         for type in MatrixType:
             if type == MatrixType.ADJACENCY_MATRIX:
                 continue
-            self.generate_value_matrix(adj_matrix, type)
+            self.all_mats[type] = self.generate_value_matrix(
+                adj_matrix, type)
 
     def generate_value_matrix(self, adj_matrix, type: MatrixType):
         value_mat = copy.deepcopy(adj_matrix)
@@ -79,6 +64,6 @@ class LinearNet(ITopology):
                         value_mat = [
                             [init_value[i][0] if value != 0 else value for i,
                              value in enumerate(row)] for row in value_mat]
-                    logging.info("value_matrix: %s", value_mat)
+                    # logging.info("value_matrix: %s", value_mat)
                     return value_mat
         return value_mat

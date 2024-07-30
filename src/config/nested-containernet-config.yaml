@@ -5,3 +5,4 @@ containernet:
     network_mode: "host"
     mounts:
       - "/var/run/docker.sock:/var/run/docker.sock"
+
