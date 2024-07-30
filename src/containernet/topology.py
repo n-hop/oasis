@@ -1,22 +1,11 @@
+from abc import ABC, abstractmethod
+from enum import IntEnum
 import logging
 import os
 import json
-
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Optional, List
-from enum import IntEnum
-from .matrix import MatrixType  # Updated import
-
 import yaml
 
-
-class TopologyType(IntEnum):
-    linear = 0,     # Linear chain topology
-    star = 1,       # Star topology
-    tree = 2,       # Complete Binary Tree
-    butterfly = 3,  # Butterfly topology
-    mesh = 5        # Random Mesh topology
+from .config import (TopologyConfig, MatrixType)
 
 
 class LinkAttr(IntEnum):
@@ -34,22 +23,6 @@ MatType2LinkAttr = {
     MatrixType.JITTER_MATRIX: LinkAttr.link_jitter,
     MatrixType.BANDWIDTH_MATRIX: LinkAttr.link_bandwidth_forward
 }
-
-
-@dataclass
-class Parameter:
-    array: List[int]
-
-
-@dataclass
-class TopologyConfig:
-    name: str
-    nodes: int
-    topology_type: TopologyType
-    # @array_description: the array description of the topology
-    array_description: Optional[List[Parameter]] = field(default=None)
-    # @json_description: the json description of the topology
-    json_description: Optional[str] = field(default=None)
 
 
 class ITopology(ABC):

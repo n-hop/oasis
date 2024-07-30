@@ -2,9 +2,8 @@ import logging
 from mininet.net import Containernet
 from mininet.util import ipStr, netParse
 from mininet.link import TCLink
-from containernet.topology import ITopology
-from containernet.matrix import MatrixType
-from .node_config import NodeConfig
+from containernet.topology import (ITopology, MatrixType)
+from .config import NodeConfig
 
 
 def subnets(base_ip, parent_ip):
@@ -20,7 +19,7 @@ def subnets(base_ip, parent_ip):
         yield ip
 
 
-class PairNet (Containernet):
+class Network (Containernet):
     """
     Create a network from an adjacency matrix.
     """
@@ -117,7 +116,7 @@ class PairNet (Containernet):
                                    params2={'ip': right_ip}
                                    )
         logging.info(
-            "############### Test Framework Init Networking done ###########")
+            "############### Oasis Init Networking done ###########")
         return True
 
     def __addLink(

@@ -4,9 +4,9 @@ import logging
 import yaml
 
 from mininet.log import setLogLevel
-from containernet.linear_net import LinearNet
-from containernet.containernet import PairNet
-from containernet.node_config import NodeConfig
+from containernet.linear_topology import LinearTopology
+from containernet.network import Network
+from containernet.config import NodeConfig
 
 
 def build_network(yaml_file_path):
@@ -17,9 +17,9 @@ def build_network(yaml_file_path):
         except yaml.YAMLError as exc:
             logging.error(exc)
             return None
-    net = LinearNet(yaml_content['topology'])
+    net = LinearTopology(yaml_content['topology'])
     config = NodeConfig(** yaml_content['node_config'])
-    return PairNet(config, net)
+    return Network(config, net)
 
 
 if __name__ == '__main__':

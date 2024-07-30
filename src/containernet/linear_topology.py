@@ -3,7 +3,7 @@ import copy
 from .topology import (ITopology, MatrixType, MatType2LinkAttr, LinkAttr)
 
 
-class LinearNet(ITopology):
+class LinearTopology(ITopology):
     def __init__(self, yaml_description: str):
         """
         Args:
