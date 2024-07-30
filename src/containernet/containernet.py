@@ -131,6 +131,9 @@ class PairNet (Containernet):
         # Link with TC interfaces
         # net.addLink(s1, s2, cls=TCLink, \
             delay="100ms", bw=1, loss=10, jitter=5)
+        # FIXME: Warning: sch_htb: quantum of \
+            class 50001 is big. Consider r2q change.
+        '''
         if self.net_link_bw_mat is not None:
             params['bw'] = self.net_link_bw_mat[id1][id2]
         if self.net_link_loss_mat is not None:
@@ -139,11 +142,6 @@ class PairNet (Containernet):
             params['delay'] = str(self.net_link_latency_mat[id1][id2]) + 'ms'
         if self.net_link_jitter_mat is not None:
             params['jitter'] = self.net_link_jitter_mat[id1][id2]
-        # (100.00Mbit 1ms delay 0 jitter 0.00000% loss) \
-            INFO:mininet:(100.00Mbit 1ms delay 0 jitter 0.00000% loss)
-        # FIXME: Warning: sch_htb: quantum of \
-            class 50001 is big. Consider r2q change.
-        '''
         link = super().addLink(
             self.hosts[id1], self.hosts[id2],
             port1, port2, cls=TCLink, **params)
@@ -157,4 +155,7 @@ class PairNet (Containernet):
         return link
 
     def _setup_routes(self):
+        # setup routes
+        # 1. ip config
+        # 2. OLSR config
         pass
