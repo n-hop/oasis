@@ -92,12 +92,16 @@ class Network (Containernet):
            or self.net_bw_mat != top.get_matrix(MatrixType.BANDW_MATRIX)\
            or self.net_latency_mat != top.get_matrix(MatrixType.LATENCY_MATRIX)\
            or self.net_jitter_mat != top.get_matrix(MatrixType.JITTER_MATRIX):
-            new_adj = top.get_matrix(MatrixType.ADJACENCY_MATRIX)
-            abs_diff = abs(self.num_of_hosts - len(new_adj))
-            logging.info(
-                "Reload the network. number of "
-                "nodes increased/decreased by %s, node %s",
-                abs_diff, node_config)
+            self.net_mat = top.get_matrix(MatrixType.ADJACENCY_MATRIX)
+            self.net_loss_mat = top.get_matrix(MatrixType.LOSS_MATRIX)
+            self.net_bw_mat = top.get_matrix(MatrixType.BANDW_MATRIX)
+            self.net_latency_mat = top.get_matrix(MatrixType.LATENCY_MATRIX)
+            self.net_jitter_mat = top.get_matrix(MatrixType.JITTER_MATRIX)
+            diff = self.num_of_hosts - len(self.net_mat)
+            if diff < 0:
+                self._expand_network(-diff, node_config)
+            else:
+                self._shrink_network(diff, node_config)
 
     def _init_containernet(self):
         self._setup_docker_nodes()
@@ -137,6 +141,7 @@ class Network (Containernet):
         link_subnets = subnets(self.node_ip_start, self.node_ip_range)
         _, link_prefix = netParse(self.node_ip_start)
         # for adjacent matrix, only the upper triangle is used.
+        logging.info("num_of_hosts: %s", self.num_of_hosts)
         for i in range(self.num_of_hosts):
             for j in range(i, self.num_of_hosts):
                 if self.net_mat[i][j] == 1:
@@ -270,3 +275,64 @@ class Network (Containernet):
             logging.warning("perf is not available.")
             self.node_vols = [
                 vol for vol in self.node_vols if '/usr/bin/perf' not in vol]
+
+    def _expand_network(self, diff, node_config):
+        """
+        Expand the network by adding more nodes.
+        """
+        logging.info(
+            "Reload the network. number of "
+            "nodes increased by %s, node %s",
+            diff, node_config)
+        self._reset_network(self.num_of_hosts, diff)
+        for i in range(diff):
+            self.addDocker(
+                f'{self.node_name_prefix}{self.num_of_hosts + i}',
+                ip=None,
+                volumes=node_config.node_vols,
+                cap_add=["NET_ADMIN", "SYS_ADMIN"],
+                dimage=node_config.node_img,
+                ports=[self.num_of_hosts + i + 10000],
+                port_bindings={self.num_of_hosts + i +
+                               10000: self.num_of_hosts + i + 10000},
+                publish_all_ports=True
+            )
+        self.num_of_hosts += diff
+        self._setup_topology()
+        self._setup_routes()
+        logging.info(
+            "Expand the network. number of nodes increased by %s, node %s",
+            diff, node_config)
+        return True
+
+    def _shrink_network(self, diff, node_config):
+        logging.info(
+            "Reload the network. number of "
+            "nodes decreased by %s, node %s",
+            diff, node_config)
+        self._reset_network(self.num_of_hosts, -diff)
+        for i in range(self.num_of_hosts - diff, self.num_of_hosts):
+            logging.info("removeDocker: %s", f'{self.node_name_prefix}{i}')
+            self.removeDocker(f'{self.node_name_prefix}{i}')
+        self.num_of_hosts -= diff
+        self._setup_topology()
+        self._setup_routes()
+        return True
+
+    def _reset_network(self, num, diff):
+        logging.info("Reset the network.")
+        # remove all links
+        for i in range(num - 1):
+            logging.info("removeLink: %s-%s",
+                         self.hosts[i].name, self.hosts[i+1].name)
+            self.removeLink(
+                node1=self.hosts[i].name, node2=self.hosts[i+1].name)
+        # remove all routes.
+        for host in self.hosts:
+            host.cmd('ip route flush table main')
+            host.deleteIntfs()
+            host.cleanup()
+        self.net_routes = [range(self.num_of_hosts + diff)]
+        self.pair_to_link = {}
+        self.pair_to_link_ip = {}
+        return True

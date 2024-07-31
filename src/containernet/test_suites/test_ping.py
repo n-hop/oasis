@@ -7,10 +7,10 @@ from .test import (ITestSuite)
 
 class PingTest(ITestSuite):
     def post_process(self):
-        pass
+        return True
 
     def pre_process(self):
-        pass
+        return True
 
     def _run_test(self, network: Network):
         logging.info(

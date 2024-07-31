@@ -16,9 +16,11 @@ class IperfTest(ITestSuite):
         config.output = "iperf3_result.svg"
         analyzer.analyze(config)
         analyzer.visualize(config)
+        return True
 
     def pre_process(self):
         self.config.log_file = "iperf3_log.txt"
+        return True
 
     def _run_test(self, network: Network):
         logging.info(
