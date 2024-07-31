@@ -21,7 +21,7 @@ MatType2LinkAttr = {
     MatrixType.LOSS_MATRIX: LinkAttr.link_loss,
     MatrixType.LATENCY_MATRIX: LinkAttr.link_latency,
     MatrixType.JITTER_MATRIX: LinkAttr.link_jitter,
-    MatrixType.BANDWIDTH_MATRIX: LinkAttr.link_bandwidth_forward
+    MatrixType.BANDW_MATRIX: LinkAttr.link_bandwidth_forward
 }
 
 

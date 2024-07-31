@@ -49,21 +49,21 @@ class Network (Containernet):
             self.num_of_hosts = len(self.net_mat)
         else:
             raise ValueError('The topology matrix is None.')
-        self.net_link_loss_mat = net_topology.get_matrix(
+        self.net_loss_mat = net_topology.get_matrix(
             MatrixType.LOSS_MATRIX)
-        self.net_link_bw_mat = net_topology.get_matrix(
-            MatrixType.BANDWIDTH_MATRIX)
-        self.net_link_latency_mat = net_topology.get_matrix(
+        self.net_bw_mat = net_topology.get_matrix(
+            MatrixType.BANDW_MATRIX)
+        self.net_latency_mat = net_topology.get_matrix(
             MatrixType.LATENCY_MATRIX)
-        self.net_link_jitter_mat = net_topology.get_matrix(
+        self.net_jitter_mat = net_topology.get_matrix(
             MatrixType.JITTER_MATRIX)
         self._check_node_vols()
         logging.info('self.node_vols %s', self.node_vols)
         logging.info('self.net_mat %s', self.net_mat)
-        logging.info('self.net_link_loss_mat %s', self.net_link_loss_mat)
-        logging.info('self.net_link_bw_mat %s', self.net_link_bw_mat)
-        logging.info('self.net_link_latency_mat %s', self.net_link_latency_mat)
-        logging.info('self.net_link_jitter_mat %s', self.net_link_jitter_mat)
+        logging.info('self.net_loss_mat %s', self.net_loss_mat)
+        logging.info('self.net_bw_mat %s', self.net_bw_mat)
+        logging.info('self.net_latency_mat %s', self.net_latency_mat)
+        logging.info('self.net_jitter_mat %s', self.net_jitter_mat)
         self.net_routes = [range(self.num_of_hosts)]
         self.pair_to_link = {}
         self.pair_to_link_ip = {}
@@ -82,11 +82,22 @@ class Network (Containernet):
         for test in self.test_suites:
             test.run(self)
 
-    def reload(self, node_config: NodeConfig, net_topology: ITopology):
+    def reload(self, node_config: NodeConfig, top: ITopology):
         """
         Reload the network with new configurations.
         """
-        logging.info("Reload the network. %s,%s", node_config, net_topology)
+        # check topology change only.
+        if self.net_mat != top.get_matrix(MatrixType.ADJACENCY_MATRIX)\
+           or self.net_loss_mat != top.get_matrix(MatrixType.LOSS_MATRIX)\
+           or self.net_bw_mat != top.get_matrix(MatrixType.BANDW_MATRIX)\
+           or self.net_latency_mat != top.get_matrix(MatrixType.LATENCY_MATRIX)\
+           or self.net_jitter_mat != top.get_matrix(MatrixType.JITTER_MATRIX):
+            new_adj = top.get_matrix(MatrixType.ADJACENCY_MATRIX)
+            abs_diff = abs(self.num_of_hosts - len(new_adj))
+            logging.info(
+                "Reload the network. number of "
+                "nodes increased/decreased by %s, node %s",
+                abs_diff, node_config)
 
     def _init_containernet(self):
         self._setup_docker_nodes()
@@ -168,14 +179,14 @@ class Network (Containernet):
         # FIXME: Warning: sch_htb: quantum of \
             class 50001 is big. Consider r2q change.
         '''
-        if self.net_link_bw_mat is not None:
-            params['bw'] = self.net_link_bw_mat[id1][id2]
-        if self.net_link_loss_mat is not None:
-            params['loss'] = self.net_link_loss_mat[id1][id2]
-        if self.net_link_latency_mat is not None:
-            params['delay'] = str(self.net_link_latency_mat[id1][id2]) + 'ms'
-        if self.net_link_jitter_mat is not None:
-            params['jitter'] = self.net_link_jitter_mat[id1][id2]
+        if self.net_bw_mat is not None:
+            params['bw'] = self.net_bw_mat[id1][id2]
+        if self.net_loss_mat is not None:
+            params['loss'] = self.net_loss_mat[id1][id2]
+        if self.net_latency_mat is not None:
+            params['delay'] = str(self.net_latency_mat[id1][id2]) + 'ms'
+        if self.net_jitter_mat is not None:
+            params['jitter'] = self.net_jitter_mat[id1][id2]
         link = super().addLink(
             self.hosts[id1], self.hosts[id2],
             port1, port2, cls=TCLink, **params)
@@ -208,7 +219,7 @@ class Network (Containernet):
         setup the OLSR routing
         '''
 
-    @staticmethod
+    @ staticmethod
     def _add_ip_gateway(host, gateway_ip, dst_ip):
         host.cmd(f'ip r a {dst_ip} via {gateway_ip}')
 
