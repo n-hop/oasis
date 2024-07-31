@@ -16,7 +16,7 @@ from containernet.test_suites.test_iperf import IperfTest
 from containernet.test_suites.test_ping import PingTest
 
 
-def load_test_yaml(test_yaml_file: str):
+def load_test(test_yaml_file: str):
     """
         Load the test case configuration from a yaml file.
     """
@@ -69,6 +69,16 @@ def load_config(test_case_yaml) -> Tuple[NodeConfig, TopologyConfig]:
     return node_config, top_config
 
 
+def build_topology(top_config: TopologyConfig):
+    built_net_top = None
+    if top_config.topology_type == "linear":
+        built_net_top = LinearTopology(top_config)
+    else:
+        logging.error("Error: unsupported topology type.")
+        return None
+    return built_net_top
+
+
 def build_network(node_config: NodeConfig, top_config: TopologyConfig):
     """Build a container network from the yaml configuration file.
 
@@ -78,12 +88,7 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig):
     Returns:
         Network: the container network object
     """
-    net_top = None
-    if top_config.topology_type == "linear":
-        net_top = LinearTopology(top_config)
-    else:
-        logging.error("Error: unsupported topology type.")
-        return None
+    net_top = build_topology(top_config)
     return Network(node_config, net_top)
 
 
@@ -98,7 +103,7 @@ if __name__ == '__main__':
         logging.info(f"Error: %s does not exist.", cur_config_yaml_file_path)
         sys.exit(1)
     linear_network = None
-    all_tests = load_test_yaml(cur_config_yaml_file_path)
+    all_tests = load_test(cur_config_yaml_file_path)
     for test in all_tests:
         cur_node_config, cur_top_config = load_config(test)
         if linear_network is None:
@@ -106,10 +111,8 @@ if __name__ == '__main__':
             linear_network.build()
             linear_network.start()
         else:
-            if cur_top_config.topology_type == "linear":
-                local_net_top = LinearTopology(cur_top_config)
-            else:
-                logging.error("Error: unsupported topology type.")
+            local_net_top = build_topology(cur_top_config)
+            if local_net_top is None:
                 continue
             linear_network.reload(cur_node_config, local_net_top)
 
