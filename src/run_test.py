@@ -7,7 +7,6 @@ import yaml
 # from mininet.cli import CLI
 from mininet.log import setLogLevel
 from containernet.linear_topology import LinearTopology
-from containernet.topology import ITopology
 from containernet.network import Network
 from containernet.config import (
     INodeConfig, NodeConfig, TopologyConfig)
@@ -61,8 +60,8 @@ def load_config(test_case_yaml) -> Tuple[NodeConfig, TopologyConfig]:
     if local_net_top_yaml is None or local_node_conf_yaml is None:
         logging.error("Error: top_yaml or node_conf_yaml is None.")
         return None, None
-    node_config = INodeConfig.load_yaml_config(local_node_conf_yaml)
-    top_config = ITopology.load_yaml_config(local_net_top_yaml)
+    node_config = INodeConfig.load_yaml_config(local_node_conf_yaml, 'node')
+    top_config = INodeConfig.load_yaml_config(local_net_top_yaml, 'topology')
     if top_config is None or node_config is None:
         logging.error("Error: topology/node configuration is None.")
         return None, None

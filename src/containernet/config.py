@@ -77,48 +77,79 @@ class TopologyConfig:
     json_description: Optional[str] = field(default=None)
 
 
+supported_config_keys = ["node", "topology"]
+
+
 class INodeConfig(ABC):
     @staticmethod
-    def load_node_config(yaml_config_file: str,
-                         config_name: str) -> NodeConfig:
+    def is_supported_config_key(config_key: str):
+        return config_key in supported_config_keys
+
+    @staticmethod
+    def load_config_reference(yaml_config_file: str,
+                              config_name: str, config_key: str):
+        if not INodeConfig.is_supported_config_key(config_key):
+            logging.error(
+                f"load_config_reference: key %s is not supported.",
+                config_key)
+            return None
         if not os.path.exists(yaml_config_file):
             logging.error(
-                f"load_node_config: file %s does not exist.",
+                f"load_config_reference: file %s does not exist.",
                 yaml_config_file)
             return None
-        node_config = []
+        loaded_yaml_config = []
         with open(yaml_config_file, 'r', encoding='utf-8') as stream:
             try:
-                node_config = yaml.safe_load(stream)
+                loaded_yaml_config = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 logging.error(exc)
                 return None
-        if node_config is None or "node" not in node_config:
+        # check key 'config_key' in the yaml content
+        if loaded_yaml_config is None or config_key not in loaded_yaml_config:
             logging.error(
-                f"load_node_config: node config is not defined in %s",
-                yaml_config_file)
+                f"load_config_reference: %s is not defined in %s",
+                config_key, yaml_config_file)
             return None
+        loaded_config = None
         # Find it by 'name' in `node_config`, for example "linear_network"
-        for topology in node_config['node']:
-            if topology['name'] == config_name:
-                loaded_node_config = topology
+        for conf in loaded_yaml_config[config_key]:
+            if conf['name'] == config_name:
+                loaded_config = conf
+                logging.info('load_config_reference: loaded %s', loaded_config)
                 break
-        logging.info('load_node_config: loaded %s', loaded_node_config)
-        return NodeConfig(**loaded_node_config)
+        if loaded_config is None:
+            logging.error(
+                f"load_config_reference: %s is not defined in %s",
+                config_name, yaml_config_file)
+            return None
+        if config_key == "node":
+            return NodeConfig(**loaded_config)
+        if config_key == "topology":
+            return TopologyConfig(**loaded_config)
+        return None
 
     @staticmethod
-    def load_yaml_config(yaml_description: str):
+    def load_yaml_config(yaml_description: str, config_key: str):
         # load it directly from the yaml_description or
         # load it from another yaml file.
-        node_config = None
+        if not INodeConfig.is_supported_config_key(config_key):
+            logging.error(
+                f"load_yaml_config: key %s is not supported.",
+                config_key)
+            return None
+        config_data = None
         is_load_from_file = ["config_file", "config_name"]
         if all(key in yaml_description for key in is_load_from_file):
             # load from the yaml file `config_file`
-            node_config = INodeConfig.load_node_config(
+            config_data = INodeConfig.load_config_reference(
                 yaml_description['config_file'],
-                yaml_description['config_name'])
+                yaml_description['config_name'], config_key)
         else:
             # load directly from the yaml_description
             logging.info('load_yaml_config: %s', yaml_description)
-            node_config = NodeConfig(**yaml_description)
-        return node_config
+            if config_key == "node":
+                config_data = NodeConfig(**yaml_description)
+            if config_key == "topology":
+                config_data = TopologyConfig(**yaml_description)
+        return config_data

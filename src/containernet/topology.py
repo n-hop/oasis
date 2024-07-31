@@ -3,8 +3,6 @@ from enum import IntEnum
 import logging
 import os
 import json
-import yaml
-
 from .config import (TopologyConfig, MatrixType)
 
 
@@ -28,10 +26,9 @@ MatType2LinkAttr = {
 class ITopology(ABC):
     def __init__(self, top: TopologyConfig) -> None:
         self.all_mats = {}
-        self.top_config = None
         self.adj_matrix = None
         self.top_config = top
-        self.init_all_matrices()
+        self.init_all_mats()
 
     @abstractmethod
     def generate_adj_matrix(self, num_of_nodes: int):
@@ -49,7 +46,7 @@ class ITopology(ABC):
             return None
         return self.all_mats[mat_type]
 
-    def init_all_matrices(self):
+    def init_all_mats(self):
         # init from json_description or array_description
         if self.top_config.json_description is not None:
             logging.info(
@@ -62,63 +59,6 @@ class ITopology(ABC):
             self.adj_matrix = self.generate_adj_matrix(self.top_config.nodes)
             self.all_mats[MatrixType.ADJACENCY_MATRIX] = self.adj_matrix
             self.generate_other_matrices(self.adj_matrix)
-
-    @staticmethod
-    def load_topology_config(yaml_config_file: str,
-                             config_name: str) -> TopologyConfig:
-        '''
-        Load the topology configuration from a yaml file. The configuration 
-        contains the following fields:
-        - name of the topology
-        - number of nodes
-        - topology type
-        - one of the following:
-            - array_description: the array description of the topology
-            - json_description: the json description of the topology;
-                if json_description is provided, need load the topology 
-                from the json file.
-        '''
-        if not os.path.exists(yaml_config_file):
-            logging.error(
-                f"load_topology_config: file %s does not exist.",
-                yaml_config_file)
-            return None
-        topology_config = []
-        with open(yaml_config_file, 'r', encoding='utf-8') as stream:
-            try:
-                topology_config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                logging.error(exc)
-                return None
-        if topology_config is None or "topology" not in topology_config:
-            logging.error(
-                f"load_topology_config: topology is not defined in %s",
-                yaml_config_file)
-            return None
-        # Find it by 'name' in `topology_config`, for example "linear_network"
-        for topology in topology_config['topology']:
-            if topology['name'] == config_name:
-                loaded_topology = topology
-                break
-        logging.info('load_topology_config: loaded %s', loaded_topology)
-        return TopologyConfig(**loaded_topology)
-
-    @staticmethod
-    def load_yaml_config(yaml_description: str):
-        # load it directly from the yaml_description or
-        # load it from another yaml file.
-        topology = None
-        is_load_from_file = ["config_file", "config_name"]
-        if all(key in yaml_description for key in is_load_from_file):
-            # load from the yaml file `config_file`
-            topology = ITopology.load_topology_config(
-                yaml_description['config_file'],
-                yaml_description['config_name'])
-        else:
-            # load directly from the yaml_description
-            logging.info('load_yaml_config: %s', yaml_description)
-            topology = TopologyConfig(**yaml_description)
-        return topology
 
     def load_all_mats(self, json_file_path):
         """Load all matrices from the Json file.
