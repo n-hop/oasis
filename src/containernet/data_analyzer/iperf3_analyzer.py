@@ -1,11 +1,11 @@
-from .analyzer import IDataAnalyzer
+from .analyzer import (IDataAnalyzer, AnalyzerConfig)
 
 
 class Iperf3Analyzer(IDataAnalyzer):
-    def analyze(self, log_file: str):
+    def analyze(self, config: AnalyzerConfig):
         pass
 
-    def visualize(self, log_file: str):
+    def visualize(self, config: AnalyzerConfig):
         # Implement visualization logic for iperf3 logs
         # ... (visualization code)
         pass

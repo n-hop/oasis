@@ -11,6 +11,7 @@ class TestType(IntEnum):
 class ITestSuite(ABC):
     def __init__(self) -> None:
         self.is_success = False
+        self.log_file = None
 
     @abstractmethod
     def post_process(self):

@@ -1,7 +1,7 @@
 from .iperf3_analyzer import Iperf3Analyzer
 
 
-class LogAnalyzerFactory:
+class AnalyzerFactory:
     @staticmethod
     def get_analyzer(log_type: str):
         if log_type == "iperf3":
