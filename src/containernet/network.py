@@ -16,7 +16,7 @@ def subnets(base_ip, parent_ip):
     step = 1 << 32 - prefix_len
 
     for ip in range(base, max_ip, step):  # not allowing x.255.255
-        yield ip
+        yield ip  # pylint: disable=refactoring
 
 
 class Network (Containernet):
@@ -29,6 +29,7 @@ class Network (Containernet):
                  net_topology: ITopology = None,
                  ** params) -> None:
         super().__init__(**params)
+        self.first_link_ip = '10.0.0.0/24'
         # NodeConfig: Docker node related
         self.node_img = node_config.node_img
         self.node_vols = node_config.node_vols
@@ -101,7 +102,6 @@ class Network (Containernet):
         """
         Setup the topology of the network by adding routes, links, etc.
         """
-        self.first_link_ip = '10.0.0.0/24'
         link_subnets = subnets(self.first_link_ip, self.node_ip_range)
         _, link_prefix = netParse(self.first_link_ip)
         # for adjacent matrix, only the upper triangle is used.

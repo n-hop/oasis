@@ -9,10 +9,10 @@ from .config import (TopologyConfig, MatrixType)
 
 
 class LinkAttr(IntEnum):
-    link_loss = 0,
-    link_latency = 1,
-    link_jitter = 2,
-    link_bandwidth_forward = 3,
+    link_loss = 0
+    link_latency = 1
+    link_jitter = 2
+    link_bandwidth_forward = 3
     link_bandwidth_backward = 4
 
 

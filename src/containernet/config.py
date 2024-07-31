@@ -9,22 +9,22 @@ from enum import IntEnum
 
 class MatrixType(IntEnum):
     # Adjacency matrix to describe the network topology
-    ADJACENCY_MATRIX = 0,
+    ADJACENCY_MATRIX = 0
     # Bandwidth matrix to describe the network bandwidth link-by-link
-    BANDWIDTH_MATRIX = 1,
+    BANDWIDTH_MATRIX = 1
     # Loss matrix to describe the network loss link-by-link
-    LOSS_MATRIX = 2,
+    LOSS_MATRIX = 2
     # Latency matrix to describe the network latency link-by-link
-    LATENCY_MATRIX = 3,
+    LATENCY_MATRIX = 3
     # Jitter matrix to describe the network jitter link-by-link
-    JITTER_MATRIX = 4,
+    JITTER_MATRIX = 4
 
 
 class TopologyType(IntEnum):
-    linear = 0,     # Linear chain topology
-    star = 1,       # Star topology
-    tree = 2,       # Complete Binary Tree
-    butterfly = 3,  # Butterfly topology
+    linear = 0      # Linear chain topology
+    star = 1        # Star topology
+    tree = 2        # Complete Binary Tree
+    butterfly = 3   # Butterfly topology
     mesh = 5        # Random Mesh topology
 
 
