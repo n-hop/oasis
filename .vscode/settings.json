@@ -20,5 +20,5 @@
     ]
   },
   "pylint.args": ["--rcfile=${workspaceFolder}/.pylintrc"],
-  "cSpell.words": ["Containernet", "dimage", "olsr", "intf"]
+  "cSpell.words": ["Containernet", "dimage", "olsr", "intf", "Iperf"]
 }

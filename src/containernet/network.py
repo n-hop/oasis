@@ -3,6 +3,7 @@ from mininet.net import Containernet
 from mininet.util import ipStr, netParse
 from mininet.link import TCLink
 from containernet.topology import (ITopology, MatrixType)
+from containernet.test_suites.test import ITestSuite
 from .config import NodeConfig
 
 
@@ -64,17 +65,20 @@ class Network (Containernet):
         self.net_routes = [range(self.num_of_hosts)]
         self.pair_to_link = {}
         self.pair_to_link_ip = {}
+        self.test_suites = []
         self._init_containernet()
 
     def get_hosts(self):
         return self.hosts
 
-    def check_connectivity(self):
-        logging.info(
-            "############### Oasis Check Connectivity ###########")
-        for host in self.hosts:
-            res = host.cmd('ping -c 5 -W 1 -i 0.1 %s' % self.hosts[0].IP())
-            logging.info('host %s', res)
+    def add_test_suite(self, test_suite: ITestSuite):
+        self.test_suites.append(test_suite)
+
+    def perform_test(self):
+        if self.test_suites is None:
+            logging.error("No test suite set")
+        for test in self.test_suites:
+            test.run(self)
 
     def _init_containernet(self):
         self._setup_docker_nodes()

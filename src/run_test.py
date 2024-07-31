@@ -9,6 +9,9 @@ from containernet.linear_topology import LinearTopology
 from containernet.topology import ITopology
 from containernet.network import Network
 from containernet.config import NodeConfig
+from containernet.test_suites.test import TestType
+from containernet.test_suites.test_iperf import IperfTest
+from containernet.test_suites.test_ping import PingTest
 
 
 def build_network(yaml_file_path):
@@ -54,6 +57,11 @@ if __name__ == '__main__':
     linear_network.build()
     linear_network.start()
 
-    linear_network.check_connectivity()
+    # add test suites
+    linear_network.add_test_suite(PingTest(TestType.latency))
+    linear_network.add_test_suite(IperfTest(TestType.throughput))
+
+    # perform the test
+    linear_network.perform_test()
 
     linear_network.stop()
