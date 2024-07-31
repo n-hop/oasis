@@ -14,9 +14,8 @@ def subnets(base_ip, parent_ip):
     base, prefix_len = netParse(base_ip)
     max_ip = (0xffffffff >> parent_prefix_len) | parent
     step = 1 << 32 - prefix_len
-
-    for ip in range(base, max_ip, step):  # not allowing x.255.255
-        yield ip  # pylint: disable=refactoring
+    # not allowing x.255.255
+    yield from range(base, max_ip, step)
 
 
 class Network (Containernet):
