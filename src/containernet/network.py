@@ -12,6 +12,7 @@ def subnets(base_ip, parent_ip):
     """
     parent, parent_prefix_len = netParse(parent_ip)
     base, prefix_len = netParse(base_ip)
+
     max_ip = (0xffffffff >> parent_prefix_len) | parent
     step = 1 << 32 - prefix_len
     # not allowing x.255.255
@@ -28,15 +29,24 @@ class Network (Containernet):
                  net_topology: ITopology = None,
                  ** params) -> None:
         super().__init__(**params)
-        self.first_link_ip = '10.0.0.0/24'
         # NodeConfig: Docker node related
         self.node_img = node_config.node_img
         self.node_vols = node_config.node_vols
         self.node_bind_port = node_config.node_bind_port
         self.node_name_prefix = node_config.node_name_prefix
         self.node_ip_range = node_config.node_ip_range
+        self.node_route = node_config.node_route
+        self.topology_type = net_topology.get_topology_type()
+        # `node_ip_start` init from node_ip_range
+        base, _ = netParse(self.node_ip_range)
+        self.node_ip_prefix = 24
+        self.node_ip_start = ipStr(base) + f'/{self.node_ip_prefix}'
         # Topology related
         self.net_mat = net_topology.get_matrix(MatrixType.ADJACENCY_MATRIX)
+        if self.net_mat is not None:
+            self.num_of_hosts = len(self.net_mat)
+        else:
+            raise ValueError('The topology matrix is None.')
         self.net_link_loss_mat = net_topology.get_matrix(
             MatrixType.LOSS_MATRIX)
         self.net_link_bw_mat = net_topology.get_matrix(
@@ -45,26 +55,26 @@ class Network (Containernet):
             MatrixType.LATENCY_MATRIX)
         self.net_link_jitter_mat = net_topology.get_matrix(
             MatrixType.JITTER_MATRIX)
+        logging.info('self.node_vols %s', self.node_vols)
         logging.info('self.net_mat %s', self.net_mat)
         logging.info('self.net_link_loss_mat %s', self.net_link_loss_mat)
         logging.info('self.net_link_bw_mat %s', self.net_link_bw_mat)
         logging.info('self.net_link_latency_mat %s', self.net_link_latency_mat)
         logging.info('self.net_link_jitter_mat %s', self.net_link_jitter_mat)
-
-        if self.net_mat is not None:
-            self.num_of_hosts = len(self.net_mat)
-        else:
-            raise ValueError('The topology matrix is None.')
         self.net_routes = [range(self.num_of_hosts)]
-        self.route_table = {}
-        logging.info('self.node_vols %s', self.node_vols)
+        self.pair_to_link = {}
+        self.pair_to_link_ip = {}
         self._init_containernet()
 
     def get_hosts(self):
         return self.hosts
 
-    def get_route_table(self) -> dict:
-        return self.route_table
+    def check_connectivity(self):
+        logging.info(
+            "############### Oasis Check Connectivity ###########")
+        for host in self.hosts:
+            res = host.cmd('ping -c 5 -W 1 -i 0.1 %s' % self.hosts[0].IP())
+            logging.info('host %s', res)
 
     def _init_containernet(self):
         self._setup_docker_nodes()
@@ -73,7 +83,7 @@ class Network (Containernet):
 
     def _setup_docker_nodes(self):
         """
-        Setup the docker nodes related configurations, 
+        Setup the docker nodes related configurations,
         such as image, volume, and port binding.
         """
         for i in range(self.num_of_hosts):
@@ -101,19 +111,33 @@ class Network (Containernet):
         """
         Setup the topology of the network by adding routes, links, etc.
         """
-        link_subnets = subnets(self.first_link_ip, self.node_ip_range)
-        _, link_prefix = netParse(self.first_link_ip)
+        link_subnets = subnets(self.node_ip_start, self.node_ip_range)
+        _, link_prefix = netParse(self.node_ip_start)
         # for adjacent matrix, only the upper triangle is used.
         for i in range(self.num_of_hosts):
-            for j in range(i+1, self.num_of_hosts):
+            for j in range(i, self.num_of_hosts):
                 if self.net_mat[i][j] == 1:
                     link_ip = next(link_subnets)
                     left_ip = ipStr(link_ip + 1) + f'/{link_prefix}'
                     right_ip = ipStr(link_ip + 2) + f'/{link_prefix}'
+                    logging.info(
+                        "addLink: %s(%s) <--> %s(%s)",
+                        self.hosts[i].name,
+                        left_ip,
+                        self.hosts[j].name,
+                        right_ip
+                    )
                     self.__addLink(i, j,
                                    params1={'ip': left_ip},
                                    params2={'ip': right_ip}
                                    )
+                    self.pair_to_link_ip[(
+                        self.hosts[i], self.hosts[j])] = ipStr(link_ip + 2)
+                    self.pair_to_link_ip[(
+                        self.hosts[j], self.hosts[i])] = ipStr(link_ip + 1)
+        for host in self.hosts:
+            host.cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
+            host.cmd('sysctl -p')
         logging.info(
             "############### Oasis Init Networking done ###########")
         return True
@@ -128,7 +152,7 @@ class Network (Containernet):
         ''' Set link parameters
         # Link with TC interfaces
         # net.addLink(s1, s2, cls=TCLink, \
-            delay="100ms", bw=1, loss=10, jitter=5)
+            delay = "100ms", bw = 1, loss = 10, jitter = 5)
         # FIXME: Warning: sch_htb: quantum of \
             class 50001 is big. Consider r2q change.
         '''
@@ -143,17 +167,76 @@ class Network (Containernet):
         link = super().addLink(
             self.hosts[id1], self.hosts[id2],
             port1, port2, cls=TCLink, **params)
-        logging.info(
-            "addLink: %s(%s) <--> %s(%s)",
-            self.hosts[id1].name,
-            self.hosts[id1].IP(),
-            self.hosts[id2].name,
-            self.hosts[id2].IP()
-        )
         return link
 
     def _setup_routes(self):
+        if self.node_route == 'ip' and self.topology_type != 'linear':
+            logging.error(
+                "The ip routing config %s is not supported for %s.",
+                self.node_route, self.topology_type)
         # setup routes
-        # 1. ip config
-        # 2. OLSR config
-        pass
+        if self.node_route == 'ip':
+            self._setup_ip_routes()
+        elif self.node_route == 'olsr':
+            self._setup_olsr_routes()
+        else:
+            logging.error(
+                "The routing config %s is not supported.", self.node_route)
+
+    def _setup_ip_routes(self):
+        '''
+        Setup the routing by ip route.
+        '''
+        for route in self.net_routes:
+            route = [self.nameToNode[f'h{i}'] for i in route]
+            self._add_route(route)
+
+    def _setup_olsr_routes(self):
+        '''
+        setup the OLSR routing
+        '''
+
+    @staticmethod
+    def _add_ip_gateway(host, gateway_ip, dst_ip):
+        host.cmd(f'ip r a {dst_ip} via {gateway_ip}')
+
+    def _add_route(self, route):
+        for i in range(len(route) - 1):
+            for j in range(i + 1, len(route)):
+                host = route[i]
+                gateway = route[i + 1]
+                dst_prev = route[j - 1]
+                dst = route[j]
+                if j < len(route) - 1:
+                    dst_next = route[j + 1]
+
+                # gateway ip is the ip of the second (right) interface
+                # of the link (route_i, route_{i+1})
+                gateway_ip = self.pair_to_link_ip[(host, gateway)]
+
+                # dst ip is the ip of the second (right) interface in the link
+                # (route_{j-1}, route_j)
+                dst_ip = self.pair_to_link_ip[(dst_prev, dst)]
+                if j < len(route) - 1:
+                    dst_ip_right = self.pair_to_link_ip[(dst_next, dst)]
+                self._add_ip_gateway(host, gateway_ip, dst_ip)
+                if j < len(route) - 1:
+                    self._add_ip_gateway(host, gateway_ip, dst_ip_right)
+
+        for i in range(1, len(route)):
+            for j in range(0, i):
+                host = route[i]
+                gateway = route[i - 1]
+                dst_prev = route[j + 1]
+                dst = route[j]
+
+                if j >= 1:
+                    dst_next = route[j - 1]
+
+                gateway_ip = self.pair_to_link_ip[(host, gateway)]
+                dst_ip = self.pair_to_link_ip[(dst_prev, dst)]
+                if j >= 1:
+                    dst_ip_left = self.pair_to_link_ip[(dst_next, dst)]
+                self._add_ip_gateway(host, gateway_ip, dst_ip)
+                if j >= 1:
+                    self._add_ip_gateway(host, gateway_ip, dst_ip_left)

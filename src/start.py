@@ -70,4 +70,4 @@ if __name__ == '__main__':
     nested_env.execute(
         f"python3 src/run_test.py {cur_workspace} "
         f"{cur_config_yaml_file_path}")
-    nested_env.stop()
+    # nested_env.stop()

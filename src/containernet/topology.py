@@ -39,6 +39,9 @@ class ITopology(ABC):
     def generate_other_matrices(self, adj_matrix):
         pass
 
+    def get_topology_type(self):
+        return self.top_config.topology_type
+
     def get_matrix(self, mat_type: MatrixType):
         return self.all_mats[mat_type]
 

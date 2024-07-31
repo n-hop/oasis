@@ -9,3 +9,5 @@ node_config:
     - "/usr/lib/linux-tools/:/usr/lib/linux-tools/:ro"
   node_bind_port: True
   node_name_prefix: h
+  node_route: ip # or olsr
+  node_ip_range: 10.10.0.0/16

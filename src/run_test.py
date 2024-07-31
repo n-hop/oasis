@@ -3,6 +3,7 @@ import sys
 import logging
 import yaml
 
+# from mininet.cli import CLI
 from mininet.log import setLogLevel
 from containernet.linear_topology import LinearTopology
 from containernet.network import Network
@@ -33,4 +34,10 @@ if __name__ == '__main__':
     if not os.path.exists(cur_config_yaml_file_path):
         logging.info(f"Error: %s does not exist.", cur_config_yaml_file_path)
         sys.exit(1)
-    pair_net = build_network(cur_config_yaml_file_path)
+    linear_network = build_network(cur_config_yaml_file_path)
+    linear_network.build()
+    linear_network.start()
+
+    linear_network.check_connectivity()
+
+    linear_network.stop()

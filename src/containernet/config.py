@@ -37,6 +37,7 @@ class NodeConfig:
     node_bind_port: Optional[bool] = field(default=True)
     node_name_prefix: Optional[str] = field(default='h')
     node_ip_range: Optional[str] = field(default='10.0.0.0/8')
+    node_route: Optional[str] = field(default='ip')
 
 
 @dataclass
