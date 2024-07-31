@@ -14,6 +14,8 @@ class TestType(IntEnum):
 class TestConfig:
     interval: Optional[float] = field(default=1.0)
     interval_num: Optional[int] = field(default=10)
+    packet_size: Optional[int] = field(default=1024)
+    packet_count: Optional[int] = field(default=10)
     log_file: Optional[str] = field(default=None)
     test_type: Optional[TestType] = field(default=TestType.throughput)
 

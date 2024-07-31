@@ -1,4 +1,5 @@
 import logging
+import os
 from mininet.net import Containernet
 from mininet.util import ipStr, netParse
 from mininet.link import TCLink
@@ -56,6 +57,7 @@ class Network (Containernet):
             MatrixType.LATENCY_MATRIX)
         self.net_link_jitter_mat = net_topology.get_matrix(
             MatrixType.JITTER_MATRIX)
+        self._check_node_vols()
         logging.info('self.node_vols %s', self.node_vols)
         logging.info('self.net_mat %s', self.net_mat)
         logging.info('self.net_link_loss_mat %s', self.net_link_loss_mat)
@@ -79,6 +81,12 @@ class Network (Containernet):
             logging.error("No test suite set")
         for test in self.test_suites:
             test.run(self)
+
+    def reload(self, node_config: NodeConfig, net_topology: ITopology):
+        """
+        Reload the network with new configurations.
+        """
+        logging.info("Reload the network. %s,%s", node_config, net_topology)
 
     def _init_containernet(self):
         self._setup_docker_nodes()
@@ -244,3 +252,10 @@ class Network (Containernet):
                 self._add_ip_gateway(host, gateway_ip, dst_ip)
                 if j >= 1:
                     self._add_ip_gateway(host, gateway_ip, dst_ip_left)
+
+    def _check_node_vols(self):
+        if not os.path.exists('/usr/bin/perf') or \
+                not os.path.isfile('/usr/bin/perf'):
+            logging.warning("perf is not available.")
+            self.node_vols = [
+                vol for vol in self.node_vols if '/usr/bin/perf' not in vol]

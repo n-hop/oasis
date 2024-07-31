@@ -4,7 +4,7 @@
 topology:
   - name: linear_network_6
     topology_type: linear
-    nodes: 6
+    nodes: 7
     array_description:
       - link_loss:
         init_value: [0]

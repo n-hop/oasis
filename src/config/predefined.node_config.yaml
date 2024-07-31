@@ -1,0 +1,22 @@
+node:
+  - name: n_hop
+    node_img: gitlab.app.n-hop.com:5005/n-hop/bats-protocol-framework/bats_protocol:dev
+    node_vols:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/nix/store:/nix/store:ro"
+      - "/usr/bin/perf:/usr/bin/perf:ro"
+      - "/lib/modules/:/lib/modules/:ro"
+      - "/usr/lib/linux-tools/:/usr/lib/linux-tools/:ro"
+    node_bind_port: True
+    node_name_prefix: h
+    node_ip_range: "10.0.0.0/8"
+  - name: default
+    node_img: ubuntu:22.04
+    node_vols:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/usr/bin/perf:/usr/bin/perf:ro"
+      - "/lib/modules/:/lib/modules/:ro"
+      - "/usr/lib/linux-tools/:/usr/lib/linux-tools/:ro"
+    node_bind_port: True
+    node_name_prefix: h
+    node_ip_range: "10.0.0.0/8"

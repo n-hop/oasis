@@ -1,3 +1,4 @@
+from typing import Tuple
 import os
 import sys
 import logging
@@ -8,13 +9,67 @@ from mininet.log import setLogLevel
 from containernet.linear_topology import LinearTopology
 from containernet.topology import ITopology
 from containernet.network import Network
-from containernet.config import NodeConfig
+from containernet.config import (
+    INodeConfig, NodeConfig, TopologyConfig)
 from containernet.test_suites.test import (TestType, TestConfig)
 from containernet.test_suites.test_iperf import IperfTest
 from containernet.test_suites.test_ping import PingTest
 
 
-def build_network(yaml_file_path):
+def load_test_yaml(test_yaml_file: str):
+    """
+        Load the test case configuration from a yaml file.
+    """
+    logging.info(
+        "########################## Oasis Loading Tests "
+        "##########################")
+    # List of active cases.
+    test_cases = None
+    with open(test_yaml_file, 'r', encoding='utf-8') as stream:
+        try:
+            yaml_content = yaml.safe_load(stream)
+            test_cases = yaml_content["test"]
+        except yaml.YAMLError as exc:
+            logging.error(exc)
+            return None
+    # ------------------------------------------------
+    test_names = test_cases.keys()
+    test_list = []
+    for name in test_names:
+        test_cases[name]['name'] = name
+        test_list.append(test_cases[name])
+    for case in test_list.copy():
+        # ignore the inactive case by "if: False"
+        if "if" in case and not case["if"]:
+            logging.info(
+                f"case %s is disabled!", case['name'])
+            test_list.remove(case)
+        else:
+            logging.info(
+                f"case %s is enabled!", case['name'])
+    if len(test_list) == 0:
+        logging.info(f"No active test case in %s", test_yaml_file)
+        return None
+    return test_list
+
+
+def load_config(test_case_yaml) -> Tuple[NodeConfig, TopologyConfig]:
+    local_net_top_yaml = test_case_yaml['topology']
+    local_node_conf_yaml = test_case_yaml['node_config']
+    logging.info(f"Test: top_yaml %s, node_conf_yaml %s",
+                 local_net_top_yaml, local_node_conf_yaml)
+    if local_net_top_yaml is None or local_node_conf_yaml is None:
+        logging.error("Error: top_yaml or node_conf_yaml is None.")
+        return None, None
+    node_config = INodeConfig.load_yaml_config(local_node_conf_yaml)
+    top_config = ITopology.load_yaml_config(local_net_top_yaml)
+    if top_config is None or node_config is None:
+        logging.error("Error: topology/node configuration is None.")
+        return None, None
+    return node_config, top_config
+
+
+def build_network(node_config: NodeConfig, top_config: TopologyConfig):
     """Build a container network from the yaml configuration file.
 
     Args:
@@ -23,23 +78,12 @@ def build_network(yaml_file_path):
     Returns:
         Network: the container network object
     """
-    with open(yaml_file_path, 'r', encoding='utf-8') as stream:
-        try:
-            yaml_content = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            logging.error(exc)
-            return None
-    top_config = ITopology.load_yaml_config(yaml_content['topology'])
-    if top_config is None:
-        logging.error("Error: topology configuration is None.")
-        return None
     net_top = None
     if top_config.topology_type == "linear":
         net_top = LinearTopology(top_config)
     else:
         logging.error("Error: unsupported topology type.")
         return None
-    node_config = NodeConfig(** yaml_content['node_config'])
     return Network(node_config, net_top)
 
 
@@ -47,26 +91,33 @@ if __name__ == '__main__':
     setLogLevel('info')
     logging.basicConfig(level=logging.INFO)
 
-    cur_workspace = sys.argv[1]
+    # cur_workspace = sys.argv[1]
     cur_config_yaml_file_path = sys.argv[2]
 
     if not os.path.exists(cur_config_yaml_file_path):
         logging.info(f"Error: %s does not exist.", cur_config_yaml_file_path)
         sys.exit(1)
-    linear_network = build_network(cur_config_yaml_file_path)
-    linear_network.build()
-    linear_network.start()
+    linear_network = None
+    all_tests = load_test_yaml(cur_config_yaml_file_path)
+    for test in all_tests:
+        cur_node_config, cur_top_config = load_config(test)
+        if linear_network is None:
+            linear_network = build_network(cur_node_config, cur_top_config)
+            linear_network.build()
+            linear_network.start()
+        else:
+            linear_network.reload(cur_node_config, cur_top_config)
 
-    # add test suites
-    iperf_test_conf = TestConfig(
-        interval=1.0, interval_num=10, test_type=TestType.throughput)
-    linear_network.add_test_suite(PingTest(iperf_test_conf))
+        # add test suites
+        iperf_test_conf = TestConfig(
+            interval=1.0, interval_num=10, test_type=TestType.throughput)
+        linear_network.add_test_suite(PingTest(iperf_test_conf))
 
-    ping_test_conf = TestConfig(
-        interval=1.0, interval_num=10, test_type=TestType.throughput)
-    linear_network.add_test_suite(IperfTest(ping_test_conf))
+        ping_test_conf = TestConfig(
+            interval=1.0, interval_num=10, test_type=TestType.latency)
+        linear_network.add_test_suite(IperfTest(ping_test_conf))
 
-    # perform the test
-    linear_network.perform_test()
+        # perform the test
+        linear_network.perform_test()
 
-    linear_network.stop()
+        linear_network.stop()
