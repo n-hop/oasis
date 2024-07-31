@@ -2,14 +2,10 @@
 import logging
 
 from containernet.network import Network
-from .test import (ITestSuite, TestType)
+from .test import (ITestSuite)
 
 
 class PingTest(ITestSuite):
-    def __init__(self, type: TestType) -> None:
-        super().__init__()
-        self.type = type
-
     def post_process(self):
         pass
 

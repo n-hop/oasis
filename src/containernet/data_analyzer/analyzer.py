@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 
+@dataclass
 class AnalyzerConfig:
     input: str  # The input file
     output: str  # The output file

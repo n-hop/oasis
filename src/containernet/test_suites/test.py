@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import IntEnum
+from dataclasses import dataclass, field
+from typing import Optional
 
 
 class TestType(IntEnum):
@@ -8,10 +10,18 @@ class TestType(IntEnum):
     jitter = 2
 
 
+@dataclass
+class TestConfig:
+    interval: Optional[float] = field(default=1.0)
+    interval_num: Optional[int] = field(default=10)
+    log_file: Optional[str] = field(default=None)
+    test_type: Optional[TestType] = field(default=TestType.throughput)
+
+
 class ITestSuite(ABC):
-    def __init__(self) -> None:
+    def __init__(self, config: TestConfig) -> None:
         self.is_success = False
-        self.log_file = None
+        self.config = config
 
     @abstractmethod
     def post_process(self):
