@@ -106,7 +106,12 @@ if __name__ == '__main__':
             linear_network.build()
             linear_network.start()
         else:
-            linear_network.reload(cur_node_config, cur_top_config)
+            if cur_top_config.topology_type == "linear":
+                local_net_top = LinearTopology(cur_top_config)
+            else:
+                logging.error("Error: unsupported topology type.")
+                continue
+            linear_network.reload(cur_node_config, local_net_top)
 
         # add test suites
         iperf_test_conf = TestConfig(
@@ -120,4 +125,4 @@ if __name__ == '__main__':
         # perform the test
         linear_network.perform_test()
 
-        linear_network.stop()
+    linear_network.stop()

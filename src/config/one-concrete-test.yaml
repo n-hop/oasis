@@ -9,3 +9,12 @@ test:
     node_config:
       config_name: default
       config_file: src/config/predefined.node_config.yaml
+  TEST_CASE_2:
+    description: "Test example"
+    if: true # set false, if you want to skip this test
+    topology:
+      config_name: 4-hops-linear-network
+      config_file: src/config/predefined.topology.yaml
+    node_config:
+      config_name: default
+      config_file: src/config/predefined.node_config.yaml
