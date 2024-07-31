@@ -127,5 +127,6 @@ if __name__ == '__main__':
 
         # perform the test
         linear_network.perform_test()
+        linear_network.reset_test_suites()
 
     linear_network.stop()

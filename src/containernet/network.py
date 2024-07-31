@@ -73,6 +73,9 @@ class Network (Containernet):
     def get_hosts(self):
         return self.hosts
 
+    def reset_test_suites(self):
+        self.test_suites = []
+
     def add_test_suite(self, test_suite: ITestSuite):
         self.test_suites.append(test_suite)
 
