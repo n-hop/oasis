@@ -9,7 +9,7 @@ from mininet.log import setLogLevel
 from containernet.linear_topology import LinearTopology
 from containernet.network import Network
 from containernet.config import (
-    INodeConfig, NodeConfig, TopologyConfig)
+    IConfig, NodeConfig, TopologyConfig, supported_config_keys)
 from containernet.test_suites.test import (TestType, TestConfig)
 from containernet.test_suites.test_iperf import IperfTest
 from containernet.test_suites.test_ping import PingTest
@@ -53,19 +53,26 @@ def load_test(test_yaml_file: str):
 
 
 def load_config(test_case_yaml) -> Tuple[NodeConfig, TopologyConfig]:
-    local_net_top_yaml = test_case_yaml['topology']
-    local_node_conf_yaml = test_case_yaml['node_config']
-    logging.info(f"Test: top_yaml %s, node_conf_yaml %s",
-                 local_net_top_yaml, local_node_conf_yaml)
-    if local_net_top_yaml is None or local_node_conf_yaml is None:
-        logging.error("Error: top_yaml or node_conf_yaml is None.")
-        return None, None
-    node_config = INodeConfig.load_yaml_config(local_node_conf_yaml, 'node')
-    top_config = INodeConfig.load_yaml_config(local_net_top_yaml, 'topology')
-    if top_config is None or node_config is None:
-        logging.error("Error: topology/node configuration is None.")
-        return None, None
-    return node_config, top_config
+    configs = []
+    for key in supported_config_keys:
+        if key not in test_case_yaml:
+            logging.error(
+                f"Error: missing key %s in the test case yaml.",
+                key)
+            return None, None
+        local_yaml = test_case_yaml[key]
+        logging.info(f"Test: local_yaml %s",
+                     local_yaml)
+        if local_yaml is None:
+            logging.error(f"Error: content of %s is None.", key)
+            return None, None
+        loaded_conf = IConfig.load_yaml_config(
+            local_yaml, key)
+        if loaded_conf is None:
+            logging.error("Error: loaded_conf of %s is None.", key)
+            return None, None
+        configs.append(loaded_conf)
+    return configs[0], configs[1]
 
 
 def build_topology(top_config: TopologyConfig):

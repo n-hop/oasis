@@ -1,4 +1,4 @@
-node:
+node_config:
   - name: n_hop
     node_img: gitlab.app.n-hop.com:5005/n-hop/bats-protocol-framework/bats_protocol:dev
     node_vols:
