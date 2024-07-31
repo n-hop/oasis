@@ -2,7 +2,7 @@
     A Wrapper for the mininet Host (Node)
 
 """
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass, field
 from typing import Optional, List
 from enum import IntEnum
