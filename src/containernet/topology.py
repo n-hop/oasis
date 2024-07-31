@@ -26,10 +26,12 @@ MatType2LinkAttr = {
 
 
 class ITopology(ABC):
-    def __init__(self) -> None:
+    def __init__(self, top: TopologyConfig) -> None:
         self.all_mats = {}
         self.top_config = None
         self.adj_matrix = None
+        self.top_config = top
+        self.init_all_matrices()
 
     @abstractmethod
     def generate_adj_matrix(self, num_of_nodes: int):
@@ -43,6 +45,8 @@ class ITopology(ABC):
         return self.top_config.topology_type
 
     def get_matrix(self, mat_type: MatrixType):
+        if mat_type not in self.all_mats:
+            return None
         return self.all_mats[mat_type]
 
     def init_all_matrices(self):
@@ -59,23 +63,8 @@ class ITopology(ABC):
             self.all_mats[MatrixType.ADJACENCY_MATRIX] = self.adj_matrix
             self.generate_other_matrices(self.adj_matrix)
 
-    def load_yaml_config(self, yaml_description: str):
-        # load it directly from the yaml_description or
-        # load it from another yaml file.
-        topology = None
-        is_load_from_file = ["config_file", "config_name"]
-        if all(key in yaml_description for key in is_load_from_file):
-            # load from the yaml file `config_file`
-            topology = self.load_topology_config(
-                yaml_description['config_file'],
-                yaml_description['config_name'])
-        else:
-            # load directly from the yaml_description
-            logging.info('load_yaml_config: %s', yaml_description)
-            topology = TopologyConfig(**yaml_description)
-        return topology
-
-    def load_topology_config(self, yaml_config_file: str,
+    @staticmethod
+    def load_topology_config(yaml_config_file: str,
                              config_name: str) -> TopologyConfig:
         '''
         Load the topology configuration from a yaml file. The configuration 
@@ -113,6 +102,23 @@ class ITopology(ABC):
                 break
         logging.info('load_topology_config: loaded %s', loaded_topology)
         return TopologyConfig(**loaded_topology)
+
+    @staticmethod
+    def load_yaml_config(yaml_description: str):
+        # load it directly from the yaml_description or
+        # load it from another yaml file.
+        topology = None
+        is_load_from_file = ["config_file", "config_name"]
+        if all(key in yaml_description for key in is_load_from_file):
+            # load from the yaml file `config_file`
+            topology = ITopology.load_topology_config(
+                yaml_description['config_file'],
+                yaml_description['config_name'])
+        else:
+            # load directly from the yaml_description
+            logging.info('load_yaml_config: %s', yaml_description)
+            topology = TopologyConfig(**yaml_description)
+        return topology
 
     def load_all_mats(self, json_file_path):
         """Load all matrices from the Json file.

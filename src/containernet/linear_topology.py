@@ -4,16 +4,6 @@ from .topology import (ITopology, MatrixType, MatType2LinkAttr, LinkAttr)
 
 
 class LinearTopology(ITopology):
-    def __init__(self, yaml_description: str):
-        """
-        Args:
-            some_parameter (int): An example parameter to initialize the class.
-        """
-        if not yaml_description:
-            raise ValueError("yaml_description is empty.")
-        super().__init__()
-        self.top_config = self.load_yaml_config(yaml_description)
-        self.init_all_matrices()
 
     def generate_adj_matrix(self, num_of_nodes: int):
         """
