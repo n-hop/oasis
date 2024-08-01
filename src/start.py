@@ -42,12 +42,12 @@ def parse_args():
     return parser
 
 
-def build_nested_env(config_file, containernet, workspace):
+def build_nested_env(config_file, containernet_name, workspace):
     nested_config = load_nested_config(
-        config_file, containernet)
+        config_file, containernet_name)
     if nested_config is None:
         logging.info(
-            f"Error: %s is not in the nested config file.", containernet)
+            f"Error: %s is not in the nested config file.", containernet_name)
         sys.exit(1)
     test_name = "default "
     # execute the test cases on nested containernet
