@@ -7,12 +7,12 @@ import yaml
 # from mininet.cli import CLI
 from mininet.log import setLogLevel
 from containernet.linear_topology import LinearTopology
-from containernet.network import Network
+from containernet.containerized_network import ContainerizedNetwork
 from containernet.config import (
     IConfig, NodeConfig, TopologyConfig, supported_config_keys)
-from containernet.test_suites.test import (TestType, TestConfig)
-from containernet.test_suites.test_iperf import IperfTest
-from containernet.test_suites.test_ping import PingTest
+from test_suites.test import (TestType, TestConfig)
+from test_suites.test_iperf import IperfTest
+from test_suites.test_ping import PingTest
 
 
 def load_test(test_yaml_file: str):
@@ -92,10 +92,10 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig):
         yaml_file_path (str): the path of the yaml configuration file
 
     Returns:
-        Network: the container network object
+        ContainerizedNetwork: the container network object
     """
     net_top = build_topology(top_config)
-    return Network(node_config, net_top)
+    return ContainerizedNetwork(node_config, net_top)
 
 
 if __name__ == '__main__':
@@ -114,13 +114,12 @@ if __name__ == '__main__':
         cur_node_config, cur_top_config = load_config(test)
         if linear_network is None:
             linear_network = build_network(cur_node_config, cur_top_config)
-            linear_network.build()
             linear_network.start()
         else:
             local_net_top = build_topology(cur_top_config)
             if local_net_top is None:
                 continue
-            linear_network.reload(cur_node_config, local_net_top)
+            linear_network.reload(local_net_top)
 
         # add test suites
         iperf_test_conf = TestConfig(

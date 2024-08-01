@@ -34,10 +34,10 @@ class ITestSuite(ABC):
         pass
 
     @abstractmethod
-    def _run_test(self, network: 'Network'):  # type: ignore
+    def _run_test(self, network: 'INetwork'):  # type: ignore
         pass
 
-    def run(self, network: 'Network'):  # type: ignore
+    def run(self, network: 'INetwork'):  # type: ignore
         self.is_success = self.pre_process()
         if not self.is_success:
             return

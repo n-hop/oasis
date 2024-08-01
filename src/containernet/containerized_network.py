@@ -4,7 +4,7 @@ from mininet.net import Containernet
 from mininet.util import ipStr, netParse
 from mininet.link import TCLink
 from containernet.topology import (ITopology, MatrixType)
-from containernet.test_suites.test import ITestSuite
+from interfaces.network import INetwork
 from .config import NodeConfig
 
 
@@ -21,7 +21,7 @@ def subnets(base_ip, parent_ip):
     yield from range(base, max_ip, step)
 
 
-class Network (Containernet):
+class ContainerizedNetwork (INetwork):
     """
     Create a network from an adjacency matrix.
     """
@@ -31,6 +31,7 @@ class Network (Containernet):
                  net_topology: ITopology = None,
                  ** params) -> None:
         super().__init__(**params)
+        self.containernet = Containernet()
         # NodeConfig: Docker node related
         self.node_img = node_config.node_img
         self.node_vols = node_config.node_vols
@@ -71,21 +72,17 @@ class Network (Containernet):
         self._init_containernet()
 
     def get_hosts(self):
-        return self.hosts
+        return self.containernet.hosts
 
-    def reset_test_suites(self):
-        self.test_suites = []
+    def start(self):
+        logging.info("Oasis starts the ContainerizedNetwork.")
+        self.containernet.build()
+        self.containernet.start()
 
-    def add_test_suite(self, test_suite: ITestSuite):
-        self.test_suites.append(test_suite)
+    def stop(self):
+        self.containernet.stop()
 
-    def perform_test(self):
-        if self.test_suites is None:
-            logging.error("No test suite set")
-        for test in self.test_suites:
-            test.run(self)
-
-    def reload(self, node_config: NodeConfig, top: ITopology):
+    def reload(self, top: ITopology):
         """
         Reload the network with new configurations.
         """
@@ -102,9 +99,9 @@ class Network (Containernet):
             self.net_jitter_mat = top.get_matrix(MatrixType.JITTER_MATRIX)
             diff = self.num_of_hosts - len(self.net_mat)
             if diff < 0:
-                self._expand_network(-diff, node_config)
+                self._expand_network(-diff)
             else:
-                self._shrink_network(diff, node_config)
+                self._shrink_network(diff)
 
     def _init_containernet(self):
         self._setup_docker_nodes()
@@ -123,7 +120,7 @@ class Network (Containernet):
             else:
                 port_bindings = {}
                 ports = []
-            self.addDocker(
+            self.containernet.addDocker(
                 f'{self.node_name_prefix}{i}',
                 ip=None,
                 volumes=self.node_vols,
@@ -153,9 +150,9 @@ class Network (Containernet):
                     right_ip = ipStr(link_ip + 2) + f'/{link_prefix}'
                     logging.info(
                         "addLink: %s(%s) <--> %s(%s)",
-                        self.hosts[i].name,
+                        self.containernet.hosts[i].name,
                         left_ip,
-                        self.hosts[j].name,
+                        self.containernet.hosts[j].name,
                         right_ip
                     )
                     self.__addLink(i, j,
@@ -163,10 +160,12 @@ class Network (Containernet):
                                    params2={'ip': right_ip}
                                    )
                     self.pair_to_link_ip[(
-                        self.hosts[i], self.hosts[j])] = ipStr(link_ip + 2)
+                        self.containernet.hosts[i],
+                        self.containernet.hosts[j])] = ipStr(link_ip + 2)
                     self.pair_to_link_ip[(
-                        self.hosts[j], self.hosts[i])] = ipStr(link_ip + 1)
-        for host in self.hosts:
+                        self.containernet.hosts[j],
+                        self.containernet.hosts[i])] = ipStr(link_ip + 1)
+        for host in self.containernet.hosts:
             host.cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
             host.cmd('sysctl -p')
         logging.info(
@@ -195,8 +194,8 @@ class Network (Containernet):
             params['delay'] = str(self.net_latency_mat[id1][id2]) + 'ms'
         if self.net_jitter_mat is not None:
             params['jitter'] = self.net_jitter_mat[id1][id2]
-        link = super().addLink(
-            self.hosts[id1], self.hosts[id2],
+        link = self.containernet.addLink(
+            self.containernet.hosts[id1], self.containernet.hosts[id2],
             port1, port2, cls=TCLink, **params)
         return link
 
@@ -219,7 +218,7 @@ class Network (Containernet):
         Setup the routing by ip route.
         '''
         for route in self.net_routes:
-            route = [self.nameToNode[f'h{i}'] for i in route]
+            route = [self.containernet.nameToNode[f'h{i}'] for i in route]
             self._add_route(route)
 
     def _setup_olsr_routes(self):
@@ -279,22 +278,22 @@ class Network (Containernet):
             self.node_vols = [
                 vol for vol in self.node_vols if '/usr/bin/perf' not in vol]
 
-    def _expand_network(self, diff, node_config):
+    def _expand_network(self, diff):
         """
         Expand the network by adding more nodes.
         """
         logging.info(
             "Reload the network. number of "
-            "nodes increased by %s, node %s",
-            diff, node_config)
+            "nodes increased by %s",
+            diff)
         self._reset_network(self.num_of_hosts, diff)
         for i in range(diff):
-            self.addDocker(
+            self.containernet.addDocker(
                 f'{self.node_name_prefix}{self.num_of_hosts + i}',
                 ip=None,
-                volumes=node_config.node_vols,
+                volumes=self.node_vols,
                 cap_add=["NET_ADMIN", "SYS_ADMIN"],
-                dimage=node_config.node_img,
+                dimage=self.node_img,
                 ports=[self.num_of_hosts + i + 10000],
                 port_bindings={self.num_of_hosts + i +
                                10000: self.num_of_hosts + i + 10000},
@@ -304,19 +303,19 @@ class Network (Containernet):
         self._setup_topology()
         self._setup_routes()
         logging.info(
-            "Expand the network. number of nodes increased by %s, node %s",
-            diff, node_config)
+            "Expand the network. number of nodes increased by %s",
+            diff)
         return True
 
-    def _shrink_network(self, diff, node_config):
+    def _shrink_network(self, diff):
         logging.info(
             "Reload the network. number of "
-            "nodes decreased by %s, node %s",
-            diff, node_config)
+            "nodes decreased by %s",
+            diff)
         self._reset_network(self.num_of_hosts, -diff)
         for i in range(self.num_of_hosts - diff, self.num_of_hosts):
             logging.info("removeDocker: %s", f'{self.node_name_prefix}{i}')
-            self.removeDocker(f'{self.node_name_prefix}{i}')
+            self.containernet.removeDocker(f'{self.node_name_prefix}{i}')
         self.num_of_hosts -= diff
         self._setup_topology()
         self._setup_routes()
@@ -327,11 +326,13 @@ class Network (Containernet):
         # remove all links
         for i in range(num - 1):
             logging.info("removeLink: %s-%s",
-                         self.hosts[i].name, self.hosts[i+1].name)
-            self.removeLink(
-                node1=self.hosts[i].name, node2=self.hosts[i+1].name)
+                         self.containernet.hosts[i].name,
+                         self.containernet.hosts[i+1].name)
+            self.containernet.removeLink(
+                node1=self.containernet.hosts[i].name,
+                node2=self.containernet.hosts[i+1].name)
         # remove all routes.
-        for host in self.hosts:
+        for host in self.containernet.hosts:
             host.cmd('ip route flush table main')
             host.deleteIntfs()
             host.cleanup()

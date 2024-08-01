@@ -1,7 +1,7 @@
 
 import logging
 
-from containernet.network import Network
+from interfaces.network import INetwork
 from .test import (ITestSuite)
 
 
@@ -12,7 +12,7 @@ class PingTest(ITestSuite):
     def pre_process(self):
         return True
 
-    def _run_test(self, network: Network):
+    def _run_test(self, network: INetwork):
         logging.info(
             "############### Oasis PingTest ###########")
         hosts = network.get_hosts()

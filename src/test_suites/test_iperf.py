@@ -1,8 +1,8 @@
 import logging
 
-from containernet.network import Network
-from containernet.data_analyzer.analyzer import AnalyzerConfig
-from containernet.data_analyzer.analyzer_factory import AnalyzerFactory
+from interfaces.network import INetwork
+from data_analyzer.analyzer import AnalyzerConfig
+from data_analyzer.analyzer_factory import AnalyzerFactory
 from .test import (ITestSuite)
 
 
@@ -22,6 +22,6 @@ class IperfTest(ITestSuite):
         self.config.log_file = "iperf3_log.txt"
         return True
 
-    def _run_test(self, network: Network):
+    def _run_test(self, network: INetwork):
         logging.info(
             "############### Oasis IperfTest ###########")

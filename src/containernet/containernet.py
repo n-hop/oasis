@@ -6,11 +6,11 @@ from .config import (NestedConfig)
 
 
 def load_nested_config(nested_config_file: str,
-                       nested_containernet: str) -> NestedConfig:
+                       containernet: str) -> NestedConfig:
     """
     Load the nested configuration from a yaml file.
     """
-    if nested_config_file == "" or nested_containernet == "":
+    if nested_config_file == "" or containernet == "":
         return None
     containernet_list = []
     logging.info(
@@ -28,7 +28,7 @@ def load_nested_config(nested_config_file: str,
     logging.info(
         f"loaded containernet: %s", containernet_list)
     for containernet in containernet_names:
-        if containernet == nested_containernet:
+        if containernet == containernet:
             logging.info(
                 f"loaded containernet: %s", containernet_list[containernet])
             return NestedConfig(**containernet_list[containernet])
@@ -57,9 +57,9 @@ class NestedContainernet():
     def tearDown(self) -> None:
         logging.info(
             "NestedContainernet tearDown the Containernet.")
-        # stop all the running containers with the name "nested_containernet**"
+        # stop all the running containers with the name "containernet**"
         os.system(
-            "docker stop $(docker ps -a -q -fname=nested_containernet) || true")
+            "docker stop $(docker ps -a -q -fname=containernet) || true")
         os.system("docker container prune --force || true")
         logging.info(
             "########################## Oasis teardown"

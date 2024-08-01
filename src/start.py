@@ -4,8 +4,14 @@ import argparse
 import logging
 
 from mininet.log import setLogLevel
-from containernet.nested_containernet import (
+from containernet.containernet import (
     NestedContainernet, load_nested_config)
+
+""" ################# USAGE OF THE SCRIPT ##########################
+  start.py is used to initialize the nested containernet environment, 
+and inside the nested containernet, it will execute the test cases 
+through the run_test.py script.
+"""
 
 
 def parse_args():
@@ -20,7 +26,7 @@ def parse_args():
                         default="")
     parser.add_argument('--containernet',
                         help='nested containernet name in the YAML file',
-                        dest='nested_containernet',
+                        dest='containernet',
                         type=str,
                         default="nuc_sz")
     parser.add_argument('-t',
@@ -58,7 +64,7 @@ if __name__ == '__main__':
     ns, args = local_parser.parse_known_args()
     cur_config_yaml_file_path = ns.tests_config_file
     nested_config_file = ns.nested_config_file
-    nested_containernet = ns.nested_containernet
+    nested_containernet = ns.containernet
     cur_workspace = ns.workspace
 
     if not os.path.exists(cur_config_yaml_file_path):
