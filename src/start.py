@@ -3,7 +3,6 @@ import sys
 import argparse
 import logging
 
-from mininet.log import setLogLevel
 from containernet.containernet import (
     NestedContainernet, load_nested_config)
 
@@ -56,8 +55,6 @@ def build_nested_env(config_file, containernet_name, workspace):
 
 
 if __name__ == '__main__':
-    # set log level
-    setLogLevel('info')
     logging.basicConfig(level=logging.INFO)
 
     local_parser = parse_args()
