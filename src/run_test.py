@@ -10,9 +10,9 @@ from containernet.linear_topology import LinearTopology
 from containernet.containerized_network import ContainerizedNetwork
 from containernet.config import (
     IConfig, NodeConfig, TopologyConfig, supported_config_keys)
-from test_suites.test import (TestType, TestConfig)
-from test_suites.test_iperf import IperfTest
-from test_suites.test_ping import PingTest
+from testsuites.test import (TestType, TestConfig)
+from testsuites.test_iperf import IperfTest
+from testsuites.test_ping import PingTest
 
 
 def load_test(test_yaml_file: str):

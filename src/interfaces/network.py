@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from containernet.topology import (ITopology)
-from test_suites.test import ITestSuite
+from testsuites.test import ITestSuite
 
 
 class INetwork(ABC):
