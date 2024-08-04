@@ -50,26 +50,13 @@ class ContainerizedNetwork (INetwork):
         self.node_ip_prefix = 24
         self.node_ip_start = ipStr(base) + f'/{self.node_ip_prefix}'
         # Topology related
-        self.net_mat = net_topology.get_matrix(MatrixType.ADJACENCY_MATRIX)
+        self._init_matrix(net_topology)
+        self._check_node_vols()
+        logging.info('self.node_vols %s', self.node_vols)
         if self.net_mat is not None:
             self.num_of_hosts = len(self.net_mat)
         else:
             raise ValueError('The topology matrix is None.')
-        self.net_loss_mat = net_topology.get_matrix(
-            MatrixType.LOSS_MATRIX)
-        self.net_bw_mat = net_topology.get_matrix(
-            MatrixType.BANDW_MATRIX)
-        self.net_latency_mat = net_topology.get_matrix(
-            MatrixType.LATENCY_MATRIX)
-        self.net_jitter_mat = net_topology.get_matrix(
-            MatrixType.JITTER_MATRIX)
-        self._check_node_vols()
-        logging.info('self.node_vols %s', self.node_vols)
-        logging.info('self.net_mat %s', self.net_mat)
-        logging.info('self.net_loss_mat %s', self.net_loss_mat)
-        logging.info('self.net_bw_mat %s', self.net_bw_mat)
-        logging.info('self.net_latency_mat %s', self.net_latency_mat)
-        logging.info('self.net_jitter_mat %s', self.net_jitter_mat)
         self.net_routes = [range(self.num_of_hosts)]
         self.pair_to_link = {}
         self.pair_to_link_ip = {}
@@ -95,16 +82,8 @@ class ContainerizedNetwork (INetwork):
         Reload the network with new configurations.
         """
         # check topology change only.
-        if self.net_mat != top.get_matrix(MatrixType.ADJACENCY_MATRIX)\
-           or self.net_loss_mat != top.get_matrix(MatrixType.LOSS_MATRIX)\
-           or self.net_bw_mat != top.get_matrix(MatrixType.BANDW_MATRIX)\
-           or self.net_latency_mat != top.get_matrix(MatrixType.LATENCY_MATRIX)\
-           or self.net_jitter_mat != top.get_matrix(MatrixType.JITTER_MATRIX):
-            self.net_mat = top.get_matrix(MatrixType.ADJACENCY_MATRIX)
-            self.net_loss_mat = top.get_matrix(MatrixType.LOSS_MATRIX)
-            self.net_bw_mat = top.get_matrix(MatrixType.BANDW_MATRIX)
-            self.net_latency_mat = top.get_matrix(MatrixType.LATENCY_MATRIX)
-            self.net_jitter_mat = top.get_matrix(MatrixType.JITTER_MATRIX)
+        if self._check_topology_change(top):
+            self._init_matrix(top)
             diff = self.num_of_hosts - len(self.net_mat)
             if diff < 0:
                 self._expand_network(-diff)
@@ -114,17 +93,57 @@ class ContainerizedNetwork (INetwork):
     def get_link_table(self):
         return self.pair_to_link_ip
 
+    def _check_topology_change(self, top: ITopology):
+        is_changed = False
+        if self.net_mat != top.get_matrix(MatrixType.ADJACENCY_MATRIX):
+            is_changed = True
+            logging.info("Oasis detected the topology change.")
+        if self.net_loss_mat != top.get_matrix(MatrixType.LOSS_MATRIX):
+            is_changed = True
+            logging.info("Oasis detected the loss matrix change.")
+        if self.net_bw_mat != top.get_matrix(MatrixType.BANDW_MATRIX):
+            is_changed = True
+            logging.info("Oasis detected the bandwidth matrix change.")
+        if self.net_latency_mat != top.get_matrix(MatrixType.LATENCY_MATRIX):
+            is_changed = True
+            logging.info("Oasis detected the latency matrix change.")
+        if self.net_jitter_mat != top.get_matrix(MatrixType.JITTER_MATRIX):
+            is_changed = True
+            logging.info("Oasis detected the jitter matrix change.")
+        return is_changed
+
+    def _init_matrix(self, net_topology: ITopology):
+        self.net_mat = net_topology.get_matrix(MatrixType.ADJACENCY_MATRIX)
+        self.net_loss_mat = net_topology.get_matrix(
+            MatrixType.LOSS_MATRIX)
+        self.net_bw_mat = net_topology.get_matrix(
+            MatrixType.BANDW_MATRIX)
+        self.net_latency_mat = net_topology.get_matrix(
+            MatrixType.LATENCY_MATRIX)
+        self.net_jitter_mat = net_topology.get_matrix(
+            MatrixType.JITTER_MATRIX)
+        logging.info('self.net_mat %s', self.net_mat)
+        logging.info('self.net_loss_mat %s', self.net_loss_mat)
+        logging.info('self.net_bw_mat %s', self.net_bw_mat)
+        logging.info('self.net_latency_mat %s', self.net_latency_mat)
+        logging.info('self.net_jitter_mat %s', self.net_jitter_mat)
+
     def _init_containernet(self):
-        self._setup_docker_nodes()
+        self._setup_docker_nodes(0, self.num_of_hosts - 1)
         self._setup_topology()
         self.routing_strategy.setup_routes(self)
 
-    def _setup_docker_nodes(self):
+    def _setup_docker_nodes(self, start_index, end_index):
         """
         Setup the docker nodes related configurations,
         such as image, volume, and port binding.
+        This setup 
         """
-        for i in range(self.num_of_hosts):
+        if start_index > end_index:
+            return False
+        logging.info("Oasis finished Docker nodes setup with num of nodes %s",
+                     end_index - start_index + 1)
+        for i in range(start_index, end_index + 1):
             if self.node_bind_port:
                 port_bindings = {i + 10000: i + 10000}
                 ports = [i + 10000]
@@ -143,8 +162,6 @@ class ContainerizedNetwork (INetwork):
             )
         self.hosts = [ContainernetHostAdapter(host) \
                       for host in self.containernet.hosts]
-        logging.info(
-            "setup_docker_nodes, num. of nodes is %s.", self.num_of_hosts)
         return True
 
     def _setup_topology(self):
@@ -154,7 +171,7 @@ class ContainerizedNetwork (INetwork):
         link_subnets = subnets(self.node_ip_start, self.node_ip_range)
         _, link_prefix = netParse(self.node_ip_start)
         # for adjacent matrix, only the upper triangle is used.
-        logging.info("Oasis reset the network topology"
+        logging.info("Oasis setup the network topology"
                      ", num. of nodes %s, mat size %s", 
                      self.num_of_hosts, len(self.net_mat))
         for i in range(self.num_of_hosts):
@@ -170,7 +187,7 @@ class ContainerizedNetwork (INetwork):
                         self.hosts[j].name(),
                         right_ip
                     )
-                    self.__addLink(i, j,
+                    self._addLink(i, j,
                                    params1={'ip': left_ip},
                                    params2={'ip': right_ip}
                                    )
@@ -189,7 +206,7 @@ class ContainerizedNetwork (INetwork):
             "############### Oasis Init Networking done ###########")
         return True
 
-    def __addLink(
+    def _addLink(
             self,
             id1,
             id2,
@@ -233,21 +250,8 @@ class ContainerizedNetwork (INetwork):
             "nodes increased by %s",
             diff)
         self._reset_network(self.num_of_hosts, diff)
-        for i in range(diff):
-            self.containernet.addDocker(
-                f'{self.node_name_prefix}{self.num_of_hosts + i}',
-                ip=None,
-                volumes=self.node_vols,
-                cap_add=["NET_ADMIN", "SYS_ADMIN"],
-                dimage=self.node_img,
-                ports=[self.num_of_hosts + i + 10000],
-                port_bindings={self.num_of_hosts + i +
-                               10000: self.num_of_hosts + i + 10000},
-                publish_all_ports=True
-            )
-        # update local hosts list.
-        self.hosts = [ContainernetHostAdapter(host) \
-                      for host in self.containernet.hosts]
+        self._setup_docker_nodes(self.num_of_hosts,
+                                self.num_of_hosts + diff - 1)
         self.num_of_hosts += diff
         self._setup_topology()
         self.routing_strategy.setup_routes(self)
