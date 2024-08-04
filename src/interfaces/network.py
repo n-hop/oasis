@@ -21,6 +21,14 @@ class INetwork(ABC):
         pass
 
     @abstractmethod
+    def get_num_of_host(self):
+        pass
+
+    @abstractmethod
+    def get_link_table(self):
+        pass
+
+    @abstractmethod
     def reload(self, top: ITopology):
         pass
 
