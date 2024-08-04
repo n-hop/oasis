@@ -1,4 +1,5 @@
 import logging
+from typing import List
 from abc import ABC, abstractmethod
 from containernet.topology import (ITopology)
 from testsuites.test import ITestSuite

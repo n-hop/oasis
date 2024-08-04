@@ -6,6 +6,20 @@ class IHost(ABC):
         pass
 
     @abstractmethod
-    def cmd(self, input: str) -> str:
+    def cmd(self, command: str) -> str:
         """Execute a command on the host.
         """
+    def name(self) -> str:
+        """Get the name of the host.
+        """
+    def IP(self) -> str:
+        """Get the IP address of the host.
+        """
+    def deleteIntfs(self):
+        """Delete all interfaces.
+        """
+    def cleanup(self):
+        """Cleanup the host.
+        """
+    def get_host(self):
+        pass

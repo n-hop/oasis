@@ -4,6 +4,7 @@ from mininet.net import Containernet
 from mininet.util import ipStr, netParse
 from mininet.link import TCLink
 from containernet.topology import (ITopology, MatrixType)
+from containernet.containernet_host import ContainernetHostAdapter
 from interfaces.network import INetwork
 from .config import NodeConfig
 
@@ -32,6 +33,7 @@ class ContainerizedNetwork (INetwork):
                  ** params) -> None:
         super().__init__(**params)
         self.containernet = Containernet()
+        self.hosts = []
         # NodeConfig: Docker node related
         self.node_img = node_config.node_img
         self.node_vols = node_config.node_vols
@@ -72,7 +74,7 @@ class ContainerizedNetwork (INetwork):
         self._init_containernet()
 
     def get_hosts(self):
-        return self.containernet.hosts
+        return self.hosts
 
     def start(self):
         logging.info("Oasis starts the ContainerizedNetwork.")
@@ -130,6 +132,8 @@ class ContainerizedNetwork (INetwork):
                 port_bindings=port_bindings,
                 publish_all_ports=True
             )
+        self.hosts = [ContainernetHostAdapter(host) \
+                      for host in self.containernet.hosts]
         logging.info(
             "setup_docker_nodes, num. of nodes is %s.", self.num_of_hosts)
         return True
@@ -150,9 +154,9 @@ class ContainerizedNetwork (INetwork):
                     right_ip = ipStr(link_ip + 2) + f'/{link_prefix}'
                     logging.info(
                         "addLink: %s(%s) <--> %s(%s)",
-                        self.containernet.hosts[i].name,
+                        self.hosts[i].name,
                         left_ip,
-                        self.containernet.hosts[j].name,
+                        self.hosts[j].name,
                         right_ip
                     )
                     self.__addLink(i, j,
@@ -160,12 +164,12 @@ class ContainerizedNetwork (INetwork):
                                    params2={'ip': right_ip}
                                    )
                     self.pair_to_link_ip[(
-                        self.containernet.hosts[i],
-                        self.containernet.hosts[j])] = ipStr(link_ip + 2)
+                        self.hosts[i],
+                        self.hosts[j])] = ipStr(link_ip + 2)
                     self.pair_to_link_ip[(
-                        self.containernet.hosts[j],
-                        self.containernet.hosts[i])] = ipStr(link_ip + 1)
-        for host in self.containernet.hosts:
+                        self.hosts[j],
+                        self.hosts[i])] = ipStr(link_ip + 1)
+        for host in self.hosts:
             host.cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
             host.cmd('sysctl -p')
         logging.info(
@@ -195,7 +199,8 @@ class ContainerizedNetwork (INetwork):
         if self.net_jitter_mat is not None:
             params['jitter'] = self.net_jitter_mat[id1][id2]
         link = self.containernet.addLink(
-            self.containernet.hosts[id1], self.containernet.hosts[id2],
+            self.hosts[id1].get_host(),
+            self.hosts[id2].get_host(),
             port1, port2, cls=TCLink, **params)
         return link
 
@@ -217,8 +222,10 @@ class ContainerizedNetwork (INetwork):
         '''
         Setup the routing by ip route.
         '''
+        # need convert the node to "IHost" type: ContainernetHostAdapter(host)
         for route in self.net_routes:
-            route = [self.containernet.nameToNode[f'h{i}'] for i in route]
+            # route = [self.containernet.nameToNode[f'h{i}'] for i in route]
+            route = [self.hosts[i] for i in route]
             self._add_route(route)
 
     def _setup_olsr_routes(self):
@@ -326,13 +333,13 @@ class ContainerizedNetwork (INetwork):
         # remove all links
         for i in range(num - 1):
             logging.info("removeLink: %s-%s",
-                         self.containernet.hosts[i].name,
-                         self.containernet.hosts[i+1].name)
+                         self.hosts[i].name,
+                         self.hosts[i+1].name)
             self.containernet.removeLink(
-                node1=self.containernet.hosts[i].name,
-                node2=self.containernet.hosts[i+1].name)
+                node1=self.hosts[i].name,
+                node2=self.hosts[i+1].name)
         # remove all routes.
-        for host in self.containernet.hosts:
+        for host in self.hosts:
             host.cmd('ip route flush table main')
             host.deleteIntfs()
             host.cleanup()

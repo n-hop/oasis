@@ -7,7 +7,7 @@ import yaml
 # from mininet.cli import CLI
 from mininet.log import setLogLevel
 from containernet.linear_topology import LinearTopology
-from containernet.containerized_network import ContainerizedNetwork
+from containernet.containernet_network import ContainerizedNetwork
 from containernet.config import (
     IConfig, NodeConfig, TopologyConfig, supported_config_keys)
 from testsuites.test import (TestType, TestConfig)
