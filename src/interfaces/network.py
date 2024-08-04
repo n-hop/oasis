@@ -1,5 +1,4 @@
 import logging
-from typing import List
 from abc import ABC, abstractmethod
 from containernet.topology import (ITopology)
 from testsuites.test import ITestSuite
@@ -19,6 +18,14 @@ class INetwork(ABC):
 
     @abstractmethod
     def get_hosts(self):
+        pass
+
+    @abstractmethod
+    def get_num_of_host(self):
+        pass
+
+    @abstractmethod
+    def get_link_table(self):
         pass
 
     @abstractmethod

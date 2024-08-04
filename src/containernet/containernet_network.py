@@ -6,6 +6,7 @@ from mininet.link import TCLink
 from containernet.topology import (ITopology, MatrixType)
 from containernet.containernet_host import ContainernetHostAdapter
 from interfaces.network import INetwork
+from interfaces.routing import IRoutingStrategy
 from .config import NodeConfig
 
 
@@ -30,9 +31,11 @@ class ContainerizedNetwork (INetwork):
     def __init__(self,
                  node_config: NodeConfig = None,
                  net_topology: ITopology = None,
+                 routing_strategy: IRoutingStrategy = None,
                  ** params) -> None:
         super().__init__(**params)
         self.containernet = Containernet()
+        self.routing_strategy = routing_strategy
         self.hosts = []
         # NodeConfig: Docker node related
         self.node_img = node_config.node_img
@@ -76,6 +79,9 @@ class ContainerizedNetwork (INetwork):
     def get_hosts(self):
         return self.hosts
 
+    def get_num_of_host(self):
+        return self.num_of_hosts
+
     def start(self):
         logging.info("Oasis starts the ContainerizedNetwork.")
         self.containernet.build()
@@ -105,10 +111,13 @@ class ContainerizedNetwork (INetwork):
             else:
                 self._shrink_network(diff)
 
+    def get_link_table(self):
+        return self.pair_to_link_ip
+
     def _init_containernet(self):
         self._setup_docker_nodes()
         self._setup_topology()
-        self._setup_routes()
+        self.routing_strategy.setup_routes(self)
 
     def _setup_docker_nodes(self):
         """
@@ -204,80 +213,6 @@ class ContainerizedNetwork (INetwork):
             port1, port2, cls=TCLink, **params)
         return link
 
-    def _setup_routes(self):
-        if self.node_route == 'ip' and self.topology_type != 'linear':
-            logging.error(
-                "The ip routing config %s is not supported for %s.",
-                self.node_route, self.topology_type)
-        # setup routes
-        if self.node_route == 'ip':
-            self._setup_ip_routes()
-        elif self.node_route == 'olsr':
-            self._setup_olsr_routes()
-        else:
-            logging.error(
-                "The routing config %s is not supported.", self.node_route)
-
-    def _setup_ip_routes(self):
-        '''
-        Setup the routing by ip route.
-        '''
-        # need convert the node to "IHost" type: ContainernetHostAdapter(host)
-        for route in self.net_routes:
-            # route = [self.containernet.nameToNode[f'h{i}'] for i in route]
-            route = [self.hosts[i] for i in route]
-            self._add_route(route)
-
-    def _setup_olsr_routes(self):
-        '''
-        setup the OLSR routing
-        '''
-
-    @ staticmethod
-    def _add_ip_gateway(host, gateway_ip, dst_ip):
-        host.cmd(f'ip r a {dst_ip} via {gateway_ip}')
-
-    def _add_route(self, route):
-        for i in range(len(route) - 1):
-            for j in range(i + 1, len(route)):
-                host = route[i]
-                gateway = route[i + 1]
-                dst_prev = route[j - 1]
-                dst = route[j]
-                if j < len(route) - 1:
-                    dst_next = route[j + 1]
-
-                # gateway ip is the ip of the second (right) interface
-                # of the link (route_i, route_{i+1})
-                gateway_ip = self.pair_to_link_ip[(host, gateway)]
-
-                # dst ip is the ip of the second (right) interface in the link
-                # (route_{j-1}, route_j)
-                dst_ip = self.pair_to_link_ip[(dst_prev, dst)]
-                if j < len(route) - 1:
-                    dst_ip_right = self.pair_to_link_ip[(dst_next, dst)]
-                self._add_ip_gateway(host, gateway_ip, dst_ip)
-                if j < len(route) - 1:
-                    self._add_ip_gateway(host, gateway_ip, dst_ip_right)
-
-        for i in range(1, len(route)):
-            for j in range(0, i):
-                host = route[i]
-                gateway = route[i - 1]
-                dst_prev = route[j + 1]
-                dst = route[j]
-
-                if j >= 1:
-                    dst_next = route[j - 1]
-
-                gateway_ip = self.pair_to_link_ip[(host, gateway)]
-                dst_ip = self.pair_to_link_ip[(dst_prev, dst)]
-                if j >= 1:
-                    dst_ip_left = self.pair_to_link_ip[(dst_next, dst)]
-                self._add_ip_gateway(host, gateway_ip, dst_ip)
-                if j >= 1:
-                    self._add_ip_gateway(host, gateway_ip, dst_ip_left)
-
     def _check_node_vols(self):
         if not os.path.exists('/usr/bin/perf') or \
                 not os.path.isfile('/usr/bin/perf'):
@@ -308,7 +243,7 @@ class ContainerizedNetwork (INetwork):
             )
         self.num_of_hosts += diff
         self._setup_topology()
-        self._setup_routes()
+        self.routing_strategy.setup_routes(self)
         logging.info(
             "Expand the network. number of nodes increased by %s",
             diff)
@@ -325,7 +260,7 @@ class ContainerizedNetwork (INetwork):
             self.containernet.removeDocker(f'{self.node_name_prefix}{i}')
         self.num_of_hosts -= diff
         self._setup_topology()
-        self._setup_routes()
+        self.routing_strategy.setup_routes(self)
         return True
 
     def _reset_network(self, num, diff):

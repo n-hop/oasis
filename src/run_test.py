@@ -13,7 +13,7 @@ from containernet.config import (
 from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
-
+from routing.static_routing import StaticRouting
 
 def load_test(test_yaml_file: str):
     """
@@ -95,7 +95,7 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig):
         ContainerizedNetwork: the container network object
     """
     net_top = build_topology(top_config)
-    return ContainerizedNetwork(node_config, net_top)
+    return ContainerizedNetwork(node_config, net_top, StaticRouting())
 
 
 if __name__ == '__main__':
