@@ -154,7 +154,9 @@ class ContainerizedNetwork (INetwork):
         link_subnets = subnets(self.node_ip_start, self.node_ip_range)
         _, link_prefix = netParse(self.node_ip_start)
         # for adjacent matrix, only the upper triangle is used.
-        logging.info("num_of_hosts: %s", self.num_of_hosts)
+        logging.info("Oasis reset the network topology"
+                     ", num. of nodes %s, mat size %s", 
+                     self.num_of_hosts, len(self.net_mat))
         for i in range(self.num_of_hosts):
             for j in range(i, self.num_of_hosts):
                 if self.net_mat[i][j] == 1:
@@ -179,6 +181,8 @@ class ContainerizedNetwork (INetwork):
                         self.hosts[j],
                         self.hosts[i])] = ipStr(link_ip + 1)
         for host in self.hosts:
+            logging.info("Oasis config ip routing for host %s",
+                        host.name())
             host.cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
             host.cmd('sysctl -p')
         logging.info(
@@ -241,6 +245,9 @@ class ContainerizedNetwork (INetwork):
                                10000: self.num_of_hosts + i + 10000},
                 publish_all_ports=True
             )
+        # update local hosts list.
+        self.hosts = [ContainernetHostAdapter(host) \
+                      for host in self.containernet.hosts]
         self.num_of_hosts += diff
         self._setup_topology()
         self.routing_strategy.setup_routes(self)
@@ -258,13 +265,16 @@ class ContainerizedNetwork (INetwork):
         for i in range(self.num_of_hosts - diff, self.num_of_hosts):
             logging.info("removeDocker: %s", f'{self.node_name_prefix}{i}')
             self.containernet.removeDocker(f'{self.node_name_prefix}{i}')
+        # update local hosts list.
+        self.hosts = [ContainernetHostAdapter(host) \
+                      for host in self.containernet.hosts]
         self.num_of_hosts -= diff
         self._setup_topology()
         self.routing_strategy.setup_routes(self)
         return True
 
     def _reset_network(self, num, diff):
-        logging.info("Reset the network.")
+        logging.info("Oasis reset the network.")
         # remove all links
         for i in range(num - 1):
             logging.info("removeLink: %s-%s",
@@ -274,6 +284,7 @@ class ContainerizedNetwork (INetwork):
                 node1=self.hosts[i].name(),
                 node2=self.hosts[i+1].name())
         # remove all routes.
+        logging.info("Oasis reset the routes and interfaces.")
         for host in self.hosts:
             host.cmd('ip route flush table main')
             host.deleteIntfs()
