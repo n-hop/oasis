@@ -163,9 +163,9 @@ class ContainerizedNetwork (INetwork):
                     right_ip = ipStr(link_ip + 2) + f'/{link_prefix}'
                     logging.info(
                         "addLink: %s(%s) <--> %s(%s)",
-                        self.hosts[i].name,
+                        self.hosts[i].name(),
                         left_ip,
-                        self.hosts[j].name,
+                        self.hosts[j].name(),
                         right_ip
                     )
                     self.__addLink(i, j,
@@ -268,11 +268,11 @@ class ContainerizedNetwork (INetwork):
         # remove all links
         for i in range(num - 1):
             logging.info("removeLink: %s-%s",
-                         self.hosts[i].name,
-                         self.hosts[i+1].name)
+                         self.hosts[i].name(),
+                         self.hosts[i+1].name())
             self.containernet.removeLink(
-                node1=self.hosts[i].name,
-                node2=self.hosts[i+1].name)
+                node1=self.hosts[i].name(),
+                node2=self.hosts[i+1].name())
         # remove all routes.
         for host in self.hosts:
             host.cmd('ip route flush table main')
