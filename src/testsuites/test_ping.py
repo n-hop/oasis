@@ -1,4 +1,3 @@
-
 import logging
 
 from interfaces.network import INetwork
