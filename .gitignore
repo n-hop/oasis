@@ -76,14 +76,6 @@ tmp*
 # containernet test
 .cache
 .config
-containernet_test/multihopnet/__pycache__/*
-containernet_test/tests/__pycache__/*
-containernet_test/batssocket/__pycache__/*
-containernet_test/results*/*
-containernet_test/utils/__pycache__/*
-containernet_test/tool/__pycache__/*
-containernet_test/tool/*report/*
-containernet_test/*report/*
 **/__pycache__/*
 
 # gcovr tmp config
@@ -92,6 +84,11 @@ gcovr.cfg
 # version h
 src/include/version.h 
 
-# FlameGraph 
-tools/FlameGraph
-containernet_test/tool/FlameGraph
+# Keys and certificates
+*.pem
+*.keys
+*key*
+id_rsa*
+*.pub
+**/bats_licence
+
