@@ -3,6 +3,7 @@ import os
 import sys
 import logging
 import yaml
+import platform
 
 # from mininet.cli import CLI
 from mininet.log import setLogLevel
@@ -16,6 +17,7 @@ from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
 from protosuites.proto import ProtoConfig
 from protosuites.bats_protocol import BATSProtocol
+
 
 def load_test(test_yaml_file: str):
     """
@@ -103,7 +105,7 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig):
 if __name__ == '__main__':
     setLogLevel('info')
     logging.basicConfig(level=logging.INFO)
-
+    logging.info("Python version: %s", platform.python_version())
     # cur_workspace = sys.argv[1]
     cur_config_yaml_file_path = sys.argv[2]
 
