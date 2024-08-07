@@ -29,13 +29,13 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.6"
+          python-version: "3.10.14"
       - name: Build required docker images
         run: |
           echo "Build required docker images"
       - name: Run tests
         run: |
-          python3.6 ${{github.workspace}}/src/start.py 
+          python3 ${{github.workspace}}/src/start.py 
           -n ${{github.workspace}}/src/config/nested-containernet-config.yaml \
           --containernet=nuc_sz \
           -w ${{github.workspace}}/ \
