@@ -105,11 +105,11 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig):
 if __name__ == '__main__':
     setLogLevel('info')
     logging.basicConfig(level=logging.INFO)
+    logging.info("Platform: %s", platform.platform())
     logging.info("Python version: %s", platform.python_version())
     cur_workspace = sys.argv[1]
     mapped_workspace = '/root/'
     cur_config_yaml_file_path = sys.argv[2]
-    logging.info(f"cur_workspace: %s", cur_workspace)
     yaml_file_path = f'{mapped_workspace}/{cur_config_yaml_file_path}'
     if not os.path.exists(yaml_file_path):
         logging.info(f"Error: %s does not exist.", yaml_file_path)
