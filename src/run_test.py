@@ -2,8 +2,8 @@ from typing import Tuple
 import os
 import sys
 import logging
-import yaml
 import platform
+import yaml
 
 # from mininet.cli import CLI
 from mininet.log import setLogLevel
