@@ -19,7 +19,7 @@ RUN apt-get install --yes \
 
 
 RUN pip3 install \
-        PyYAML==6.0.2
+        PyYAML==6.0.1
 
 # install Perf tools for Azure
 RUN apt-get install --yes \
