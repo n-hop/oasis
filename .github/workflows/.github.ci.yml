@@ -1,0 +1,42 @@
+name: Oasis CI
+on:
+  pull_request:
+    branches: ["main", "dev"]
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+    paths-ignore:
+      - "**.md"
+      - "**.json"
+  push:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - "**.md"
+      - "**.json"
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  oasis-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.6"
+      - name: Build required docker images
+        run: |
+          echo "Build required docker images"
+      - name: Run tests
+        run: |
+          python3.6 ${{github.workspace}}/src/start.py 
+          -n ${{github.workspace}}/src/config/nested-containernet-config.yaml \
+          --containernet=nuc_sz \
+          -w ${{github.workspace}}/ \
+          -t ${{github.workspace}}/src/config/one-concrete-test.yaml
