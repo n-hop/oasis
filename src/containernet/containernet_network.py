@@ -160,7 +160,7 @@ class ContainerizedNetwork (INetwork):
                 port_bindings=port_bindings,
                 publish_all_ports=True
             )
-        self.hosts = [ContainernetHostAdapter(host) \
+        self.hosts = [ContainernetHostAdapter(host)
                       for host in self.containernet.hosts]
         return True
 
@@ -172,7 +172,7 @@ class ContainerizedNetwork (INetwork):
         _, link_prefix = netParse(self.node_ip_start)
         # for adjacent matrix, only the upper triangle is used.
         logging.info("Oasis setup the network topology"
-                     ", num. of nodes %s, mat size %s", 
+                     ", num. of nodes %s, mat size %s",
                      self.num_of_hosts, len(self.net_mat))
         for i in range(self.num_of_hosts):
             for j in range(i, self.num_of_hosts):
@@ -188,20 +188,28 @@ class ContainerizedNetwork (INetwork):
                         right_ip
                     )
                     self._addLink(i, j,
-                                   params1={'ip': left_ip},
-                                   params2={'ip': right_ip}
-                                   )
+                                  params1={'ip': left_ip},
+                                  params2={'ip': right_ip}
+                                  )
                     self.pair_to_link_ip[(
                         self.hosts[i],
                         self.hosts[j])] = ipStr(link_ip + 2)
                     self.pair_to_link_ip[(
                         self.hosts[j],
                         self.hosts[i])] = ipStr(link_ip + 1)
-        for host in self.hosts:
+
+        for i in range(self.num_of_hosts):
             logging.info("Oasis config ip routing for host %s",
-                        host.name())
-            host.cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
-            host.cmd('sysctl -p')
+                         self.hosts[i].name())
+            self.hosts[i].cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
+            self.hosts[i].cmd('sysctl -p')
+            # check tc qdisc
+            res = self.hosts[i].cmdPrint(
+                f'tc -s -d class show dev {self.node_name_prefix}{i}-eth0')
+            logging.info('tc qdisc results %s', res)
+            res = self.hosts[i].cmdPrint(
+                f'tc -s -d class show dev {self.node_name_prefix}{i}-eth1')
+            logging.info('tc qdisc results %s', res)
         logging.info(
             "############### Oasis Init Networking done ###########")
         return True
@@ -251,7 +259,7 @@ class ContainerizedNetwork (INetwork):
             diff)
         self._reset_network(self.num_of_hosts, diff)
         self._setup_docker_nodes(self.num_of_hosts,
-                                self.num_of_hosts + diff - 1)
+                                 self.num_of_hosts + diff - 1)
         self.num_of_hosts += diff
         self._setup_topology()
         self.routing_strategy.setup_routes(self)
@@ -270,7 +278,7 @@ class ContainerizedNetwork (INetwork):
             logging.info("removeDocker: %s", f'{self.node_name_prefix}{i}')
             self.containernet.removeDocker(f'{self.node_name_prefix}{i}')
         # update local hosts list.
-        self.hosts = [ContainernetHostAdapter(host) \
+        self.hosts = [ContainernetHostAdapter(host)
                       for host in self.containernet.hosts]
         self.num_of_hosts -= diff
         self._setup_topology()

@@ -1,12 +1,18 @@
 # adapter pattern
 from interfaces.host import IHost
 
+
 class ContainernetHostAdapter(IHost):
     def __init__(self, containernet_host):
         self.containernet_host = containernet_host
 
     def cmd(self, command):
         return self.containernet_host.cmd(command)
+
+    def cmdPrint(self, command: str) -> str:
+        """Execute a command on the host and print the output.
+        """
+        return self.containernet_host.cmdPrint(command)
 
     def name(self) -> str:
         """Get the name of the host.
@@ -30,4 +36,3 @@ class ContainernetHostAdapter(IHost):
 
     def get_host(self):
         return self.containernet_host
-    
