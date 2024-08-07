@@ -37,10 +37,13 @@ jobs:
       - name: Build required docker images
         run: |
           echo "Build required docker images"
+          cd ${{github.workspace}}/src/config/containernet-docker-official && docker build -t containernet:latest .
+          cd ${{github.workspace}}/src/config/protocol-docker-azure && docker build -t ubuntu:22.04 .
+          docker images
       - name: Run tests
         run: |
           python3 ${{github.workspace}}/src/start.py \
           -n ${{github.workspace}}/src/config/nested-containernet-config.yaml \
-          --containernet=nuc_sz \
+          --containernet=default \
           -w ${{github.workspace}}/ \
           -t ${{github.workspace}}/src/config/one-concrete-test.yaml
