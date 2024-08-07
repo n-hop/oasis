@@ -73,7 +73,7 @@ jobs:
       - name: Run tests
         run: |
           python3 ${{github.workspace}}/src/start.py \
-          -n ${{github.workspace}}/src/config/nested-containernet-config.yaml \
+          -n src/config/nested-containernet-config.yaml \
           --containernet=default \
           -w ${{github.workspace}}/ \
-          -t ${{github.workspace}}/src/config/one-concrete-test.yaml
+          -t src/config/one-concrete-test.yaml

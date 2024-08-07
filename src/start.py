@@ -42,8 +42,11 @@ def parse_args():
 
 
 def build_nested_env(config_file, containernet_name, workspace):
+    # join cur_workspace with nested_config_file
+    absolute_path_of_config_file = os.path.join(
+        workspace + "/", config_file)
     nested_config = load_nested_config(
-        config_file, containernet_name)
+        absolute_path_of_config_file, containernet_name)
     if nested_config is None:
         logging.info(
             f"Error: %s is not in the nested config file.", containernet_name)
@@ -64,8 +67,9 @@ if __name__ == '__main__':
     nested_containernet = ns.containernet
     cur_workspace = ns.workspace
 
-    if not os.path.exists(cur_config_yaml_file_path):
-        logging.info(f"Error: %s does not exist.", cur_config_yaml_file_path)
+    if not os.path.exists(f'{cur_workspace}/{cur_config_yaml_file_path}'):
+        logging.info(f"Error: %s does not exist.", {
+                     cur_workspace}/{cur_config_yaml_file_path})
         sys.exit(1)
     nested_env = build_nested_env(
         nested_config_file, nested_containernet, cur_workspace)

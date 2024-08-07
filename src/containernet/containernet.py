@@ -113,6 +113,7 @@ class NestedContainernet():
             f"Nested Containernet config mounts: %s", self.config.mounts)
         if self.config.mounts is None:
             return ""
+        # mount workspace directory to /root
         self.formatted_mounts = f" --mount "\
             f"type=bind,source={self.workspace},"\
             f"target=/root,bind-propagation=shared "
