@@ -5,3 +5,9 @@ containernet:
     network_mode: "host"
     mounts:
       - "/var/run/docker.sock:/var/run/docker.sock"
+  default:
+    image: containernet:latest
+    privileged: true
+    network_mode: "host"
+    mounts:
+      - "/var/run/docker.sock:/var/run/docker.sock"

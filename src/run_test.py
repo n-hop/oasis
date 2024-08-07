@@ -2,6 +2,7 @@ from typing import Tuple
 import os
 import sys
 import logging
+import platform
 import yaml
 
 # from mininet.cli import CLI
@@ -16,6 +17,7 @@ from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
 from protosuites.proto import ProtoConfig
 from protosuites.bats_protocol import BATSProtocol
+
 
 def load_test(test_yaml_file: str):
     """
@@ -103,17 +105,21 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig):
 if __name__ == '__main__':
     setLogLevel('info')
     logging.basicConfig(level=logging.INFO)
-
-    # cur_workspace = sys.argv[1]
+    logging.info("Python version: %s", platform.python_version())
+    cur_workspace = sys.argv[1]
+    mapped_workspace = '/root/'
     cur_config_yaml_file_path = sys.argv[2]
-
-    if not os.path.exists(cur_config_yaml_file_path):
-        logging.info(f"Error: %s does not exist.", cur_config_yaml_file_path)
+    logging.info(f"cur_workspace: %s", cur_workspace)
+    yaml_file_path = f'{mapped_workspace}/{cur_config_yaml_file_path}'
+    if not os.path.exists(yaml_file_path):
+        logging.info(f"Error: %s does not exist.", yaml_file_path)
         sys.exit(1)
     linear_network = None
-    all_tests = load_test(cur_config_yaml_file_path)
+    all_tests = load_test(yaml_file_path)
     for test in all_tests:
         cur_node_config, cur_top_config = load_config(test)
+        # mount the workspace
+        cur_node_config.node_vols.append(f'{cur_workspace}:{mapped_workspace}')
         if linear_network is None:
             linear_network = build_network(cur_node_config, cur_top_config)
             linear_network.start()

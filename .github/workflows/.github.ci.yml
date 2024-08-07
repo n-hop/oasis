@@ -34,13 +34,46 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           pip install -r ${{github.workspace}}/src/requirements.txt
-      - name: Build required docker images
+      - name: Restore Cached Containernet Image
+        id: cache-containernet-image
+        uses: actions/cache@v4
+        with:
+          path: ${{github.workspace}}/containernet_cache/
+          key: docker_cache-${{ hashFiles('**/containernet-docker-official/Dockerfile') }}
+      - name: Restore Cached Node Image
+        id: cache-node-image
+        uses: actions/cache@v4
+        with:
+          path: ${{github.workspace}}/node_cache/
+          key: docker_cache-${{ hashFiles('**/protocol-docker-azure/Dockerfile') }}
+      - name: Build containernet
+        if: steps.cache-containernet-image.outputs.cache-hit != 'true'
         run: |
-          echo "Build required docker images"
+          cd ${{github.workspace}}/src/config/containernet-docker-official && docker build -t containernet:latest .
+          mkdir -p ${{github.workspace}}/containernet_cache/
+          docker image save containernet:latest --output ${{github.workspace}}/containernet_cache/containernet.tar
+          docker images
+      - name: Build containernet node
+        if: steps.cache-node-image.outputs.cache-hit != 'true'
+        run: |
+          cd ${{github.workspace}}/src/config/protocol-docker-azure && docker build -t ubuntu:22.04 .
+          mkdir -p ${{github.workspace}}/node_cache/
+          docker image save ubuntu:22.04 --output ${{github.workspace}}/node_cache/containernet_node.tar
+          docker images
+      - name: Load containernet image
+        working-directory: ${{github.workspace}}/
+        if: steps.cache-containernet-image.outputs.cache-hit == 'true'
+        run: |
+          docker image load --input ./containernet_cache/containernet.tar
+      - name: Load containernet node image
+        working-directory: ${{github.workspace}}/
+        if: steps.cache-node-image.outputs.cache-hit == 'true'
+        run: |
+          docker image load --input ./node_cache/containernet_node.tar
       - name: Run tests
         run: |
           python3 ${{github.workspace}}/src/start.py \
-          -n ${{github.workspace}}/src/config/nested-containernet-config.yaml \
-          --containernet=nuc_sz \
+          -n src/config/nested-containernet-config.yaml \
+          --containernet=default \
           -w ${{github.workspace}}/ \
-          -t ${{github.workspace}}/src/config/one-concrete-test.yaml
+          -t src/config/one-concrete-test.yaml
