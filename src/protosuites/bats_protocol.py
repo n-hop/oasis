@@ -1,7 +1,7 @@
 import logging
 from interfaces.network import INetwork
+from tools.cfg_generator import generate_cfg_files
 from .proto import IProtoSuite
-
 
 class BATSProtocol(IProtoSuite):
     def post_run(self, network: INetwork):
@@ -18,6 +18,8 @@ class BATSProtocol(IProtoSuite):
         if prefix_path == '':
             prefix_path = '.'
         host_num = len(hosts)
+        # prepare the bats protocol config files
+        generate_cfg_files(host_num, network.node_ip_range, prefix_path)
         for i in range(host_num):
             hosts[i].cmd(
                 f'mkdir -p /etc/cfg')
@@ -25,6 +27,13 @@ class BATSProtocol(IProtoSuite):
                 f'cp {prefix_path}/licence /etc/cfg/')
             logging.info(
                 f"############### Oasis install licence file on "
+                "%s ###############",
+                hosts[i].name())
+            hosts[i].cmd(
+                f'mkdir -p /etc/bats-protocol')
+            hosts[i].cmd(f'mv {prefix_path}/h{i}.ini /etc/bats-protocol/bats-protocol-settings.ini')
+            logging.info(
+                f"############### Oasis install bats protocol config file on "
                 "%s ###############",
                 hosts[i].name())
         return True

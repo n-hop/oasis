@@ -1,6 +1,6 @@
 containernet:
   nuc_sz:
-    image: bats_containernet:dev
+    image: gitlab.app.n-hop.com:5005/n-hop/bats-protocol-framework/bats_containernet:dev
     privileged: true
     network_mode: "host"
     mounts:
