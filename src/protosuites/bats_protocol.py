@@ -21,6 +21,9 @@ class BATSProtocol(IProtoSuite):
         # prepare the bats protocol config files
         generate_cfg_files(host_num, network.node_ip_range, prefix_path)
         for i in range(host_num):
+            hosts[i].cmd(f'mkdir /dev/net')
+            hosts[i].cmd(f'mknod /dev/net/tun c 10 200')
+            hosts[i].cmd(f'ip tuntap add mode tap tap')
             hosts[i].cmd(
                 f'mkdir -p /etc/cfg')
             hosts[i].cmd(
