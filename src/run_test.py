@@ -130,7 +130,7 @@ if __name__ == '__main__':
             linear_network.reload(local_net_top)
         # init protocol
         bats_proto_config = ProtoConfig(
-            protocol_path="/root/build/bin/bats_protocol",
+            protocol_path="/root/bats/bats_protocol",
             protocol_args="--daemon_enabled=true",
             log_file="/root/bats_protocol.log",
             hosts=[0, 1, 2, 3])

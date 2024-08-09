@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from typing import (Optional, List)
 
 
-
 @dataclass
 class ProtoConfig:
     protocol_path: Optional[str] = field(default=None)
@@ -19,11 +18,11 @@ class IProtoSuite(ABC):
         self.config = config
 
     @abstractmethod
-    def post_run(self):
+    def post_run(self, network: 'INetwork'):  # type: ignore
         pass
 
     @abstractmethod
-    def pre_run(self):
+    def pre_run(self, network: 'INetwork'):  # type: ignore
         pass
 
     @abstractmethod
@@ -31,13 +30,13 @@ class IProtoSuite(ABC):
         pass
 
     def start(self, network: 'INetwork'):  # type: ignore
-        self.is_success = self.pre_run()
+        self.is_success = self.pre_run(network)
         if not self.is_success:
             return
         self.is_success = self.run(network)
         if not self.is_success:
             return
-        self.is_success = self.post_run()
+        self.is_success = self.post_run(network)
         if not self.is_success:
             return
 

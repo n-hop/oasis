@@ -59,8 +59,8 @@ class NestedContainernet():
             "NestedContainernet tearDown the Containernet.")
         # stop all the running containers with the name "containernet**"
         os.system(
-            f"docker stop $(docker ps -a -q "
-            "-fname={self.test_container_name}) || true")
+            "docker stop $(docker ps -a -q "
+            f"-fname={self.test_container_name}) || true")
         os.system("docker container prune --force || true")
         logging.info(
             "########################## Oasis teardown"
