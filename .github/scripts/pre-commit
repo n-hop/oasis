@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Define patterns to search for
+patterns="(AWS_SECRET_ACCESS_KEY|API_KEY|PASSWORD|SECRET|KEY|TOKEN)"
+
+# Check for secrets in the staged files
+if git diff --cached --name-only | xargs grep -E -i "$patterns"; then
+	cat <<\EOF
+########################## WARNING ##########################
+Error: Attempt to commit secrets to the repository. Operation is aborted!
+EOF
+    exit 1
+fi
