@@ -13,7 +13,7 @@ class ProtoConfig:
 
 
 class IProtoSuite(ABC):
-    def __init__(self, config: ProtoConfig) -> None:
+    def __init__(self, config: ProtoConfig):
         self.is_success = False
         self.config = config
 

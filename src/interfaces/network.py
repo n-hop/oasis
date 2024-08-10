@@ -28,6 +28,10 @@ class INetwork(ABC):
         pass
 
     @abstractmethod
+    def get_host_ip_range(self):
+        pass
+
+    @abstractmethod
     def get_link_table(self):
         pass
 
