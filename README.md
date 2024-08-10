@@ -1,3 +1,10 @@
+
+[![Oasis CI](https://github.com/n-hop/oasis/actions/workflows/.github.ci.yml/badge.svg)](https://github.com/n-hop/oasis/actions/workflows/.github.ci.yml)
+[![CodeQL](https://github.com/n-hop/oasis/actions/workflows/codeql.yml/badge.svg)](https://github.com/n-hop/oasis/actions/workflows/codeql.yml)
+[![Pylint](https://github.com/n-hop/oasis/actions/workflows/pylint.yml/badge.svg)](https://github.com/n-hop/oasis/actions/workflows/pylint.yml)
+
+-----
+
 # Oasis
 
 Oasis is a network emulation platform that allows protocol developers to test their protocols in any network topology with various network conditions.
