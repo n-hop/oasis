@@ -127,10 +127,10 @@ class ConfigGenerator:
             all_ips.append(right_ip)
 
         node_ips = []
-        for i in range(num_nodes):
+        for i in range(num_nodes + 1):
             if i == 0:
                 node_ips.append([all_ips[i]])
-            elif i == num_nodes - 1:
+            elif i == num_nodes:
                 node_ips.append([all_ips[-1]])
             else:
                 node_ips.append([all_ips[i * 2 - 1], all_ips[i * 2]])
