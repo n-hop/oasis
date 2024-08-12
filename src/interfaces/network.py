@@ -7,7 +7,6 @@ from protosuites.proto import IProtoSuite
 
 class INetwork(ABC):
     def __init__(self):
-        self.is_protocol_set = False
         self.test_suites = []
         self.proto_suites = []
 
@@ -46,7 +45,7 @@ class INetwork(ABC):
         self.test_suites.append(test_suite)
 
     def perform_test(self):
-        if not self.is_protocol_set:
+        if self.proto_suites is None:
             logging.error("No protocol set")
             return False
         if self.test_suites is None:
