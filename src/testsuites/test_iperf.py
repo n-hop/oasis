@@ -3,6 +3,7 @@ import logging
 from interfaces.network import INetwork
 from data_analyzer.analyzer import AnalyzerConfig
 from data_analyzer.analyzer_factory import AnalyzerFactory
+from protosuites.proto_info import IProtoInfo
 from .test import (ITestSuite)
 
 
@@ -22,6 +23,6 @@ class IperfTest(ITestSuite):
         self.config.log_file = "iperf3_log.txt"
         return True
 
-    def _run_test(self, network: INetwork):
+    def _run_test(self, network: INetwork, proto: IProtoInfo):
         logging.info(
             "############### Oasis IperfTest ###########")

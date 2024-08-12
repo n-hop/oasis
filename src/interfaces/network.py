@@ -57,7 +57,8 @@ class INetwork(ABC):
             # start the protocol
             proto.start(self)
             for test in self.test_suites:
-                test.run(self)
+                # run `test` on `network`(self) specified by `proto`
+                test.run(self, proto)
             # stop the protocol
             proto.stop(self)
         return True
