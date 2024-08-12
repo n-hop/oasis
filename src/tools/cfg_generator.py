@@ -25,6 +25,7 @@ class ConfigGenerator:
         self.template += "{routes}\n"
         self.template += "\n"
         self.template += "proxies.tcp.proxy.cnt = {tcp_proxy_cnt}\n"
+        self.template += "proxies.tcp.exclude_ports = 5201\n"
         self.template += "{tcp_proxies}\n"
         self.template += "\n"
         self.template += "tun.name = tun_session\n"
