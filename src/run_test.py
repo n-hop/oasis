@@ -16,7 +16,7 @@ from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
 from protosuites.proto import ProtoConfig
-from protosuites.bats_protocol import BATSProtocol
+from protosuites.bats.bats_protocol import BATSProtocol
 from protosuites.bats.bats_btp import BTP
 
 
