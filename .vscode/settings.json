@@ -20,5 +20,15 @@
     ]
   },
   "pylint.args": ["--rcfile=${workspaceFolder}/.pylintrc"],
-  "cSpell.words": ["Containernet", "dimage", "olsr", "intf", "Iperf", "BANDW", "testsuites", "protosuites"]
+  "cSpell.words": [
+    "Containernet",
+    "dimage",
+    "olsr",
+    "intf",
+    "Iperf",
+    "BANDW",
+    "testsuites",
+    "protosuites",
+    "BRTP"
+  ]
 }

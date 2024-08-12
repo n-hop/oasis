@@ -16,7 +16,7 @@ from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
 from protosuites.proto import ProtoConfig
-from protosuites.bats_protocol import BATSProtocol
+from protosuites.bats.bats_protocol import BTP
 
 
 def load_test(test_yaml_file: str):
@@ -134,9 +134,9 @@ if __name__ == '__main__':
             protocol_args="--daemon_enabled=true",
             log_file="/root/bats_protocol.log",
             hosts=[0, 1, 2, 3])
-        bats_protocol = BATSProtocol(
+        bats_btp = BTP(
             bats_proto_config)
-        linear_network.add_protocol_suite(bats_protocol)
+        linear_network.add_protocol_suite(bats_btp)
 
         # add test suites
         iperf_test_conf = TestConfig(

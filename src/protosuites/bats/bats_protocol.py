@@ -1,10 +1,9 @@
 import logging
 from interfaces.network import INetwork
 from interfaces.host import IHost
-from protosuites.proto import ProtoConfig
 from tools.cfg_generator import generate_cfg_files
-from .proto import IProtoSuite
-from .proto_info import IProtoInfo
+from protosuites.proto import (ProtoConfig, IProtoSuite)
+from protosuites.proto_info import IProtoInfo
 
 
 class BATSProtocol(IProtoSuite, IProtoInfo):
