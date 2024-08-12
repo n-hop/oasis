@@ -153,7 +153,7 @@ class ConfigGenerator:
                                              tun_mappings=tun_mappings))
                 logging.info("Generated %s/h%d.ini", self.path, i)
 
-def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8", output_dir="/tmp"):
+def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8", virtual_ip_prefix="1.0.0.", output_dir="/tmp"):
     generator = ConfigGenerator(node_ip_range, output_dir)
     generator.generate_cfg(num_nodes)
 
@@ -163,6 +163,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', type=int, required=True, help='Number of nodes')
     parser.add_argument('-ip', type=str, default="10.0.0.0/8", help='Node IP range (default: 10.0.0.0/8)')
     parser.add_argument('-o', type=str, default="/tmp", help='Output directory (default: /tmp)')
+    parser.add_argument('-p', type=str, default="1.0.0.", help='Virtual IP prefix (default: 1.0.0.)')
     args = parser.parse_args()
 
-    generate_cfg_files(args.n, args.ip, args.o)
+    generate_cfg_files(num_nodes = args.n, node_ip_range = args.ip, virtual_ip_prefix = args.p, output_dir = args.o)
