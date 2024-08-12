@@ -16,7 +16,8 @@ from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
 from protosuites.proto import ProtoConfig
-from protosuites.bats_protocol import BATSProtocol
+from protosuites.bats.bats_protocol import BATSProtocol
+from protosuites.bats.bats_btp import BTP
 
 
 def load_test(test_yaml_file: str):
@@ -115,6 +116,15 @@ if __name__ == '__main__':
         logging.info(f"Error: %s does not exist.", yaml_file_path)
         sys.exit(1)
     linear_network = None
+
+    # init bats protocol
+    bats_proto_config = ProtoConfig(
+        protocol_path="/root/bats/bats_protocol",
+        protocol_args="--daemon_enabled=true",
+        log_file="/root/bats_protocol.log",
+        hosts=[0, 1, 2, 3])
+    bats_protocol = BATSProtocol(bats_proto_config)
+
     all_tests = load_test(yaml_file_path)
     for test in all_tests:
         cur_node_config, cur_top_config = load_config(test)
@@ -128,15 +138,11 @@ if __name__ == '__main__':
             if local_net_top is None:
                 continue
             linear_network.reload(local_net_top)
-        # init protocol
-        bats_proto_config = ProtoConfig(
-            protocol_path="/root/bats/bats_protocol",
-            protocol_args="--daemon_enabled=true",
-            log_file="/root/bats_protocol.log",
-            hosts=[0, 1, 2, 3])
-        bats_protocol = BATSProtocol(
-            bats_proto_config)
-        linear_network.init_protocol(bats_protocol)
+
+        # BTP protocol
+        bats_btp = BTP(
+            bats_protocol)
+        linear_network.add_protocol_suite(bats_btp)
 
         # add test suites
         iperf_test_conf = TestConfig(

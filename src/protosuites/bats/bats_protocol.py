@@ -2,11 +2,12 @@ import logging
 import time
 from interfaces.network import INetwork
 from interfaces.host import IHost
-from protosuites.proto import ProtoConfig
 from tools.cfg_generator import generate_cfg_files
-from .proto import IProtoSuite
+from protosuites.proto import (ProtoConfig, IProtoSuite)
+from protosuites.proto_info import IProtoInfo
 
-class BATSProtocol(IProtoSuite):
+
+class BATSProtocol(IProtoSuite, IProtoInfo):
     def __init__(self, config: ProtoConfig):
         super().__init__(config)
         if self.config.protocol_path is None or self.config.hosts is None:
@@ -76,5 +77,12 @@ class BATSProtocol(IProtoSuite):
             f'cp {self.source_path}/licence /etc/cfg/')
         host.cmd(
             f'mkdir -p /etc/bats-protocol')
-        host.cmd(f'mv {self.source_path}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
+        host.cmd(
+            f'mv {self.source_path}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
         return True
+
+    def get_forward_port(self) -> int:
+        pass
+
+    def get_tun_ip(self) -> str:
+        pass

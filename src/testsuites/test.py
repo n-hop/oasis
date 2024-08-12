@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from dataclasses import dataclass, field
 from typing import Optional
+from protosuites.proto_info import IProtoInfo
 
 
 class TestType(IntEnum):
@@ -51,14 +52,14 @@ class ITestSuite(ABC):
         pass
 
     @abstractmethod
-    def _run_test(self, network: 'INetwork'):  # type: ignore
+    def _run_test(self, network: 'INetwork', proto: IProtoInfo):  # type: ignore
         pass
 
-    def run(self, network: 'INetwork'):  # type: ignore
+    def run(self, network: 'INetwork', proto: IProtoInfo):  # type: ignore
         self.is_success = self.pre_process()
         if not self.is_success:
             return
-        self.is_success = self._run_test(network)
+        self.is_success = self._run_test(network, proto)
         if not self.is_success:
             return
         self.is_success = self.post_process()
