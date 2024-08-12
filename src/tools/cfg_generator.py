@@ -128,19 +128,18 @@ class ConfigGenerator:
             all_ips.append(right_ip)
 
         node_ips = []
-        for i in range(num_nodes + 1):
+        for i in range(num_nodes):
             if i == 0:
                 node_ips.append([all_ips[i]])
-            elif i == num_nodes:
-                node_ips.append([all_ips[-1]])
+            elif i == num_nodes - 1:
+                node_ips.append([all_ips[i * 2 - 1]])
             else:
                 node_ips.append([all_ips[i * 2 - 1], all_ips[i * 2]])
         return node_ips
 
-    def generate_cfg(self, num_nodes):
+    def generate_cfg(self, num_nodes, virtual_ip_prefix):
         node_ips = self._generate_node_ips(num_nodes)
-        tun_ip = "1.0.0."
-        tun_mappings = self._generate_tun_cfg(node_ips, tun_ip)
+        tun_mappings = self._generate_tun_cfg(node_ips, virtual_ip_prefix)
         for i in range(len(node_ips)):
             link_cnt, links = self._generate_link_cfg(node_ips, i)
             route_cnt, routes = self._generate_route_cfg(node_ips, i)
@@ -149,13 +148,13 @@ class ConfigGenerator:
                 f.write(self.template.format(link_cnt=link_cnt, links=links,
                                              route_cnt=route_cnt, routes=routes,
                                              tcp_proxy_cnt=tcp_proxy_cnt, tcp_proxies=tcp_proxies,
-                                             tun_ip=f"{tun_ip}{i+1}", tun_mapping_cnt=len(node_ips),
+                                             tun_ip=f"{virtual_ip_prefix}{i+1}", tun_mapping_cnt=len(node_ips),
                                              tun_mappings=tun_mappings))
                 logging.info("Generated %s/h%d.ini", self.path, i)
 
 def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8", virtual_ip_prefix="1.0.0.", output_dir="/tmp"):
     generator = ConfigGenerator(node_ip_range, output_dir)
-    generator.generate_cfg(num_nodes)
+    generator.generate_cfg(num_nodes, virtual_ip_prefix)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

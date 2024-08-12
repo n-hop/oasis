@@ -16,6 +16,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         self.source_path = '/'.join(self.config.protocol_path.split('/')[:-1])
         if self.source_path == '':
             self.source_path = '.'
+        self.virtual_ip_prefix = '1.0.0.'
 
     def post_run(self, network: INetwork):
         return True
@@ -26,7 +27,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         host_num = len(hosts)
         # prepare the bats protocol config files
         hosts_ip_range = network.get_host_ip_range()
-        generate_cfg_files(host_num, hosts_ip_range, self.source_path)
+        generate_cfg_files(host_num, hosts_ip_range, self.virtual_ip_prefix, self.source_path)
         for i in range(host_num):
             self._init_tun(hosts[i])
             self._init_config(hosts[i])
@@ -85,4 +86,4 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         pass
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
-        pass
+        return self.virtual_ip_prefix + str(host_id + 1)
