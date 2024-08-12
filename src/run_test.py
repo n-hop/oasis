@@ -140,12 +140,12 @@ if __name__ == '__main__':
 
         # add test suites
         iperf_test_conf = TestConfig(
-            interval=1.0, interval_num=10, test_type=TestType.throughput)
-        linear_network.add_test_suite(PingTest(iperf_test_conf))
+            interval=1.0, interval_num=10, test_type=TestType.throughput, log_file="/root/iperf_test.log")
+        linear_network.add_test_suite(IperfTest(iperf_test_conf))
 
         ping_test_conf = TestConfig(
-            interval=1.0, interval_num=10, test_type=TestType.latency)
-        linear_network.add_test_suite(IperfTest(ping_test_conf))
+            interval=1.0, interval_num=10, test_type=TestType.latency, log_file="/root/ping_test.log")
+        linear_network.add_test_suite(PingTest(ping_test_conf))
 
         # perform the test
         linear_network.perform_test()

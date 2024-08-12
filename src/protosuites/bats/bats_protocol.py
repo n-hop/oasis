@@ -1,4 +1,5 @@
 import logging
+import time
 from interfaces.network import INetwork
 from interfaces.host import IHost
 from tools.cfg_generator import generate_cfg_files
@@ -46,6 +47,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
                 f"############### Oasis run bats protocol on "
                 "%s, %s ###############",
                 hosts[i].name(), res)
+        time.sleep(2)
         return True
 
     def stop(self, network: INetwork):
