@@ -23,9 +23,9 @@ class BRTPProxy(IProtoSuite, IProtoInfo):
     def stop(self, network: INetwork):
         return self.bats_protocol.stop(network)
 
-    def get_forward_port(self) -> int:
+    def get_forward_port(self, network: 'INetwork', host_id: int) -> int:
         # The Iperf3 default port 5201 is set to exclude_port on the ini, for TCP proxy we use 5202
         return 5202
 
-    def get_tun_ip(self) -> str:
+    def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass

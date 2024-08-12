@@ -8,13 +8,13 @@ class IProtoInfo(ABC):
     - UDS listening port
     """
     @abstractmethod
-    def get_forward_port(self) -> int:
-        """The UDP forward port of the protocol.
+    def get_forward_port(self, network: 'INetwork', host_id: int) -> int:  # type: ignore
+        """The UDP forward port of the protocol on host `host_id`
         """
 
     @abstractmethod
-    def get_tun_ip(self) -> str:
-        """The ip address of the tun interface.
+    def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:  # type: ignore
+        """The ip address of the tun interface on host `host_id`
 
         Returns:
             str: ip address of the tun interface

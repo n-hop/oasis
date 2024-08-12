@@ -16,8 +16,8 @@ class KCPProtocol(IProtoSuite):
     def stop(self, network: INetwork):
         return True
 
-    def get_forward_port(self) -> int:
+    def get_forward_port(self, network: 'INetwork', host_id: int) -> int:
         pass
 
-    def get_tun_ip(self) -> str:
+    def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass
