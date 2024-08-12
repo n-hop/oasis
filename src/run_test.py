@@ -136,7 +136,7 @@ if __name__ == '__main__':
             hosts=[0, 1, 2, 3])
         bats_protocol = BATSProtocol(
             bats_proto_config)
-        linear_network.init_protocol(bats_protocol)
+        linear_network.add_protocol_suite(bats_protocol)
 
         # add test suites
         iperf_test_conf = TestConfig(

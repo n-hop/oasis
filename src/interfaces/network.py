@@ -9,7 +9,7 @@ class INetwork(ABC):
     def __init__(self):
         self.is_protocol_set = False
         self.test_suites = []
-        self.protocol_instance = None
+        self.proto_suites = []
 
     @abstractmethod
     def start(self):
@@ -39,10 +39,8 @@ class INetwork(ABC):
     def reload(self, top: ITopology):
         pass
 
-    def init_protocol(self, proto_suite: IProtoSuite):
-        self.protocol_instance = proto_suite
-        self.protocol_instance.start(self)
-        self.is_protocol_set = True
+    def add_protocol_suite(self, proto_suite: IProtoSuite):
+        self.proto_suites.append(proto_suite)
 
     def add_test_suite(self, test_suite: ITestSuite):
         self.test_suites.append(test_suite)
@@ -54,12 +52,16 @@ class INetwork(ABC):
         if self.test_suites is None:
             logging.error("No test suite set")
             return False
-        for test in self.test_suites:
-            test.run(self)
+        # Combination of protocol and test
+        for proto in self.proto_suites:
+            # start the protocol
+            proto.start(self)
+            for test in self.test_suites:
+                test.run(self)
+            # stop the protocol
+            proto.stop(self)
         return True
 
     def reset(self):
-        self.protocol_instance.stop(self)
+        self.proto_suites = []
         self.test_suites = []
-        self.is_protocol_set = False
-        self.protocol_instance = None
