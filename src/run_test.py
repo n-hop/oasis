@@ -78,8 +78,7 @@ def setup_test(test_case_yaml, network: INetwork):
                 bats_proto_config = ProtoConfig(
                     protocol_path="/root/bats/bats_protocol",
                     protocol_args="--daemon_enabled=true",
-                    protocol_version=version,
-                    log_file="/root/bats_protocol.log")
+                    protocol_version=version)
                 # map `proto` into python object BTP, BRTP, BRTPProxy
                 bats = None
                 if proto == 'btp':

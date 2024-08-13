@@ -28,7 +28,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         host_num = len(hosts)
         # prepare the bats protocol config files
         hosts_ip_range = network.get_host_ip_range()
-        generate_cfg_files(host_num, hosts_ip_range, self.virtual_ip_prefix, self.source_path)
+        generate_cfg_files(host_num, hosts_ip_range,
+                           self.virtual_ip_prefix, self.source_path)
         for i in range(host_num):
             self._init_tun(hosts[i])
             self._init_config(hosts[i])
@@ -42,9 +43,9 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         hosts = network.get_hosts()
         host_num = len(hosts)
         for i in range(host_num):
-            res = hosts[i].cmd(
-                f'{self.config.protocol_path} {self.config.protocol_args} '
-                f' ')
+            res = hosts[i].cmdPrint(
+                f'nohup {self.config.protocol_path} {self.config.protocol_args} '
+                f' > bats_protocol_h{i}.log &')
             logging.info(
                 f"############### Oasis run bats protocol on "
                 "%s, %s ###############",
