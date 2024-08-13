@@ -74,23 +74,26 @@ def setup_test(test_case_yaml, network: INetwork):
                 f"Error: unsupported protocol %s", proto)
             continue
         if proto in SupportedBATSProto:
-            bats_proto_config = ProtoConfig(
-                protocol_path="/root/bats/bats_protocol",
-                protocol_args="--daemon_enabled=true",
-                protocol_version=bats_protocol_version,
-                log_file="/root/bats_protocol.log")
-            bats_protocol = BATSProtocol(bats_proto_config)
-            # map `proto` into python object BTP, BRTP, BRTPProxy
-            if proto == 'btp':
-                bats = BTP(bats_protocol)
-                logging.info("Added bats BTP protocol.")
-            elif proto == 'brtp':
-                bats = BRTP(bats_protocol)
-                logging.info("Added bats BRTP protocol.")
-            elif proto == 'brtp_proxy':
-                bats = BRTPProxy(bats_protocol)
-                logging.info("Added bats BRTP proxy protocol.")
-            network.add_protocol_suite(bats)
+            # combine the protocol with the its version
+            for version in bats_protocol_version:
+                bats_proto_config = ProtoConfig(
+                    protocol_path="/root/bats/bats_protocol",
+                    protocol_args="--daemon_enabled=true",
+                    protocol_version=version,
+                    log_file="/root/bats_protocol.log")
+                bats_protocol = BATSProtocol(bats_proto_config)
+                # map `proto` into python object BTP, BRTP, BRTPProxy
+                bats = None
+                if proto == 'btp':
+                    bats = BTP(bats_protocol)
+                    logging.info("Added bats BTP protocol.")
+                elif proto == 'brtp':
+                    bats = BRTP(bats_protocol)
+                    logging.info("Added bats BRTP protocol.")
+                elif proto == 'brtp_proxy':
+                    bats = BRTPProxy(bats_protocol)
+                    logging.info("Added bats BRTP proxy protocol.")
+                network.add_protocol_suite(bats)
         else:
             logging.error(
                 f"Error: not implemented protocol %s", proto)
