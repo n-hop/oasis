@@ -10,13 +10,14 @@ class AnalyzerConfig:
 
 
 class IDataAnalyzer(ABC):
-    def __init__(self) -> None:
-        self.config = None
+    def __init__(self, config: AnalyzerConfig):
+        super().__init__()
+        self.config = config
 
     @abstractmethod
-    def analyze(self, config: AnalyzerConfig):
+    def analyze(self):
         pass
 
     @abstractmethod
-    def visualize(self, config: AnalyzerConfig):
+    def visualize(self):
         pass

@@ -10,13 +10,11 @@ from .test import (ITestSuite)
 class IperfTest(ITestSuite):
 
     def post_process(self):
-        analyzer = AnalyzerFactory.get_analyzer("iperf3")
         config = AnalyzerConfig(
             input=[self.config.log_file], output="iperf3_result.svg")
-        config.input = self.config.log_file
-        config.output = "iperf3_result.svg"
-        analyzer.analyze(config)
-        analyzer.visualize(config)
+        analyzer = AnalyzerFactory.get_analyzer("iperf", config)
+        analyzer.analyze()
+        analyzer.visualize()
         return True
 
     def pre_process(self):
