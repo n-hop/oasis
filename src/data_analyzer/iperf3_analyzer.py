@@ -38,8 +38,10 @@ class Iperf3Analyzer(IDataAnalyzer):
                     else:
                         zero_bit_line_cnt = 0
                     if zero_bit_line_cnt > 3:
-                        logging.info("The iperf3 %s has too many zero bit", input_log)
-                        break
+                        logging.info(
+                            "The iperf3 %s has too many zero bit", input_log)
+                        return False
+        return True
 
     def visualize(self):
         # Implement visualization logic for iperf3 logs

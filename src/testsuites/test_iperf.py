@@ -1,8 +1,6 @@
 import logging
 import time
 from interfaces.network import INetwork
-from data_analyzer.analyzer import AnalyzerConfig
-from data_analyzer.analyzer_factory import AnalyzerFactory
 from protosuites.proto_info import IProtoInfo
 from .test import (ITestSuite)
 
@@ -10,11 +8,6 @@ from .test import (ITestSuite)
 class IperfTest(ITestSuite):
 
     def post_process(self):
-        config = AnalyzerConfig(
-            input=[self.config.log_file], output="iperf3_result.svg")
-        analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
-        analyzer.analyze()
-        analyzer.visualize()
         return True
 
     def pre_process(self):

@@ -70,3 +70,9 @@ class ITestSuite(ABC):
 
     def is_succeed(self) -> bool:
         return self.is_success
+
+    def type(self) -> TestType:
+        return self.config.test_type
+
+    def log_file(self) -> str:
+        return self.config.log_file
