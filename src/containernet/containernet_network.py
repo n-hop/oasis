@@ -72,6 +72,9 @@ class ContainerizedNetwork (INetwork):
     def get_host_ip_range(self):
         return self.node_ip_range
 
+    def get_routing_strategy(self):
+        return self.routing_strategy
+
     def start(self):
         logging.info("Oasis starts the ContainerizedNetwork.")
         self.containernet.build()

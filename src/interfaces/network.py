@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from containernet.topology import (ITopology)
 from testsuites.test import ITestSuite
 from protosuites.proto import IProtoSuite
+from interfaces.routing import IRoutingStrategy
 
 
 class INetwork(ABC):
@@ -32,6 +33,10 @@ class INetwork(ABC):
 
     @abstractmethod
     def get_link_table(self):
+        pass
+
+    @abstractmethod
+    def get_routing_strategy(self) -> IRoutingStrategy:
         pass
 
     @abstractmethod

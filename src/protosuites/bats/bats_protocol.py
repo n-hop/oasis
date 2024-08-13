@@ -1,5 +1,6 @@
 import logging
 import time
+import re
 from interfaces.network import INetwork
 from interfaces.host import IHost
 from tools.cfg_generator import generate_cfg_files
@@ -82,8 +83,15 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
             f'mv {self.source_path}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
         return True
 
+    def _get_ip_from_host(self, host: IHost, dev: str) -> str:
+        ip = host.popen(f"ip addr show {dev}").stdout.read().decode('utf-8')
+        match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', ip)
+        if match:
+            return match.group(1)
+        return None
+
     def get_forward_port(self, network: 'INetwork', host_id: int) -> int:
         pass
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
-        return self.virtual_ip_prefix + str(host_id + 1)
+        pass
