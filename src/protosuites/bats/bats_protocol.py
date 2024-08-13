@@ -10,8 +10,8 @@ from protosuites.proto_info import IProtoInfo
 class BATSProtocol(IProtoSuite, IProtoInfo):
     def __init__(self, config: ProtoConfig):
         super().__init__(config)
-        if self.config.protocol_path is None or self.config.hosts is None:
-            logging.error("No protocol path or hosts set")
+        if self.config.protocol_path is None:
+            logging.error("No protocol path specified.")
         self.process_name = self.config.protocol_path.split('/')[-1]
         self.source_path = '/'.join(self.config.protocol_path.split('/')[:-1])
         if self.source_path == '':
