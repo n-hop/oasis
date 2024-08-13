@@ -18,7 +18,6 @@ class IperfTest(ITestSuite):
         return True
 
     def pre_process(self):
-        self.config.log_file = "iperf3_log.txt"
         return True
 
     def _run_iperf(self, client, server, recv_port, recv_ip):
@@ -33,6 +32,7 @@ class IperfTest(ITestSuite):
         return True
 
     def _run_test(self, network: INetwork, proto: IProtoInfo):
+        self.config.log_file = f"iperf3_{proto.get_protocol_name()}.log"
         hosts = network.get_hosts()
         client = None
         server = None
