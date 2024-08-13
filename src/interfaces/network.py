@@ -84,7 +84,6 @@ class INetwork(ABC):
                 analyzer.visualize()
                 logging.info(
                     "Analyzed and visualized the throughput test results")
-
         return True
 
     def reset(self):
