@@ -20,7 +20,6 @@ from protosuites.proto import (ProtoConfig, SupportedProto, SupportedBATSProto)
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
-from protosuites.bats.bats_protocol import BATSProtocol
 
 
 def load_test(test_yaml_file: str):
