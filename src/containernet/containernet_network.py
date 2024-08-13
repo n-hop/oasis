@@ -209,14 +209,6 @@ class ContainerizedNetwork (INetwork):
                          self.hosts[i].name())
             self.hosts[i].cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
             self.hosts[i].cmd('sysctl -p')
-            # check tc qdisc
-            res = self.hosts[i].cmdPrint(
-                f'tc -s -d class show dev {self.node_name_prefix}{i}-eth0')
-            logging.info('tc qdisc results %s', res)
-            if i not in (0, self.num_of_hosts - 1):
-                res = self.hosts[i].cmdPrint(
-                    f'tc -s -d class show dev {self.node_name_prefix}{i}-eth1')
-                logging.info('tc qdisc results %s', res)
         logging.info(
             "############### Oasis Init Networking done ###########")
         return True
