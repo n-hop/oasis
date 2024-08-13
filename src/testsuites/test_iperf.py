@@ -12,7 +12,7 @@ class IperfTest(ITestSuite):
     def post_process(self):
         config = AnalyzerConfig(
             input=[self.config.log_file], output="iperf3_result.svg")
-        analyzer = AnalyzerFactory.get_analyzer("iperf", config)
+        analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
         analyzer.analyze()
         analyzer.visualize()
         return True
@@ -24,11 +24,13 @@ class IperfTest(ITestSuite):
     def _run_iperf(self, client, server, recv_port, recv_ip):
         server.cmd(f'nohup iperf3 -s -p {recv_port} -i {int(self.config.interval)} -V --forceflush'
                    f' --logfile {self.config.log_file} &')
-        client.cmd(f'iperf3 -c {recv_ip} -p {recv_port} -i {int(self.config.interval)}'
-                   f' -t {int(self.config.interval_num * self.config.interval)}')
+        res = client.popen(f'iperf3 -c {recv_ip} -p {recv_port} -i {int(self.config.interval)}'
+                           f' -t {int(self.config.interval_num * self.config.interval)}').stdout.read().decode('utf-8')
+        logging.info('iperf client output: %s', res)
         time.sleep(1)
         client.cmd('pkill -f iperf3')
         server.cmd('pkill -f iperf3')
+        return True
 
     def _run_test(self, network: INetwork, proto: IProtoInfo):
         hosts = network.get_hosts()
@@ -54,4 +56,4 @@ class IperfTest(ITestSuite):
         if receiver_port is None:
             receiver_port = 5201
 
-        self._run_iperf(client, server, receiver_port, receiver_ip)
+        return self._run_iperf(client, server, receiver_port, receiver_ip)

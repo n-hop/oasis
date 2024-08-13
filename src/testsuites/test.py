@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from enum import IntEnum
 from dataclasses import dataclass, field
@@ -61,6 +62,7 @@ class ITestSuite(ABC):
             return
         self.is_success = self._run_test(network, proto)
         if not self.is_success:
+            logging.error("Test failed.")
             return
         self.is_success = self.post_process()
         if not self.is_success:
