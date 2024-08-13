@@ -7,6 +7,7 @@ import yaml
 
 # from mininet.cli import CLI
 from mininet.log import setLogLevel
+from interfaces.network import INetwork
 from containernet.linear_topology import LinearTopology
 from containernet.containernet_network import ContainerizedNetwork
 from containernet.config import (
@@ -15,8 +16,11 @@ from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
-from protosuites.proto import ProtoConfig
+from protosuites.proto import (ProtoConfig, SupportedProto, SupportedBATSProto)
 from protosuites.bats.bats_btp import BTP
+from protosuites.bats.bats_brtp import BRTP
+from protosuites.bats.bats_brtp_proxy import BRTPProxy
+from protosuites.bats.bats_protocol import BATSProtocol
 
 
 def load_test(test_yaml_file: str):
@@ -56,7 +60,70 @@ def load_test(test_yaml_file: str):
     return test_list
 
 
-def load_config(test_case_yaml) -> Tuple[NodeConfig, TopologyConfig]:
+def setup_test(test_case_yaml, network: INetwork):
+    """setup the test case configuration.
+    """
+    # read the strategy matrix
+    strategy = test_case_yaml['strategy']
+    matrix = strategy['matrix']
+    target_protocols = matrix['target_protocols']
+    bats_protocol_version = matrix['bats_protocol_version']
+    for proto in target_protocols:
+        if proto not in SupportedProto:
+            logging.error(
+                f"Error: unsupported protocol %s", proto)
+            continue
+        if proto in SupportedBATSProto:
+            # combine the protocol with the its version
+            for version in bats_protocol_version:
+                bats_proto_config = ProtoConfig(
+                    protocol_path="/root/bats/bats_protocol",
+                    protocol_args="--daemon_enabled=true",
+                    protocol_version=version,
+                    log_file="/root/bats_protocol.log")
+                # map `proto` into python object BTP, BRTP, BRTPProxy
+                bats = None
+                if proto == 'btp':
+                    bats = BTP(bats_proto_config)
+                    logging.info("Added bats BTP protocol.")
+                elif proto == 'brtp':
+                    bats = BRTP(bats_proto_config)
+                    logging.info("Added bats BRTP protocol.")
+                elif proto == 'brtp_proxy':
+                    bats = BRTPProxy(bats_proto_config)
+                    logging.info("Added bats BRTP proxy protocol.")
+                network.add_protocol_suite(bats)
+        else:
+            logging.error(
+                f"Error: not implemented protocol %s", proto)
+    # read test_tools
+    test_tools = test_case_yaml['test_tools']
+    for tool in test_tools:
+        if tool['name'] == 'iperf':
+            iperf_test_conf = TestConfig(
+                interval=tool['interval'], interval_num=tool['interval_num'],
+                test_type=TestType.throughput, log_file="/root/iperf_test.log",
+                client_host=tool['client_host'], server_host=tool['server_host'])
+            network.add_test_suite(IperfTest(iperf_test_conf))
+            logging.info("Added iperf test.")
+        elif tool['name'] == 'ping':
+            ping_test_conf = TestConfig(
+                interval=tool['interval'], interval_num=tool['interval_num'],
+                test_type=TestType.latency, log_file="/root/ping_test.log",
+                client_host=tool['client_host'], server_host=tool['server_host'])
+            network.add_test_suite(PingTest(ping_test_conf))
+            logging.info("Added ping test.")
+        else:
+            logging.error(
+                f"Error: unsupported test tool %s", tool['name'])
+    # read route
+    route = test_case_yaml['route']
+    logging.info("Route: %s", route)
+
+
+def load_net_config(test_case_yaml) -> Tuple[NodeConfig, TopologyConfig]:
+    """Load network related configuration from the yaml file.
+    """
     configs = []
     for key in supported_config_keys:
         if key not in test_case_yaml:
@@ -115,17 +182,9 @@ if __name__ == '__main__':
         logging.info(f"Error: %s does not exist.", yaml_file_path)
         sys.exit(1)
     linear_network = None
-
-    # init bats protocol
-    bats_proto_config = ProtoConfig(
-        protocol_path="/root/bats/bats_protocol",
-        protocol_args="--daemon_enabled=true",
-        log_file="/root/bats_protocol.log",
-        hosts=[0, 1, 2, 3])
-
     all_tests = load_test(yaml_file_path)
     for test in all_tests:
-        cur_node_config, cur_top_config = load_config(test)
+        cur_node_config, cur_top_config = load_net_config(test)
         # mount the workspace
         cur_node_config.node_vols.append(f'{cur_workspace}:{mapped_workspace}')
         if linear_network is None:
@@ -137,20 +196,8 @@ if __name__ == '__main__':
                 continue
             linear_network.reload(local_net_top)
 
-        # BTP protocol
-        bats_proto_config.hosts = range(len(linear_network.get_hosts()))
-        bats_btp = BTP(
-            bats_proto_config)
-        linear_network.add_protocol_suite(bats_btp)
-
-        # add test suites
-        iperf_test_conf = TestConfig(
-            interval=1.0, interval_num=10, test_type=TestType.throughput, log_file="/root/iperf_test.log")
-        linear_network.add_test_suite(IperfTest(iperf_test_conf))
-
-        ping_test_conf = TestConfig(
-            interval=1.0, interval_num=10, test_type=TestType.latency, log_file="/root/ping_test.log")
-        linear_network.add_test_suite(PingTest(ping_test_conf))
+        # setup the test
+        setup_test(test, linear_network)
 
         # perform the test
         linear_network.perform_test()
