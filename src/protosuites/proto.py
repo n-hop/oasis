@@ -7,9 +7,14 @@ from typing import (Optional, List)
 class ProtoConfig:
     protocol_path: Optional[str] = field(default=None)
     protocol_args: Optional[str] = field(default=None)
+    protocol_version: Optional[str] = field(default='latest')
     log_file: Optional[str] = field(default=None)
     hosts: Optional[List[int]] = field(default=None)
     port: Optional[int] = field(default=None)
+
+
+SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp']
+SupportedBATSProto = ['btp', 'brtp', 'brtp_proxy']
 
 
 class IProtoSuite(ABC):
