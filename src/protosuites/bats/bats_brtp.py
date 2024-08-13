@@ -1,6 +1,7 @@
 from protosuites.bats.bats_protocol import BATSProtocol
 from interfaces.network import INetwork
 
+
 class BRTP(BATSProtocol):
     """BATS protocol BRTP-TUN mode
     """
@@ -14,3 +15,6 @@ class BRTP(BATSProtocol):
             host = network.get_hosts()[host_id]
             return self._get_ip_from_host(host, 'olsr_tun_BRTP')
         return None
+
+    def get_protocol_name(self) -> str:
+        return 'BRTP'

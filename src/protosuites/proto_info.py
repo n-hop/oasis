@@ -19,3 +19,8 @@ class IProtoInfo(ABC):
         Returns:
             str: ip address of the tun interface
         """
+
+    @abstractmethod
+    def get_protocol_name(self) -> str:
+        """The name of the protocol
+        """
