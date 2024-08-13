@@ -12,7 +12,7 @@ class IperfTest(ITestSuite):
     def post_process(self):
         analyzer = AnalyzerFactory.get_analyzer("iperf3")
         config = AnalyzerConfig(
-            input=self.config.log_file, output="iperf3_result.svg")
+            input=[self.config.log_file], output="iperf3_result.svg")
         config.input = self.config.log_file
         config.output = "iperf3_result.svg"
         analyzer.analyze(config)
@@ -39,7 +39,7 @@ class IperfTest(ITestSuite):
         receiver_ip = None
         receiver_port = None
         if self.config.client_host is None or self.config.server_host is None:
-            client =  hosts[0]
+            client = hosts[0]
             server = hosts[-1]
             receiver_ip = proto.get_tun_ip(network, len(hosts) - 1)
             receiver_port = proto.get_forward_port(network, len(hosts) - 1)
@@ -47,7 +47,8 @@ class IperfTest(ITestSuite):
             client = hosts[self.config.client_host]
             server = hosts[self.config.server_host]
             receiver_ip = proto.get_tun_ip(network, self.config.server_host)
-            receiver_port = proto.get_forward_port(network, self.config.server_host)
+            receiver_port = proto.get_forward_port(
+                network, self.config.server_host)
         logging.info(
             "############### Oasis IperfTest from %s to %s ###############", client.name(), server.name())
         if receiver_ip is None or receiver_ip == "":
