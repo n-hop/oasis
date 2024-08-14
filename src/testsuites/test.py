@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from enum import IntEnum
 from dataclasses import dataclass, field
@@ -61,6 +62,7 @@ class ITestSuite(ABC):
             return
         self.is_success = self._run_test(network, proto)
         if not self.is_success:
+            logging.error("Test failed.")
             return
         self.is_success = self.post_process()
         if not self.is_success:
@@ -68,3 +70,9 @@ class ITestSuite(ABC):
 
     def is_succeed(self) -> bool:
         return self.is_success
+
+    def type(self) -> TestType:
+        return self.config.test_type
+
+    def log_file(self) -> str:
+        return self.config.log_file

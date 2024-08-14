@@ -72,6 +72,9 @@ class ContainerizedNetwork (INetwork):
     def get_host_ip_range(self):
         return self.node_ip_range
 
+    def get_routing_strategy(self):
+        return self.routing_strategy
+
     def start(self):
         logging.info("Oasis starts the ContainerizedNetwork.")
         self.containernet.build()
@@ -140,7 +143,6 @@ class ContainerizedNetwork (INetwork):
         """
         Setup the docker nodes related configurations,
         such as image, volume, and port binding.
-        This setup 
         """
         if start_index > end_index:
             return False
@@ -206,14 +208,6 @@ class ContainerizedNetwork (INetwork):
                          self.hosts[i].name())
             self.hosts[i].cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
             self.hosts[i].cmd('sysctl -p')
-            # check tc qdisc
-            res = self.hosts[i].cmdPrint(
-                f'tc -s -d class show dev {self.node_name_prefix}{i}-eth0')
-            logging.info('tc qdisc results %s', res)
-            if i not in (0, self.num_of_hosts - 1):
-                res = self.hosts[i].cmdPrint(
-                    f'tc -s -d class show dev {self.node_name_prefix}{i}-eth1')
-                logging.info('tc qdisc results %s', res)
         logging.info(
             "############### Oasis Init Networking done ###########")
         return True
@@ -229,8 +223,6 @@ class ContainerizedNetwork (INetwork):
         # Link with TC interfaces
         # net.addLink(s1, s2, cls=TCLink, \
             delay = "100ms", bw = 1, loss = 10, jitter = 5)
-        # FIXME: Warning: sch_htb: quantum of \
-            class 50001 is big. Consider r2q change.
         '''
         if self.net_bw_mat is not None:
             params['bw'] = self.net_bw_mat[id1][id2]
@@ -238,8 +230,12 @@ class ContainerizedNetwork (INetwork):
             params['loss'] = self.net_loss_mat[id1][id2]
         if self.net_latency_mat is not None:
             params['delay'] = str(self.net_latency_mat[id1][id2]) + 'ms'
+            # params['latency_ms'] = int(self.net_latency_mat[id1][id2])
         if self.net_jitter_mat is not None:
             params['jitter'] = self.net_jitter_mat[id1][id2]
+        params['max_queue_size'] = 20000000
+        # params['use_hfsc'] = True
+        params['use_tbf'] = True
         link = self.containernet.addLink(
             self.hosts[id1].get_host(),
             self.hosts[id2].get_host(),

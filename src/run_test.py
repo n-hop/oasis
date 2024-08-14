@@ -20,7 +20,6 @@ from protosuites.proto import (ProtoConfig, SupportedProto, SupportedBATSProto)
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
-from protosuites.bats.bats_protocol import BATSProtocol
 
 
 def load_test(test_yaml_file: str):
@@ -79,19 +78,17 @@ def setup_test(test_case_yaml, network: INetwork):
                 bats_proto_config = ProtoConfig(
                     protocol_path="/root/bats/bats_protocol",
                     protocol_args="--daemon_enabled=true",
-                    protocol_version=version,
-                    log_file="/root/bats_protocol.log")
-                bats_protocol = BATSProtocol(bats_proto_config)
+                    protocol_version=version)
                 # map `proto` into python object BTP, BRTP, BRTPProxy
                 bats = None
                 if proto == 'btp':
-                    bats = BTP(bats_protocol)
+                    bats = BTP(bats_proto_config)
                     logging.info("Added bats BTP protocol.")
                 elif proto == 'brtp':
-                    bats = BRTP(bats_protocol)
+                    bats = BRTP(bats_proto_config)
                     logging.info("Added bats BRTP protocol.")
                 elif proto == 'brtp_proxy':
-                    bats = BRTPProxy(bats_protocol)
+                    bats = BRTPProxy(bats_proto_config)
                     logging.info("Added bats BRTP proxy protocol.")
                 network.add_protocol_suite(bats)
         else:

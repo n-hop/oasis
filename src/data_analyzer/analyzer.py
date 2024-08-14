@@ -1,21 +1,23 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import List
 
 
 @dataclass
 class AnalyzerConfig:
-    input: str  # The input file
-    output: str  # The output file
+    input: List[str]   # A series of input files
+    output:  str  # The output visualization diagram file
 
 
 class IDataAnalyzer(ABC):
-    def __init__(self) -> None:
-        self.config = None
+    def __init__(self, config: AnalyzerConfig):
+        super().__init__()
+        self.config = config
 
     @abstractmethod
-    def analyze(self, config: AnalyzerConfig):
+    def analyze(self):
         pass
 
     @abstractmethod
-    def visualize(self, config: AnalyzerConfig):
+    def visualize(self):
         pass

@@ -1,8 +1,11 @@
 import logging
 from abc import ABC, abstractmethod
 from containernet.topology import (ITopology)
-from testsuites.test import ITestSuite
+from testsuites.test import (ITestSuite, TestType)
 from protosuites.proto import IProtoSuite
+from interfaces.routing import IRoutingStrategy
+from data_analyzer.analyzer import AnalyzerConfig
+from data_analyzer.analyzer_factory import AnalyzerFactory
 
 
 class INetwork(ABC):
@@ -35,6 +38,10 @@ class INetwork(ABC):
         pass
 
     @abstractmethod
+    def get_routing_strategy(self) -> IRoutingStrategy:
+        pass
+
+    @abstractmethod
     def reload(self, top: ITopology):
         pass
 
@@ -45,6 +52,8 @@ class INetwork(ABC):
         self.test_suites.append(test_suite)
 
     def perform_test(self):
+        """Perform the test for each input case from YAML file
+        """
         if self.proto_suites is None:
             logging.error("No protocol set")
             return False
@@ -52,14 +61,29 @@ class INetwork(ABC):
             logging.error("No test suite set")
             return False
         # Combination of protocol and test
+        test_results = {}
         for proto in self.proto_suites:
             # start the protocol
             proto.start(self)
             for test in self.test_suites:
                 # run `test` on `network`(self) specified by `proto`
                 test.run(self, proto)
+                if test.type() not in test_results:
+                    test_results[test.type()] = []
+                test_results[test.type()].append(test.log_file())
             # stop the protocol
             proto.stop(self)
+        # Analyze the test results
+        for test_type, log_files in test_results.items():
+            # analyze the test results
+            if test_type == TestType.throughput:
+                config = AnalyzerConfig(
+                    input=log_files, output="iperf3_throughput.svg")
+                analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
+                analyzer.analyze()
+                analyzer.visualize()
+                logging.info(
+                    "Analyzed and visualized the throughput test results")
         return True
 
     def reset(self):

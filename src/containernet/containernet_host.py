@@ -36,3 +36,6 @@ class ContainernetHostAdapter(IHost):
 
     def get_host(self):
         return self.containernet_host
+
+    def popen(self, command):
+        return self.containernet_host.popen(command)

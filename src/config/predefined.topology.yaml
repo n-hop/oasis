@@ -7,7 +7,7 @@ topology:
     nodes: 7
     array_description:
       - link_loss:
-        init_value: [0]
+        init_value: [5]
       - link_latency:
         init_value: [1]
       - link_jitter:

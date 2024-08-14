@@ -25,12 +25,13 @@ class ConfigGenerator:
         self.template += "{routes}\n"
         self.template += "\n"
         self.template += "proxies.tcp.proxy.cnt = {tcp_proxy_cnt}\n"
+        self.template += "proxies.tcp.exclude_ports = 5201\n"
         self.template += "{tcp_proxies}\n"
         self.template += "\n"
         self.template += "tun.name = tun_session\n"
         self.template += "tun.ip = {tun_ip}\n"
         self.template += "tun.max_flow_per_session = 1\n"
-        self.template += "tun.mapping_cnt = {tun_mapping_cnt}\n"
+        self.template += "tun.mapping.cnt = {tun_mapping_cnt}\n"
         self.template += "{tun_mappings}\n"
 
     def _subnets(self, base_ip, parent_ip):
@@ -131,15 +132,14 @@ class ConfigGenerator:
             if i == 0:
                 node_ips.append([all_ips[i]])
             elif i == num_nodes - 1:
-                node_ips.append([all_ips[-1]])
+                node_ips.append([all_ips[i * 2 - 1]])
             else:
                 node_ips.append([all_ips[i * 2 - 1], all_ips[i * 2]])
         return node_ips
 
-    def generate_cfg(self, num_nodes):
+    def generate_cfg(self, num_nodes, virtual_ip_prefix):
         node_ips = self._generate_node_ips(num_nodes)
-        tun_ip = "1.0.0."
-        tun_mappings = self._generate_tun_cfg(node_ips, tun_ip)
+        tun_mappings = self._generate_tun_cfg(node_ips, virtual_ip_prefix)
         for i in range(len(node_ips)):
             link_cnt, links = self._generate_link_cfg(node_ips, i)
             route_cnt, routes = self._generate_route_cfg(node_ips, i)
@@ -148,13 +148,13 @@ class ConfigGenerator:
                 f.write(self.template.format(link_cnt=link_cnt, links=links,
                                              route_cnt=route_cnt, routes=routes,
                                              tcp_proxy_cnt=tcp_proxy_cnt, tcp_proxies=tcp_proxies,
-                                             tun_ip=f"{tun_ip}{i+1}", tun_mapping_cnt=len(node_ips),
+                                             tun_ip=f"{virtual_ip_prefix}{i+1}", tun_mapping_cnt=len(node_ips),
                                              tun_mappings=tun_mappings))
                 logging.info("Generated %s/h%d.ini", self.path, i)
 
-def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8", output_dir="/tmp"):
+def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8", virtual_ip_prefix="1.0.0.", output_dir="/tmp"):
     generator = ConfigGenerator(node_ip_range, output_dir)
-    generator.generate_cfg(num_nodes)
+    generator.generate_cfg(num_nodes, virtual_ip_prefix)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -162,6 +162,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', type=int, required=True, help='Number of nodes')
     parser.add_argument('-ip', type=str, default="10.0.0.0/8", help='Node IP range (default: 10.0.0.0/8)')
     parser.add_argument('-o', type=str, default="/tmp", help='Output directory (default: /tmp)')
+    parser.add_argument('-p', type=str, default="1.0.0.", help='Virtual IP prefix (default: 1.0.0.)')
     args = parser.parse_args()
 
-    generate_cfg_files(args.n, args.ip, args.o)
+    generate_cfg_files(num_nodes = args.n, node_ip_range = args.ip, virtual_ip_prefix = args.p, output_dir = args.o)
