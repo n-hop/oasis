@@ -236,6 +236,7 @@ class ContainerizedNetwork (INetwork):
         params['max_queue_size'] = 20000000
         # params['use_hfsc'] = True
         params['use_tbf'] = True
+        params['apply_tc_on_ingress'] = True
         link = self.containernet.addLink(
             self.hosts[id1].get_host(),
             self.hosts[id2].get_host(),

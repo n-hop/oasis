@@ -1,0 +1,156 @@
+--- /containernet/mininet/link.py	2024-08-14 10:03:50.725159520 +0800
++++ ./containernet/mininet/link.py	2024-08-14 12:08:50.432566784 +0800
+@@ -39,7 +39,7 @@
+     "Basic interface object that can configure itself."
+ 
+     def __init__( self, name, node=None, port=None, link=None,
+-                  mac=None, **params ):
++                  mac=None, enable_ifb=False, **params ):
+         """name: interface name (e.g. h1-eth0)
+            node: owning node (where this intf most likely lives)
+            link: parent link if we're part of a link
+@@ -48,6 +48,8 @@
+         self.name = name
+         self.link = link
+         self.mac = mac
++        self.port = port
++        self.ifb_name = f'ifb{port}'
+         self.ip, self.prefixLen = None, None
+ 
+         # if interface is lo, we know the ip is 127.0.0.1.
+@@ -62,6 +64,8 @@
+                 node.addIntf( self, port=port, moveIntfFn=moveIntfFn )
+             else:
+                 node.addIntf( self, port=port )
++        if enable_ifb:
++            self.addIfbInf()
+         # Save params for future reference
+         self.params = params
+         self.config( **params )
+@@ -70,6 +74,11 @@
+         "Run a command in our owning node"
+         return self.node.cmd( *args, **kwargs )
+ 
++    def addIfbInf (self):
++        self.node.cmd('ip link add name %s type ifb' % self.ifb_name)
++        self.node.cmd('ip link set %s up' % self.ifb_name)
++        info(" add tfb inf name: %s, inf port %s \n" % (self.ifb_name, self.port))
++
+     def ifconfig( self, *args ):
+         "Configure ourselves using ifconfig"
+         return self.cmd( 'ifconfig', self.name, *args )
+@@ -302,26 +311,40 @@
+ 
+     @staticmethod
+     def delayCmds( parent, delay=None, jitter=None,
+-                   loss=None, max_queue_size=None ):
++                   loss=None, max_queue_size=None,
++                   apply_tc_on_ingress=False, port=None):
+         "Internal method: return tc commands for delay and loss"
+         cmds = []
++        ifb_cmds = []
+         if loss and ( loss < 0 or loss > 100 ):
+             error( 'Bad loss percentage', loss, '%%\n' )
+         else:
+-            # Delay/jitter/loss/max queue size
++            # Delay/jitter/loss/max queue size 
+             netemargs = '%s%s%s%s' % (
+                 'delay %s ' % delay if delay is not None else '',
+                 '%s ' % jitter if jitter is not None else '',
+                 'loss %.5f ' % loss if (loss is not None and loss > 0) else '',
+                 'limit %d' % max_queue_size if max_queue_size is not None
+                 else '' )
+-            if netemargs:
+-                cmds = [ '%s qdisc add dev %s ' + parent +
+-                         ' handle 10: netem ' +
+-                         netemargs ]
+-                parent = ' parent 10:1 '
+-        return cmds, parent
+-
++            if apply_tc_on_ingress == False:
++                if netemargs:
++                    cmds = [ '%s qdisc add dev %s ' + parent +
++                             ' handle 10: netem ' +
++                             netemargs ]
++                    parent = ' parent 10:1 '
++            else:
++                ifb_name = f'ifb{port}'
++                info("delayCmds ifb_name %s" % ifb_name)
++                cmds += [ '%s qdisc add dev %s ingress' ]
++                cmds += [ '%s filter add dev %s parent ffff: protocol ip u32 match u32 0 0 action mirred egress redirect dev ' + ifb_name ]
++                ifb_cmds += ['%s qdisc add dev %s root netem ' + netemargs ]
++        return cmds, ifb_cmds, parent
++    
++    def tc_ifb( self, cmd,  tc='tc'):
++        c = cmd % (tc, self.ifb_name)
++        info(" *** executing command: %s\n" % c)
++        return self.cmd( c )
++    
+     def tc( self, cmd, tc='tc' ):
+         "Execute tc command for our interface"
+         c = cmd % (tc, self)  # Add in tc command and our name
+@@ -333,7 +356,7 @@
+                 gro=False, txo=True, rxo=True,
+                 speedup=0, use_hfsc=False, use_tbf=False,
+                 latency_ms=None, enable_ecn=False, enable_red=False,
+-                max_queue_size=None, **params ):
++                max_queue_size=None, apply_tc_on_ingress=False, **params ):
+         """Configure the port and set its properties.
+            bw: bandwidth in b/s (e.g. '10m')
+            delay: transmit delay (e.g. '1ms' )
+@@ -348,7 +371,9 @@
+            latency_ms: TBF latency parameter
+            enable_ecn: enable ECN (False)
+            enable_red: enable RED (False)
+-           max_queue_size: queue limit parameter for netem"""
++           max_queue_size: queue limit parameter for netem
++           apply_tc_on_ingress: apply latency/jitter/loss for ingress flow.
++           """
+ 
+         # Support old names for parameters
+         gro = not params.pop( 'disable_gro', not gro )
+@@ -387,9 +412,11 @@
+         cmds += bwcmds
+ 
+         # Delay/jitter/loss/max_queue_size using netem
+-        delaycmds, parent = self.delayCmds( delay=delay, jitter=jitter,
++        delaycmds, ifb_delaycmds, parent = self.delayCmds( delay=delay, jitter=jitter,
+                                             loss=loss,
+                                             max_queue_size=max_queue_size,
++                                            apply_tc_on_ingress=apply_tc_on_ingress,
++                                            port=self.port,
+                                             parent=parent )
+         cmds += delaycmds
+ 
+@@ -408,6 +435,11 @@
+         for output in tcoutputs:
+             if output != '' and output != 'RTNETLINK answers: No such file or directory\r\n':
+                 error( "*** Error: %s" % output )
++        # ifb config
++        tcoutputs2 = [ self.tc_ifb(cmd) for cmd in ifb_delaycmds ]
++        for output in tcoutputs2:
++            if output != '' and output != 'RTNETLINK answers: No such file or directory\r\n':
++                error( "*** Error: %s" % output )
+         debug( "cmds:", cmds, '\n' )
+         debug( "outputs:", tcoutputs, '\n' )
+         result[ 'tcoutputs'] = tcoutputs
+@@ -474,12 +506,15 @@
+             cls1 = intf
+         if not cls2:
+             cls2 = intf
+-
++        enable_ifb = False
++        if 'apply_tc_on_ingress' in params:
++            if  params[ 'apply_tc_on_ingress' ]:
++                enable_ifb = True
+         intf1 = cls1( name=intfName1, node=node1,
+-                      link=self, mac=addr1, **params1  )
++                      link=self, mac=addr1, enable_ifb=enable_ifb, **params1 )
+         intf2 = cls2( name=intfName2, node=node2,
+-                      link=self, mac=addr2, **params2 )
+-
++                      link=self, mac=addr2, enable_ifb=enable_ifb, **params2 )
++        
+         # All we are is dust in the wind, and our two interfaces
+         self.intf1, self.intf2 = intf1, intf2
+ 
