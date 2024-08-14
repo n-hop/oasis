@@ -312,7 +312,7 @@ class TCIntf( Intf ):
     @staticmethod
     def delayCmds( parent, delay=None, jitter=None,
                    loss=None, max_queue_size=None,
-                   apply_tc_on_ingress=False, port=None):
+                   ts_on_ingress=False, port=None):
         "Internal method: return tc commands for delay and loss"
         cmds = []
         ifb_cmds = []
@@ -326,7 +326,7 @@ class TCIntf( Intf ):
                 'loss %.5f ' % loss if (loss is not None and loss > 0) else '',
                 'limit %d' % max_queue_size if max_queue_size is not None
                 else '' )
-            if apply_tc_on_ingress == False:
+            if ts_on_ingress == False:
                 if netemargs:
                     cmds = [ '%s qdisc add dev %s ' + parent +
                              ' handle 10: netem ' +
@@ -356,7 +356,7 @@ class TCIntf( Intf ):
                 gro=False, txo=True, rxo=True,
                 speedup=0, use_hfsc=False, use_tbf=False,
                 latency_ms=None, enable_ecn=False, enable_red=False,
-                max_queue_size=None, apply_tc_on_ingress=False, **params ):
+                max_queue_size=None, ts_on_ingress=False, **params ):
         """Configure the port and set its properties.
            bw: bandwidth in b/s (e.g. '10m')
            delay: transmit delay (e.g. '1ms' )
@@ -372,7 +372,7 @@ class TCIntf( Intf ):
            enable_ecn: enable ECN (False)
            enable_red: enable RED (False)
            max_queue_size: queue limit parameter for netem
-           apply_tc_on_ingress: apply latency/jitter/loss for ingress flow.
+           ts_on_ingress: apply traffic shaping(latency/jitter/loss) on ingress flow.
            """
 
         # Support old names for parameters
@@ -415,7 +415,7 @@ class TCIntf( Intf ):
         delaycmds, ifb_delaycmds, parent = self.delayCmds( delay=delay, jitter=jitter,
                                             loss=loss,
                                             max_queue_size=max_queue_size,
-                                            apply_tc_on_ingress=apply_tc_on_ingress,
+                                            ts_on_ingress=apply_tc_on_ingress,
                                             port=self.port,
                                             parent=parent )
         cmds += delaycmds
@@ -507,8 +507,8 @@ class Link( object ):
         if not cls2:
             cls2 = intf
         enable_ifb = False
-        if 'apply_tc_on_ingress' in params:
-            if  params[ 'apply_tc_on_ingress' ]:
+        if 'ts_on_ingress' in params:
+            if  params[ 'ts_on_ingress' ]:
                 enable_ifb = True
         intf1 = cls1( name=intfName1, node=node1,
                       link=self, mac=addr1, enable_ifb=enable_ifb, **params1 )
