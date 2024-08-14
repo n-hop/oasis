@@ -31,7 +31,7 @@ class ConfigGenerator:
         self.template += "tun.name = tun_session\n"
         self.template += "tun.ip = {tun_ip}\n"
         self.template += "tun.max_flow_per_session = 1\n"
-        self.template += "tun.mapping_cnt = {tun_mapping_cnt}\n"
+        self.template += "tun.mapping.cnt = {tun_mapping_cnt}\n"
         self.template += "{tun_mappings}\n"
 
     def _subnets(self, base_ip, parent_ip):
