@@ -64,6 +64,7 @@ class Iperf3Analyzer(IDataAnalyzer):
             x = np.arange(1, len(throughput_array))
             plt.plot(x, throughput_array[0: len(x)],
                      'o-', markersize=3, linewidth=1.5, label=f"{input_log}")
+            plt.ylim(0, max(throughput_array) + 10)
             plt.legend(loc="lower right", fontsize=8)
         # save the plot to svg file
         plt.savefig("name.svg")
