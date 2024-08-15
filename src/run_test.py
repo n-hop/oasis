@@ -59,6 +59,23 @@ def load_test(test_yaml_file: str):
     return test_list
 
 
+def add_test_to_network(network, tool):
+    test_conf = TestConfig(
+        interval=tool['interval'], interval_num=tool['interval_num'],
+        client_host=tool['client_host'], server_host=tool['server_host'])
+    if tool['name'] == 'iperf':
+        test_conf.test_type = TestType.throughput
+        network.add_test_suite(IperfTest(test_conf))
+        logging.info("Added iperf test.")
+    elif tool['name'] == 'ping':
+        test_conf.test_type = TestType.latency
+        network.add_test_suite(PingTest(test_conf))
+        logging.info("Added ping test.")
+    else:
+        logging.error(
+            f"Error: unsupported test tool %s", tool['name'])
+
+
 def setup_test(test_case_yaml, network: INetwork):
     """setup the test case configuration.
     """
@@ -95,26 +112,10 @@ def setup_test(test_case_yaml, network: INetwork):
         else:
             logging.error(
                 f"Error: not implemented protocol %s", proto)
-    # read test_tools
+    # convert test_tools to test suites
     test_tools = test_case_yaml['test_tools']
     for tool in test_tools:
-        if tool['name'] == 'iperf':
-            iperf_test_conf = TestConfig(
-                interval=tool['interval'], interval_num=tool['interval_num'],
-                test_type=TestType.throughput, log_file="/root/iperf_test.log",
-                client_host=tool['client_host'], server_host=tool['server_host'])
-            network.add_test_suite(IperfTest(iperf_test_conf))
-            logging.info("Added iperf test.")
-        elif tool['name'] == 'ping':
-            ping_test_conf = TestConfig(
-                interval=tool['interval'], interval_num=tool['interval_num'],
-                test_type=TestType.latency, log_file="/root/ping_test.log",
-                client_host=tool['client_host'], server_host=tool['server_host'])
-            network.add_test_suite(PingTest(ping_test_conf))
-            logging.info("Added ping test.")
-        else:
-            logging.error(
-                f"Error: unsupported test tool %s", tool['name'])
+        add_test_to_network(network, tool)
     # read route
     route = test_case_yaml['route']
     logging.info("Route: %s", route)
