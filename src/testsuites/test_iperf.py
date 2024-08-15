@@ -19,6 +19,7 @@ class IperfTest(ITestSuite):
         res = client.popen(f'iperf3 -c {recv_ip} -p {recv_port} -i {int(self.config.interval)}'
                            f' -t {int(self.config.interval_num * self.config.interval)}').stdout.read().decode('utf-8')
         logging.info('iperf client output: %s', res)
+        logging.info('iperf test result save to %s', self.result.record)
         time.sleep(1)
         client.cmd('pkill -f iperf3')
         server.cmd('pkill -f iperf3')
