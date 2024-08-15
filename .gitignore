@@ -64,6 +64,7 @@ tmp*
 *tags*
 
 # patch files
+*patch
 *.log
 
 # history

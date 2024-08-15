@@ -1,12 +1,11 @@
 import logging
 import re
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 from .analyzer import IDataAnalyzer
 
 
-def str_to_mbps(x, unit):
+def str_to_Mbps(x, unit):
     ret = 0.00
     if unit == "K":
         ret = float(x) / 1000
@@ -25,12 +24,10 @@ class Iperf3Analyzer(IDataAnalyzer):
 
     def analyze(self):
         for input_log in self.config.input:
+            # Implement analysis logic for iperf3 logs
+            # ... (analysis code)
             logging.info(f"Analyze iperf3 log: %s", input_log)
-            # if input_log not exist, return False
-            if not os.path.exists(input_log):
-                logging.info(
-                    "The iperf3 log file %s not exist", input_log)
-                return False
+            # dump file content
             with open(input_log, "r", encoding="utf-8") as f:
                 zero_bit_line_cnt = 0
                 lines = f.readlines()
@@ -57,9 +54,9 @@ class Iperf3Analyzer(IDataAnalyzer):
             logging.info(f"Visualize iperf3 log: %s", input_log)
             with open(f"{input_log}", "r", encoding='utf-8') as f:
                 content = f.read()
-                throughput_pattern = r"(\d+) (K|M|G)?Bytes(\s+)(\d+(\.\d+)?) (K|M|G)?bits/sec"
+                throughput_pattern = r"(\d+) (K|M|G)Bytes(\s+)(\d+(\.\d+)?) (K|M|G)bits/sec"
                 matches2 = re.findall(throughput_pattern, content)
-                throughput_array = [str_to_mbps(
+                throughput_array = [str_to_Mbps(
                     match[3], match[5]) for match in matches2]
                 if len(throughput_array) <= 1:
                     logging.error(f"no throughput data in %s", input_log)
@@ -69,8 +66,6 @@ class Iperf3Analyzer(IDataAnalyzer):
                      'o-', markersize=3, linewidth=1.5, label=f"{input_log}")
             plt.ylim(0, max(throughput_array) + 10)
             plt.legend(loc="lower right", fontsize=8)
-        if not self.config.output:
-            self.config.output = "iperf3_throughput.svg"
-        plt.savefig(f"{self.config.output}")
-        logging.info("Visualize iperf3 diagram saved to %s",
-                     self.config.output)
+        # save the plot to svg file
+        plt.savefig("name.svg")
+        logging.info("Visualize iperf3 diagram saved to name.svg")

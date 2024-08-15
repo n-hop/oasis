@@ -3,7 +3,7 @@
 init-hook='import sys; sys.path.append("./containernet_test")'
 # Maximum number of lines Python code can execute
 max-line-length=120
-ignore=cpplint.py,link.py
+ignore=cpplint.py
 
 [MESSAGES CONTROL]
 # Disabled message numbers or message names

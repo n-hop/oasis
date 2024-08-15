@@ -234,9 +234,8 @@ class ContainerizedNetwork (INetwork):
         if self.net_jitter_mat is not None:
             params['jitter'] = self.net_jitter_mat[id1][id2]
         params['max_queue_size'] = 20000000
+        # params['use_hfsc'] = True
         params['use_tbf'] = True
-        # apply the traffic shaping on the ingress interface.
-        params['ts_on_ingress'] = True
         link = self.containernet.addLink(
             self.hosts[id1].get_host(),
             self.hosts[id2].get_host(),
