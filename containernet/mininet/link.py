@@ -283,9 +283,12 @@ class TCIntf( Intf ):
             elif use_tbf:
                 if latency_ms is None:
                     latency_ms = 15.0 * 8 / bw
+                # https://www.man7.org/linux/man-pages/man8/tc-tbf.8.html
+                # 10mbit/s ==> 10 kbytes
+                burst_bytes = f'{bw}kb'
                 cmds += [ '%s qdisc add dev %s root handle 5: tbf ' +
-                          'rate %fMbit burst 15000 latency %fms' %
-                          ( bw, latency_ms ) ]
+                          'rate %fMbit burst %s latency %fms' %
+                          ( bw, burst_bytes, latency_ms ) ]
             else:
                 cmds += [ '%s qdisc add dev %s root handle 5:0 htb default 1',
                           '%s class add dev %s parent 5:0 classid 5:1 htb ' +
