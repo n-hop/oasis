@@ -1,5 +1,5 @@
---- /containernet/mininet/link.py	2024-08-14 10:03:50.725159520 +0800
-+++ /containernet/mininet/link.py	2024-08-15 13:01:17.228228432 +0800
+--- /containernet/mininet/link.py	2024-08-14 13:17:38.000000000 +0800
++++ ./containernet/mininet/link.py	2024-08-15 13:55:18.652136671 +0800
 @@ -39,7 +39,7 @@
      "Basic interface object that can configure itself."
  
@@ -44,8 +44,8 @@
                  if latency_ms is None:
                      latency_ms = 15.0 * 8 / bw
 +                # https://www.man7.org/linux/man-pages/man8/tc-tbf.8.html
-+                # 10mbit/s ==> 10 kbytes
-+                burst_bytes = f'{bw}kb'
++                # 10mbit/s ==> 12.5 kbytes
++                burst_bytes = f'{bw * 1.25}kb'
                  cmds += [ '%s qdisc add dev %s root handle 5: tbf ' +
 -                          'rate %fMbit burst 15000 latency %fms' %
 -                          ( bw, latency_ms ) ]
@@ -54,7 +54,7 @@
              else:
                  cmds += [ '%s qdisc add dev %s root handle 5:0 htb default 1',
                            '%s class add dev %s parent 5:0 classid 5:1 htb ' +
-@@ -302,26 +314,40 @@
+@@ -302,30 +314,44 @@
  
      @staticmethod
      def delayCmds( parent, delay=None, jitter=None,
@@ -104,6 +104,11 @@
      def tc( self, cmd, tc='tc' ):
          "Execute tc command for our interface"
          c = cmd % (tc, self)  # Add in tc command and our name
+-        debug(" *** executing command: %s\n" % c)
++        info(" *** executing command: %s\n" % c)
+         return self.cmd( c )
+ 
+     # pylint: disable=arguments-differ
 @@ -333,7 +359,7 @@
                  gro=False, txo=True, rxo=True,
                  speedup=0, use_hfsc=False, use_tbf=False,
