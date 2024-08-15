@@ -107,9 +107,12 @@ class ContainerizedNetwork (INetwork):
         if self.net_loss_mat != top.get_matrix(MatrixType.LOSS_MATRIX):
             is_changed = True
             logging.info("Oasis detected the loss matrix change.")
-        if self.net_bw_mat != top.get_matrix(MatrixType.BANDW_MATRIX):
+        if self.net_uplink_bw_mat != top.get_matrix(MatrixType.UPLINK_BANDW_MATRIX):
             is_changed = True
-            logging.info("Oasis detected the bandwidth matrix change.")
+            logging.info("Oasis detected the uplink bandwidth matrix change.")
+        if self.net_downlink_bw_mat != top.get_matrix(MatrixType.DOWNLINK_BANDW_MATRIX):
+            is_changed = True
+            logging.info("Oasis detected the downlink bandwidth matrix change.")
         if self.net_latency_mat != top.get_matrix(MatrixType.LATENCY_MATRIX):
             is_changed = True
             logging.info("Oasis detected the latency matrix change.")
@@ -122,15 +125,18 @@ class ContainerizedNetwork (INetwork):
         self.net_mat = net_topology.get_matrix(MatrixType.ADJACENCY_MATRIX)
         self.net_loss_mat = net_topology.get_matrix(
             MatrixType.LOSS_MATRIX)
-        self.net_bw_mat = net_topology.get_matrix(
-            MatrixType.BANDW_MATRIX)
+        self.net_uplink_bw_mat = net_topology.get_matrix(
+            MatrixType.UPLINK_BANDW_MATRIX)
+        self.net_downlink_bw_mat = net_topology.get_matrix(
+            MatrixType.DOWNLINK_BANDW_MATRIX)
         self.net_latency_mat = net_topology.get_matrix(
             MatrixType.LATENCY_MATRIX)
         self.net_jitter_mat = net_topology.get_matrix(
             MatrixType.JITTER_MATRIX)
         logging.info('self.net_mat %s', self.net_mat)
         logging.info('self.net_loss_mat %s', self.net_loss_mat)
-        logging.info('self.net_bw_mat %s', self.net_bw_mat)
+        logging.info('self.net_uplink_bw_mat %s', self.net_uplink_bw_mat)
+        logging.info('self.net_downlink_bw_mat %s', self.net_downlink_bw_mat)
         logging.info('self.net_latency_mat %s', self.net_latency_mat)
         logging.info('self.net_jitter_mat %s', self.net_jitter_mat)
 
@@ -192,7 +198,11 @@ class ContainerizedNetwork (INetwork):
                         self.hosts[j].name(),
                         right_ip
                     )
-                    self._addLink(i, j,
+                    # self._addLink(i, j,
+                    #               params1={'ip': left_ip},
+                    #               params2={'ip': right_ip}
+                    #               )
+                    self._addLink2(i, j,
                                   params1={'ip': left_ip},
                                   params2={'ip': right_ip}
                                   )
@@ -224,8 +234,8 @@ class ContainerizedNetwork (INetwork):
         # net.addLink(s1, s2, cls=TCLink, \
             delay = "100ms", bw = 1, loss = 10, jitter = 5)
         '''
-        if self.net_bw_mat is not None:
-            params['bw'] = self.net_bw_mat[id1][id2]
+        if self.net_uplink_bw_mat is not None:
+            params['bw'] = self.net_uplink_bw_mat[id1][id2]
         if self.net_loss_mat is not None:
             params['loss'] = self.net_loss_mat[id1][id2]
         if self.net_latency_mat is not None:
@@ -233,7 +243,7 @@ class ContainerizedNetwork (INetwork):
             # params['latency_ms'] = int(self.net_latency_mat[id1][id2])
         if self.net_jitter_mat is not None:
             params['jitter'] = self.net_jitter_mat[id1][id2]
-        params['max_queue_size'] = 20000000
+        params['max_queue_size'] = 10000000
         # params['use_hfsc'] = True
         params['use_tbf'] = True
         link = self.containernet.addLink(
@@ -241,6 +251,57 @@ class ContainerizedNetwork (INetwork):
             self.hosts[id2].get_host(),
             port1, port2, cls=TCLink, **params)
         return link
+
+    def _addLink2(
+            self,
+            id1,
+            id2,
+            port1=None,  # used to attach the interface to a switch.
+            port2=None,  # used to attach the interface to a switch.
+            cls=None,
+            **params):
+        # id1(host1)    -->    id2(host2)
+        host1 = self.hosts[id1].get_host()
+        host2 = self.hosts[id2].get_host()
+
+        res = self.containernet.addLink(
+            host1,
+            host2,
+            port1, port2, cls, **params)
+
+        uplink_output_bandwidth_limit = "pfifo"
+        downlink_output_bandwidth_limit = "pfifo"
+        if self.net_uplink_bw_mat is not None:
+            uplink_output_bandwidth_limit = f"tbf rate {self.net_uplink_bw_mat[id1][id2]}mbit"
+            uplink_output_bandwidth_limit += f" burst {self.net_uplink_bw_mat[id1][id2]*1.25}kb latency 1ms"
+        if self.net_downlink_bw_mat is not None:
+            downlink_output_bandwidth_limit = f"tbf rate {self.net_downlink_bw_mat[id1][id2]}mbit"
+            downlink_output_bandwidth_limit += f" burst {self.net_downlink_bw_mat[id1][id2]*1.25}kb latency 1ms"
+        loss_parameters = ""
+        if self.net_loss_mat is not None:
+            loss_parameters = f" loss {self.net_loss_mat[id1][id2]}"
+        if self.net_latency_mat is not None:
+            delay = self.net_latency_mat[id1][id2]
+            if delay > 0:
+                loss_parameters += f" delay {delay}ms"
+                if self.net_jitter_mat is not None:
+                    jitter = self.net_jitter_mat[id1][id2]
+                    if jitter > 0:
+                        loss_parameters += f" {self.net_jitter_mat[id1][id2]}ms distribution normal"
+
+        self._setup_tc(host1, res.intf1.name, "ifb0", uplink_output_bandwidth_limit, loss_parameters)
+        self._setup_tc(host2, res.intf2.name, "ifb1", downlink_output_bandwidth_limit, loss_parameters)
+
+        return res
+
+    def _setup_tc(self, host, interface, ifb, bandwidth_limit, loss_parameters):
+        host.cmd(f"tc qdisc add dev {interface} root handle 1: {bandwidth_limit}")
+        host.cmd(f"ip link add name {ifb} type ifb")
+        host.cmd(f"ip link set {ifb} up")
+        host.cmd(f"tc qdisc add dev {interface} ingress")
+        host.cmd(f"tc filter add dev {interface} parent ffff: protocol ip u32 "
+                    f"match u32 0 0 action mirred egress redirect dev {ifb}")
+        host.cmd(f"tc qdisc add dev {ifb} root netem{loss_parameters} limit 10000000")
 
     def _check_node_vols(self):
         if not os.path.exists('/usr/bin/perf') or \
