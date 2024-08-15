@@ -85,6 +85,7 @@ def setup_test(test_case_yaml, network: INetwork):
                     bats = BTP(bats_proto_config)
                     logging.info("Added bats BTP protocol.")
                 elif proto == 'brtp':
+                    bats_proto_config.protocol_args += " --tun_protocol=BRTP"
                     bats = BRTP(bats_proto_config)
                     logging.info("Added bats BRTP protocol.")
                 elif proto == 'brtp_proxy':
