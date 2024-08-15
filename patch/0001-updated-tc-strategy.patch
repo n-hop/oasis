@@ -1,5 +1,5 @@
 --- /containernet/mininet/link.py	2024-08-14 10:03:50.725159520 +0800
-+++ ./containernet/mininet/link.py	2024-08-14 12:32:30.137425536 +0800
++++ ./containernet/mininet/link.py	2024-08-15 12:54:49.453600881 +0800
 @@ -39,7 +39,7 @@
      "Basic interface object that can configure itself."
  
@@ -117,7 +117,7 @@
 +        delaycmds, ifb_delaycmds, parent = self.delayCmds( delay=delay, jitter=jitter,
                                              loss=loss,
                                              max_queue_size=max_queue_size,
-+                                            ts_on_ingress=apply_tc_on_ingress,
++                                            ts_on_ingress=ts_on_ingress,
 +                                            port=self.port,
                                              parent=parent )
          cmds += delaycmds

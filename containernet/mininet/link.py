@@ -415,7 +415,7 @@ class TCIntf( Intf ):
         delaycmds, ifb_delaycmds, parent = self.delayCmds( delay=delay, jitter=jitter,
                                             loss=loss,
                                             max_queue_size=max_queue_size,
-                                            ts_on_ingress=apply_tc_on_ingress,
+                                            ts_on_ingress=ts_on_ingress,
                                             port=self.port,
                                             parent=parent )
         cmds += delaycmds
