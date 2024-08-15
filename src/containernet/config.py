@@ -15,8 +15,8 @@ class MatrixType(IntEnum):
     # Adjacency matrix to describe the network topology
     ADJACENCY_MATRIX = 0
     # Bandwidth matrix to describe the network bandwidth link-by-link
-    UPLINK_BANDW_MATRIX = 1
-    DOWNLINK_BANDW_MATRIX = 2
+    FORWARD_BANDW_MATRIX = 1
+    BACKWARD_BANDW_MATRIX = 2
     # Loss matrix to describe the network loss link-by-link
     LOSS_MATRIX = 3
     # Latency matrix to describe the network latency link-by-link

@@ -107,12 +107,12 @@ class ContainerizedNetwork (INetwork):
         if self.net_loss_mat != top.get_matrix(MatrixType.LOSS_MATRIX):
             is_changed = True
             logging.info("Oasis detected the loss matrix change.")
-        if self.net_uplink_bw_mat != top.get_matrix(MatrixType.UPLINK_BANDW_MATRIX):
+        if self.net_forward_bw_mat != top.get_matrix(MatrixType.FORWARD_BANDW_MATRIX):
             is_changed = True
-            logging.info("Oasis detected the uplink bandwidth matrix change.")
-        if self.net_downlink_bw_mat != top.get_matrix(MatrixType.DOWNLINK_BANDW_MATRIX):
+            logging.info("Oasis detected the forward bandwidth matrix change.")
+        if self.net_backward_bw_mat != top.get_matrix(MatrixType.BACKWARD_BANDW_MATRIX):
             is_changed = True
-            logging.info("Oasis detected the downlink bandwidth matrix change.")
+            logging.info("Oasis detected the backward bandwidth matrix change.")
         if self.net_latency_mat != top.get_matrix(MatrixType.LATENCY_MATRIX):
             is_changed = True
             logging.info("Oasis detected the latency matrix change.")
@@ -125,18 +125,18 @@ class ContainerizedNetwork (INetwork):
         self.net_mat = net_topology.get_matrix(MatrixType.ADJACENCY_MATRIX)
         self.net_loss_mat = net_topology.get_matrix(
             MatrixType.LOSS_MATRIX)
-        self.net_uplink_bw_mat = net_topology.get_matrix(
-            MatrixType.UPLINK_BANDW_MATRIX)
-        self.net_downlink_bw_mat = net_topology.get_matrix(
-            MatrixType.DOWNLINK_BANDW_MATRIX)
+        self.net_forward_bw_mat = net_topology.get_matrix(
+            MatrixType.FORWARD_BANDW_MATRIX)
+        self.net_backward_bw_mat = net_topology.get_matrix(
+            MatrixType.BACKWARD_BANDW_MATRIX)
         self.net_latency_mat = net_topology.get_matrix(
             MatrixType.LATENCY_MATRIX)
         self.net_jitter_mat = net_topology.get_matrix(
             MatrixType.JITTER_MATRIX)
         logging.info('self.net_mat %s', self.net_mat)
         logging.info('self.net_loss_mat %s', self.net_loss_mat)
-        logging.info('self.net_uplink_bw_mat %s', self.net_uplink_bw_mat)
-        logging.info('self.net_downlink_bw_mat %s', self.net_downlink_bw_mat)
+        logging.info('self.net_forward_bw_mat %s', self.net_forward_bw_mat)
+        logging.info('self.net_backward_bw_mat %s', self.net_backward_bw_mat)
         logging.info('self.net_latency_mat %s', self.net_latency_mat)
         logging.info('self.net_jitter_mat %s', self.net_jitter_mat)
 
@@ -234,8 +234,8 @@ class ContainerizedNetwork (INetwork):
         # net.addLink(s1, s2, cls=TCLink, \
             delay = "100ms", bw = 1, loss = 10, jitter = 5)
         '''
-        if self.net_uplink_bw_mat is not None:
-            params['bw'] = self.net_uplink_bw_mat[id1][id2]
+        if self.net_forward_bw_mat is not None:
+            params['bw'] = self.net_forward_bw_mat[id1][id2]
         if self.net_loss_mat is not None:
             params['loss'] = self.net_loss_mat[id1][id2]
         if self.net_latency_mat is not None:
@@ -269,14 +269,14 @@ class ContainerizedNetwork (INetwork):
             host2,
             port1, port2, cls, **params)
 
-        uplink_output_bandwidth_limit = "pfifo"
-        downlink_output_bandwidth_limit = "pfifo"
-        if self.net_uplink_bw_mat is not None:
-            uplink_output_bandwidth_limit = f"tbf rate {self.net_uplink_bw_mat[id1][id2]}mbit"
-            uplink_output_bandwidth_limit += f" burst {self.net_uplink_bw_mat[id1][id2]*1.25}kb latency 1ms"
-        if self.net_downlink_bw_mat is not None:
-            downlink_output_bandwidth_limit = f"tbf rate {self.net_downlink_bw_mat[id1][id2]}mbit"
-            downlink_output_bandwidth_limit += f" burst {self.net_downlink_bw_mat[id1][id2]*1.25}kb latency 1ms"
+        forward_bw_limit = "pfifo"
+        backward_bw_limit = "pfifo"
+        if self.net_forward_bw_mat is not None:
+            forward_bw_limit = f"tbf rate {self.net_forward_bw_mat[id1][id2]}mbit"
+            forward_bw_limit += f" burst {self.net_forward_bw_mat[id1][id2]*1.25}kb latency 1ms"
+        if self.net_backward_bw_mat is not None:
+            backward_bw_limit = f"tbf rate {self.net_backward_bw_mat[id1][id2]}mbit"
+            backward_bw_limit += f" burst {self.net_backward_bw_mat[id1][id2]*1.25}kb latency 1ms"
         loss_parameters = ""
         if self.net_loss_mat is not None:
             loss_parameters = f" loss {self.net_loss_mat[id1][id2]}"
@@ -289,8 +289,8 @@ class ContainerizedNetwork (INetwork):
                     if jitter > 0:
                         loss_parameters += f" {self.net_jitter_mat[id1][id2]}ms distribution normal"
 
-        self._setup_tc(host1, res.intf1.name, "ifb0", uplink_output_bandwidth_limit, loss_parameters)
-        self._setup_tc(host2, res.intf2.name, "ifb1", downlink_output_bandwidth_limit, loss_parameters)
+        self._setup_tc(host1, res.intf1.name, "ifb0", forward_bw_limit, loss_parameters)
+        self._setup_tc(host2, res.intf2.name, "ifb1", backward_bw_limit, loss_parameters)
 
         return res
 
