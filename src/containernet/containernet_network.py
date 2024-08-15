@@ -197,11 +197,9 @@ class ContainerizedNetwork (INetwork):
                                    params1={'ip': left_ip},
                                    params2={'ip': right_ip}
                                    )'''
-                    self._addLink2(self.hosts[i].get_host(), self.hosts[j].get_host(),
-                                   params1={
-                                       'ip': left_ip},
-                                   params2={
-                                       'ip': right_ip}
+                    self._addLink2(i, j,
+                                   params1={'ip': left_ip},
+                                   params2={'ip': right_ip}
                                    )
                     self.pair_to_link_ip[(
                         self.hosts[i],
@@ -215,18 +213,6 @@ class ContainerizedNetwork (INetwork):
                          self.hosts[i].name())
             self.hosts[i].cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
             self.hosts[i].cmd('sysctl -p')
-            if i + 1 < self.num_of_hosts:
-                bandwidth = self.net_bw_mat[i][i + 1]
-                loss = str(self.net_loss_mat[i][i + 1]) + '%'
-                delay = str(self.net_latency_mat[i][i + 1])
-                loss_delay = f"{loss} {delay}"
-            else:
-                bandwidth = self.net_bw_mat[i][i - 1]
-                loss = str(self.net_loss_mat[i][i - 1]) + '%'
-                delay = str(self.net_latency_mat[i][i - 1])
-                loss_delay = f"{loss} {delay}"
-            self.set_link_params(
-                i, self.num_of_hosts, self.hosts[i], bandwidth, loss_delay)
         logging.info(
             "############### Oasis Init Networking done ###########")
         return True
@@ -252,10 +238,8 @@ class ContainerizedNetwork (INetwork):
             # params['latency_ms'] = int(self.net_latency_mat[id1][id2])
         if self.net_jitter_mat is not None:
             params['jitter'] = self.net_jitter_mat[id1][id2]
-        params['max_queue_size'] = 20000000
+        params['max_queue_size'] = 10000000
         params['use_tbf'] = True
-        # apply the traffic shaping on the ingress interface.
-        params['ts_on_ingress'] = True
         link = self.containernet.addLink(
             self.hosts[id1].get_host(),
             self.hosts[id2].get_host(),
@@ -270,59 +254,48 @@ class ContainerizedNetwork (INetwork):
             port2=None,  # used to attach the interface to a switch.
             cls=None,
             **params):
-        return self.containernet.addLink(id1, id2, port1, port2, cls, **params)
+        res = self.containernet.addLink(
+            self.hosts[id1].get_host(),
+            self.hosts[id2].get_host(),
+            port1, port2, cls, **params)
+        link_left = res.intf1.name
+        link_right = res.intf2.name
+        bandwidth_limit = "pfifo"
+        if self.net_bw_mat is not None:
+            bandwidth_limit = f"tbf rate {self.net_bw_mat[id1][id2]}mbit"
+            bandwidth_limit += f" burst {self.net_bw_mat[id1][id2]*1.25}kb latency 1ms"
+        loss_parameters = ""
+        if self.net_loss_mat is not None:
+            loss_parameters = f" loss {self.net_loss_mat[id1][id2]}"
+        if self.net_latency_mat is not None:
+            delay = self.net_latency_mat[id1][id2]
+            if delay > 0:
+                loss_parameters += f" delay {delay}ms"
+                if self.net_jitter_mat is not None:
+                    jitter = self.net_jitter_mat[id1][id2]
+                    if jitter > 0:
+                        loss_parameters += f" {self.net_jitter_mat[id1][id2]}ms distribution normal"
+    
+        host_left = self.hosts[id1].get_host()
+        host_left.cmd(f"tc qdisc add dev {link_left} root handle 1: {bandwidth_limit}")
+        host_left.cmd(f"ip link add name ifb0 type ifb")
+        host_left.cmd(f"ip link set ifb0 up")
+        host_left.cmd(f"tc qdisc add dev {link_left} ingress")
+        host_left.cmd(f"tc filter add dev {link_left} parent ffff: protocol ip u32 "
+                      f"match u32 0 0 action mirred egress redirect dev ifb0")
+        host_left.cmd(f"tc qdisc add dev ifb0 root netem{loss_parameters} limit 10000000")
 
-    def set_link_params(
-            self,
-            host_id,
-            host_num,
-            host,
-            bandwidth=None,
-            loss_parameters=None):
-        '''
-        Old way to set link parameters, but only works for linear topology.
-        '''
-        left_interface = f'h{host_id}-eth0'
-        right_interface = f'h{host_id}-eth1'
-        if bandwidth is not None:
-            bandwidth_limit = f"tbf rate {bandwidth}mbit burst {bandwidth*1.25}kb latency 1ms"
-        else:
-            bandwidth_limit = "pfifo"
-        tc_loss_string_left = ''
-        tc_loss_string_right = ''
-        if loss_parameters is not None:
-            tc_loss_string_left = f" loss {loss_parameters}"
-            tc_loss_string_right = f" loss {loss_parameters}"
-        # tc_bandwidth_cmd_left
-        host.cmd(
-            f"tc qdisc add dev {left_interface} root handle 1: {bandwidth_limit}")
-        # tc_bandwidth_cmd_right : the first and last node didn't use eth1
-        # eth0 <---> eth0 ... eth1 <----> eth0
-        if host_id not in (0, host_num - 1):
-            host.cmd(
-                f"tc qdisc add dev {right_interface} root handle 1: {bandwidth_limit}")
-        # tc_loss_cmd_left
-        host.cmd(f"ip link add name ifb0 type ifb")
-        host.cmd(f"ip link set ifb0 up")
-        host.cmd(f"tc qdisc add dev {left_interface} ingress")
-        host.cmd(
-            f"tc filter add dev {left_interface} parent ffff: protocol ip u32 "
-            f"match u32 0 0 action mirred egress redirect dev ifb0"
-        )
-        host.cmd(
-            f"tc qdisc add dev ifb0 root netem{tc_loss_string_left} limit 10000000")
+        # ingress direction
+        host_right = self.hosts[id2].get_host()
+        host_right.cmd(f"tc qdisc add dev {link_right} root handle 1: {bandwidth_limit}")
+        host_right.cmd(f"ip link add name ifb1 type ifb")
+        host_right.cmd(f"ip link set ifb1 up")
+        host_right.cmd(f"tc qdisc add dev {link_right} ingress")
+        host_right.cmd(f"tc filter add dev {link_right} parent ffff: protocol ip u32 "
+                       f"match u32 0 0 action mirred egress redirect dev ifb1")
+        host_right.cmd(f"tc qdisc add dev ifb1 root netem{loss_parameters} limit 10000000")
 
-        # tc_loss_cmd_right
-        if host_id not in (0, host_num - 1):
-            host.cmd(f"ip link add name ifb1 type ifb")
-            host.cmd(f"ip link set ifb1 up")
-            host.cmd(f"tc qdisc add dev {right_interface} ingress")
-            host.cmd(
-                f"tc filter add dev {right_interface} parent ffff: protocol ip u32 "
-                f"match u32 0 0 action mirred egress redirect dev ifb1"
-            )
-            host.cmd(
-                f"tc qdisc add dev ifb1 root netem{tc_loss_string_right} limit 10000000")
+        return res
 
     def _check_node_vols(self):
         if not os.path.exists('/usr/bin/perf') or \
