@@ -12,6 +12,14 @@ class TestType(IntEnum):
     jitter = 2
 
 
+# add mapping for the test type
+test_type_str_mapping = {
+    TestType.throughput: "throughput",
+    TestType.latency: "latency",
+    TestType.jitter: "jitter"
+}
+
+
 @dataclass
 class TestConfig:
     """
@@ -55,8 +63,8 @@ class ITestSuite(ABC):
     def __init__(self, config: TestConfig) -> None:
         self.config = config
         self.result = TestResult(
-            False, f"{self.__class__.__name__}_{TestType(self.config.test_type)}"
-            f"_{self.config.client_host}_{self.config.server_host}.log")
+            False, f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
+            f"_h{self.config.client_host}_h{self.config.server_host}.log")
 
     @abstractmethod
     def post_process(self):
