@@ -154,13 +154,13 @@ def load_top_config(test_case_yaml) -> TopologyConfig:
     """Load network related configuration from the yaml file.
     """
     if 'topology' not in test_case_yaml:
-        logging.error(f"Error: missing key topology in the test case yaml.")
+        logging.error("Error: missing key topology in the test case yaml.")
         return None
     local_yaml = test_case_yaml['topology']
     logging.info(f"Test: local_yaml %s",
                  local_yaml)
     if local_yaml is None:
-        logging.error(f"Error: content of topology is None.")
+        logging.error("Error: content of topology is None.")
         return None
     loaded_conf = IConfig.load_yaml_config(
         local_yaml, 'topology')

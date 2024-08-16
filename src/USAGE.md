@@ -4,7 +4,7 @@
 sudo python3 src/start.py -n src/config/nested-containernet-config.yaml \
     --containernet=nuc_sz \
     -w {workspace} \
-    -t src/config/one-concrete-test.yaml
+    -t src/config/protocol-test.yaml
 ```
 
 If image `bats_containernet:dev` is available in local, use `--containernet=nuc_sz`; otherwise, use `--containernet=default`.
