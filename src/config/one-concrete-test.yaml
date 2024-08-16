@@ -1,18 +1,21 @@
 # test case yaml file is only visible to the `run_test.py`
-test:
+containernet:
+  node_config:
+    config_name: default
+    config_file: src/config/predefined.node_config.yaml
+
+tests:
   TEST_CASE_1:
     description: "Test example"
-    if: true # set false, if you want to skip this test
     topology:
       config_name: linear_network_6
       config_file: src/config/predefined.topology.yaml
-    node_config:
-      config_name: default
-      config_file: src/config/predefined.node_config.yaml
     strategy:
       matrix:
         target_protocols: [brtp_proxy] # brtp, brtp_proxy, kcp, tcp
-        bats_protocol_version: [latest] # v3.5.0, latest
+        bats_version: [latest] # v3.5.0, latest
+        tcp_version: [cubic] # default:cubic; optional: bbr, reno
+        kcp_version: [latest]
     route: static_route
     test_tools:
       - name: iperf

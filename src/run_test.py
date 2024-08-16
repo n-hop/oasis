@@ -11,7 +11,7 @@ from interfaces.network import INetwork
 from containernet.linear_topology import LinearTopology
 from containernet.containernet_network import ContainerizedNetwork
 from containernet.config import (
-    IConfig, NodeConfig, TopologyConfig, supported_config_keys)
+    IConfig, NodeConfig, TopologyConfig)
 from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
@@ -34,7 +34,7 @@ def load_test(test_yaml_file: str):
     with open(test_yaml_file, 'r', encoding='utf-8') as stream:
         try:
             yaml_content = yaml.safe_load(stream)
-            test_cases = yaml_content["test"]
+            test_cases = yaml_content["tests"]
         except yaml.YAMLError as exc:
             logging.error(exc)
             return None
@@ -81,9 +81,17 @@ def setup_test(test_case_yaml, network: INetwork):
     """
     # read the strategy matrix
     strategy = test_case_yaml['strategy']
+    if strategy is None:
+        logging.error("Error: strategy is None.")
+        return
     matrix = strategy['matrix']
+    if matrix is None:
+        logging.error("Error: strategy is empty.")
+        return
     target_protocols = matrix['target_protocols']
-    bats_protocol_version = matrix['bats_protocol_version']
+    bats_version = matrix['bats_version']
+    # tcp_version = matrix['tcp_version']
+    # kcp_version = matrix['kcp_version']
     for proto in target_protocols:
         if proto not in SupportedProto:
             logging.error(
@@ -91,7 +99,7 @@ def setup_test(test_case_yaml, network: INetwork):
             continue
         if proto in SupportedBATSProto:
             # combine the protocol with the its version
-            for version in bats_protocol_version:
+            for version in bats_version:
                 bats_proto_config = ProtoConfig(
                     protocol_path="/root/bats/bats_protocol",
                     protocol_args="--daemon_enabled=true",
@@ -121,29 +129,45 @@ def setup_test(test_case_yaml, network: INetwork):
     logging.info("Route: %s", route)
 
 
-def load_net_config(test_case_yaml) -> Tuple[NodeConfig, TopologyConfig]:
+def load_node_config(file_path) -> NodeConfig:
+    """Load node related configuration from the yaml file.
+    """
+    node_config_yaml = None
+    with open(file_path, 'r', encoding='utf-8') as stream:
+        try:
+            yaml_content = yaml.safe_load(stream)
+            if yaml_content['containernet'] is None:
+                logging.error("Error: no containernet node config.")
+                return None
+            node_config_yaml = yaml_content['containernet']["node_config"]
+        except yaml.YAMLError as exc:
+            logging.error(exc)
+            return None
+    if node_config_yaml is None:
+        logging.error("Error: no containernet node config.")
+        return None
+    return IConfig.load_yaml_config(
+        node_config_yaml, 'node_config')
+
+
+def load_top_config(test_case_yaml) -> TopologyConfig:
     """Load network related configuration from the yaml file.
     """
-    configs = []
-    for key in supported_config_keys:
-        if key not in test_case_yaml:
-            logging.error(
-                f"Error: missing key %s in the test case yaml.",
-                key)
-            return None, None
-        local_yaml = test_case_yaml[key]
-        logging.info(f"Test: local_yaml %s",
-                     local_yaml)
-        if local_yaml is None:
-            logging.error(f"Error: content of %s is None.", key)
-            return None, None
-        loaded_conf = IConfig.load_yaml_config(
-            local_yaml, key)
-        if loaded_conf is None:
-            logging.error("Error: loaded_conf of %s is None.", key)
-            return None, None
-        configs.append(loaded_conf)
-    return configs[0], configs[1]
+    if 'topology' not in test_case_yaml:
+        logging.error(f"Error: missing key topology in the test case yaml.")
+        return None
+    local_yaml = test_case_yaml['topology']
+    logging.info(f"Test: local_yaml %s",
+                 local_yaml)
+    if local_yaml is None:
+        logging.error(f"Error: content of topology is None.")
+        return None
+    loaded_conf = IConfig.load_yaml_config(
+        local_yaml, 'topology')
+    if loaded_conf is None:
+        logging.error("Error: loaded_conf of topology is None.")
+        return None
+    return loaded_conf
 
 
 def build_topology(top_config: TopologyConfig):
@@ -182,11 +206,17 @@ if __name__ == '__main__':
         logging.info(f"Error: %s does not exist.", yaml_file_path)
         sys.exit(1)
     linear_network = None
+    cur_node_config = load_node_config(yaml_file_path)
+    if cur_node_config is None:
+        logging.error("Error: no containernet node config.")
+        sys.exit(1)
+    # mount the workspace
+    cur_node_config.node_vols.append(f'{cur_workspace}:{mapped_workspace}')
+
+    # load all cases
     all_tests = load_test(yaml_file_path)
     for test in all_tests:
-        cur_node_config, cur_top_config = load_net_config(test)
-        # mount the workspace
-        cur_node_config.node_vols.append(f'{cur_workspace}:{mapped_workspace}')
+        cur_top_config = load_top_config(test)
         if linear_network is None:
             linear_network = build_network(cur_node_config, cur_top_config)
             linear_network.start()
