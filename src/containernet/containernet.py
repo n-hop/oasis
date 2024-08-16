@@ -98,11 +98,15 @@ class NestedContainernet():
         return ret == 0
 
     def patch(self):
-        patch_cmd = f"docker exec {self.test_container_name} "\
-            f"/bin/bash -c \"cd / && patch -p0 < /root/patch/0001-updated-tc-strategy.patch\""
-        os.system(patch_cmd)
-        logging.info(
-            f"Oasis execute patch command \" %s \"", patch_cmd)
+        '''Apply patches to the nested containernet source code.'''
+        for _, _, files in os.walk(f"/root/patch"):
+            for patch_file in files:
+                if patch_file.endswith(".patch"):
+                    patch_cmd = f"docker exec {self.test_container_name} "\
+                        f"/bin/bash -c \"cd / && patch -p0 < /root/patch/{patch_file}\""
+                    os.system(patch_cmd)
+                    logging.info(
+                        f"Oasis execute patch command \" %s \"", patch_cmd)
 
     def execute(self, cmd):
         test_case_cmd = f"docker exec {self.test_container_name} "\
