@@ -1,8 +1,8 @@
-# Traffic shape (tc)
+# Traffic control (tc)
 
 ## tc in Linux
 
-In Linux, the traffic shaping is implemented by the `tc` command. See details in [tc(8)](https://www.man7.org/linux/man-pages/man8/tc.8.html)
+In Linux, the traffic control for shaping the flow is implemented by the `tc` command. See details in [tc(8)](https://www.man7.org/linux/man-pages/man8/tc.8.html)
 
 ## tc strategy in Oasis
 
