@@ -29,6 +29,9 @@
     "BANDW",
     "testsuites",
     "protosuites",
-    "BRTP"
+    "BRTP",
+    "qdisc",
+    "noqueue",
+    "priomap"
   ]
 }

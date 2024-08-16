@@ -15,17 +15,17 @@ class IperfTest(ITestSuite):
 
     def _run_iperf(self, client, server, recv_port, recv_ip):
         server.cmd(f'nohup iperf3 -s -p {recv_port} -i {int(self.config.interval)} -V --forceflush'
-                   f' --logfile {self.config.log_file} &')
+                   f' --logfile {self.result.record} &')
         res = client.popen(f'iperf3 -c {recv_ip} -p {recv_port} -i {int(self.config.interval)}'
                            f' -t {int(self.config.interval_num * self.config.interval)}').stdout.read().decode('utf-8')
         logging.info('iperf client output: %s', res)
+        logging.info('iperf test result save to %s', self.result.record)
         time.sleep(1)
         client.cmd('pkill -f iperf3')
         server.cmd('pkill -f iperf3')
         return True
 
     def _run_test(self, network: INetwork, proto: IProtoInfo):
-        self.config.log_file = f"iperf3_{proto.get_protocol_name()}.log"
         hosts = network.get_hosts()
         client = None
         server = None

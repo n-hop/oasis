@@ -24,7 +24,7 @@ class PingTest(ITestSuite):
                     "%s to %s ###############", hosts[i].name(), hosts[0].name())
                 res = hosts[i].cmd(f'ping -c 5 -W 1 -i 0.1 '
                                    f'{hosts[0].IP()}'
-                                   f' > {self.config.log_file}')
+                                   f' > {self.result.record}')
                 logging.info('host %s', res)
                 if "100% packet loss" in res:
                     logging.error("Ping test failed")
