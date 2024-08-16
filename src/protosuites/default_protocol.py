@@ -1,8 +1,12 @@
 from interfaces.network import INetwork
-from .proto import IProtoSuite
+from protosuites.proto import (ProtoConfig, IProtoSuite)
+from .proto_info import IProtoInfo
 
 
-class DefaultProtocol(IProtoSuite):
+class DefaultProtocol(IProtoSuite, IProtoInfo):
+    def __init__(self, config: ProtoConfig):
+        super().__init__(config)
+
     def post_run(self, network: INetwork):
         return True
 
@@ -20,3 +24,6 @@ class DefaultProtocol(IProtoSuite):
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass
+    
+    def get_protocol_name(self) -> str:
+        return "default"

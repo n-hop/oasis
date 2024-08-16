@@ -17,6 +17,7 @@ from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
 from protosuites.proto import (ProtoConfig, SupportedProto, SupportedBATSProto)
+from protosuites.tcp_protocol import TCPProtocol
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
@@ -92,6 +93,10 @@ def setup_test(test_case_yaml, network: INetwork):
                     bats = BRTPProxy(bats_proto_config)
                     logging.info("Added bats BRTP proxy protocol.")
                 network.add_protocol_suite(bats)
+        elif proto == 'tcp':
+            config = ProtoConfig()
+            network.add_protocol_suite(TCPProtocol(config))
+            logging.info("Added TCP protocol.")
         else:
             logging.error(
                 f"Error: not implemented protocol %s", proto)
