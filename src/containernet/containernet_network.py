@@ -2,7 +2,6 @@ import logging
 import os
 from mininet.net import Containernet
 from mininet.util import ipStr, netParse
-from mininet.link import TCLink
 from containernet.topology import (ITopology, MatrixType)
 from containernet.containernet_host import ContainernetHostAdapter
 from interfaces.network import INetwork
@@ -216,32 +215,73 @@ class ContainerizedNetwork (INetwork):
             self,
             id1,
             id2,
-            port1=None,  # used to attach the interface to a switch.
-            port2=None,  # used to attach the interface to a switch.
             **params):
-        ''' Set link parameters
-        # Link with TC interfaces
-        # net.addLink(s1, s2, cls=TCLink, \
-            delay = "100ms", bw = 1, loss = 10, jitter = 5)
-        '''
-        if self.net_bw_mat is not None:
-            params['bw'] = self.net_bw_mat[id1][id2]
-        if self.net_loss_mat is not None:
-            params['loss'] = self.net_loss_mat[id1][id2]
-        if self.net_latency_mat is not None:
-            params['delay'] = str(self.net_latency_mat[id1][id2]) + 'ms'
-            # params['latency_ms'] = int(self.net_latency_mat[id1][id2])
-        if self.net_jitter_mat is not None:
-            params['jitter'] = self.net_jitter_mat[id1][id2]
-        params['max_queue_size'] = 20000000
-        params['use_tbf'] = True
-        # apply the traffic shaping on the ingress interface.
-        params['ts_on_ingress'] = True
         link = self.containernet.addLink(
             self.hosts[id1].get_host(),
-            self.hosts[id2].get_host(),
-            port1, port2, cls=TCLink, **params)
+            self.hosts[id2].get_host(), cls=None, **params)
+        # apply the traffic shaping on the ingress interface.
+        self._bandwidth_limit_on_egress(link, id1, id2)
+        # direction from host1 to host2, setup ifb on host2
+        self._traffic_shaping_on_ingress(id1, id2, link.intf2.name)
+        # direction from host2 to host1, setup ifb on host1
+        self._traffic_shaping_on_ingress(id2, id1, link.intf1.name)
         return link
+
+    def _bandwidth_limit_on_egress(self, link, id1, id2):
+        """
+            Apply the bandwidth limit on the egress interface.
+            Set the interface(attached to link) of host1 with the bandwidth limit.
+            Set the interface(attached to link) of host2 with the bandwidth limit.
+        """
+        def __set_bw_limit_on(host, attached_inf, bw_limit):
+            host.cmd(
+                f"tc qdisc add dev {attached_inf} root handle 1: {bw_limit}")
+            logging.info(
+                "apply bandwidth limit on egress interface %s with %s", attached_inf, bw_limit)
+            return True
+        default_queueing_strategy = "pfifo"
+        bw_limit1 = default_queueing_strategy
+        bw_limit2 = default_queueing_strategy
+        if self.net_bw_mat is not None:
+            # bw from host1 to host2
+            bw_limit1 = f"tbf rate {self.net_bw_mat[id1][id2]}mbit"
+            bw_limit1 += f" burst {self.net_bw_mat[id1][id2]*1.25}kb latency 1ms"
+            # bw from host2 to host1
+            bw_limit2 = f"tbf rate {self.net_bw_mat[id2][id1]}mbit"
+            bw_limit2 += f" burst {self.net_bw_mat[id2][id1]*1.25}kb latency 1ms"
+        __set_bw_limit_on(self.hosts[id1], link.intf1.name, bw_limit1)
+        __set_bw_limit_on(self.hosts[id2], link.intf2.name, bw_limit2)
+
+    def _traffic_shaping_on_ingress(self, id1, id2, attached_inf):
+        """
+        Apply the traffic shaping(latency,jitter,loss) on the ingress interface.
+        id1: the source host id.
+        id2: the destination host id. Do the traffic shaping on `host2`.
+        attached_inf: the interface to be set with the traffic shaping. 
+        """
+        shaping_parameters = ""
+        if self.net_loss_mat is not None:
+            shaping_parameters += f" loss {self.net_loss_mat[id1][id2]}%"
+        if self.net_latency_mat is not None:
+            delay = self.net_latency_mat[id1][id2]
+            if delay > 0:
+                shaping_parameters += f" delay {delay}ms"
+                if self.net_jitter_mat is not None:
+                    jitter = self.net_jitter_mat[id1][id2]
+                    if jitter > 0:
+                        shaping_parameters += f" {self.net_jitter_mat[id1][id2]}ms distribution normal"
+        logging.info("shaping_parameters %s", shaping_parameters)
+        port = attached_inf[-1]
+        ifb_interface = f"ifb{port}"
+        self.hosts[id2].cmd(f"ip link add name {ifb_interface} type ifb")
+        self.hosts[id2].cmd(f"ip link set {ifb_interface} up")
+        self.hosts[id2].cmd(
+            f"tc qdisc add dev {attached_inf} ingress")
+        self.hosts[id2].cmd(f"tc filter add dev {attached_inf} parent ffff: protocol ip u32 "
+                            f"match u32 0 0 action mirred egress redirect dev {ifb_interface}")
+        self.hosts[id2].cmd(
+            f"tc qdisc add dev {ifb_interface} root netem{shaping_parameters} limit 20000000")
+        return True
 
     def _check_node_vols(self):
         if not os.path.exists('/usr/bin/perf') or \
