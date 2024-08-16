@@ -1,9 +1,12 @@
 # import logging
+from protosuites.proto import (ProtoConfig, IProtoSuite)
 from interfaces.network import INetwork
-from .proto import IProtoSuite
+from .proto_info import IProtoInfo
 
+class KCPProtocol(IProtoSuite, IProtoInfo):
+    def __init__(self, config:ProtoConfig):
+        super().__init__(config)
 
-class KCPProtocol(IProtoSuite):
     def post_run(self, network: INetwork):
         return True
 
@@ -21,3 +24,6 @@ class KCPProtocol(IProtoSuite):
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass
+
+    def get_protocol_name(self) -> str:
+        return "KCP"
