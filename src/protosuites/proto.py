@@ -26,7 +26,7 @@ class IProtoSuite(ABC):
         return self.config
 
     def is_distributed(self) -> bool:
-        return False
+        return True
 
     @abstractmethod
     def post_run(self, network: 'INetwork'):  # type: ignore

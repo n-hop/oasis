@@ -65,7 +65,7 @@ class INetwork(ABC):
         result_files = []
         for test in self.test_suites:
             for proto in self.proto_suites:
-                if proto.is_distributed() and \
+                if not proto.is_distributed() and \
                     test.config.client_host is not None and \
                     test.config.server_host is not None:
                     proto.get_config().hosts = [test.config.client_host, test.config.server_host]

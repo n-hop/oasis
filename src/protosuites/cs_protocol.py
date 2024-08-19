@@ -10,7 +10,7 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         self.server = server
 
     def is_distributed(self) -> bool:
-        return True
+        return False
 
     def post_run(self, network: INetwork):
         return self.client.post_run(network) and self.server.post_run(network)
