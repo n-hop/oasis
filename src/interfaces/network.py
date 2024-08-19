@@ -67,18 +67,22 @@ class INetwork(ABC):
                 # start the protocol
                 proto.start(self, test.config.client_host, test.config.server_host)
                 # run `test` on `network`(self) specified by `proto`
-                test.run(self, proto)
+                result = test.run(self, proto)
                 if test.type() not in test_results:
                     test_results[test.type()] = []
-                test_results[test.type()].append(test.log_file())
+                # save the test result
+                test_results[test.type()].append(result)
                 # stop the protocol
                 proto.stop(self)
         # Analyze the test results
-        for test_type, log_files in test_results.items():
-            # analyze the test results
+        for test_type, test_results in test_results.items():
+            result_files = []
+            for result in test_results:
+                result_files.append(result.record)
+            # analyze those results files according to the test type
             if test_type == TestType.throughput:
                 config = AnalyzerConfig(
-                    input=log_files, output="iperf3_throughput.svg")
+                    input=result_files, output="iperf3_throughput.svg")
                 analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
                 analyzer.analyze()
                 analyzer.visualize()
