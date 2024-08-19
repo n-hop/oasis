@@ -33,11 +33,11 @@ class IProtoSuite(ABC):
     def run(self, network: 'INetwork'):  # type: ignore
         pass
 
-    def start(self, network: 'INetwork'):  # type: ignore
+    def start(self, network: 'INetwork', client_host:int, server_host:int):  # type: ignore
         self.is_success = self.pre_run(network)
         if not self.is_success:
             return
-        self.is_success = self.run(network)
+        self.is_success = self.run(network, client_host, server_host)
         if not self.is_success:
             return
         self.is_success = self.post_run(network)

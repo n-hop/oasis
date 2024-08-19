@@ -12,7 +12,7 @@ class TCPProtocol(IProtoSuite, IProtoInfo):
     def pre_run(self, network: INetwork):
         return True
 
-    def run(self, network: INetwork):
+    def run(self, network: INetwork, client_host:int, server_host:int):
         return True
 
     def stop(self, network: INetwork):
@@ -23,6 +23,6 @@ class TCPProtocol(IProtoSuite, IProtoInfo):
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass
-    
+
     def get_protocol_name(self) -> str:
         return "tcp"

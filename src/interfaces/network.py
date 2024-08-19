@@ -63,16 +63,16 @@ class INetwork(ABC):
         # Combination of protocol and test
         test_results = {}
         for proto in self.proto_suites:
-            # start the protocol
-            proto.start(self)
             for test in self.test_suites:
+                # start the protocol
+                proto.start(self, test.config.client_host, test.config.server_host)
                 # run `test` on `network`(self) specified by `proto`
                 test.run(self, proto)
                 if test.type() not in test_results:
                     test_results[test.type()] = []
                 test_results[test.type()].append(test.log_file())
-            # stop the protocol
-            proto.stop(self)
+                # stop the protocol
+                proto.stop(self)
         # Analyze the test results
         for test_type, log_files in test_results.items():
             # analyze the test results

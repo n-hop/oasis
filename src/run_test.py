@@ -18,6 +18,8 @@ from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
 from protosuites.proto import (ProtoConfig, SupportedProto, SupportedBATSProto)
 from protosuites.tcp_protocol import TCPProtocol
+from protosuites.kcp_protocol import KCPProtocol
+from protosuites.cs_protocol import CSProtocol
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
@@ -97,6 +99,18 @@ def setup_test(test_case_yaml, network: INetwork):
             config = ProtoConfig()
             network.add_protocol_suite(TCPProtocol(config))
             logging.info("Added TCP protocol.")
+        elif proto == 'kcp':
+            kcp_client_cfg = ProtoConfig(
+                protocol_path="/root/kcp/client_linux_amd64",
+                protocol_args="client",
+                protocol_version="latest")
+            kcp_server_cfg = ProtoConfig(
+                protocol_path="/root/kcp/server_linux_amd64",
+                protocol_args= "server",
+                protocol_version="latest")
+            cs = CSProtocol(KCPProtocol(kcp_client_cfg), KCPProtocol(kcp_server_cfg))
+            network.add_protocol_suite(cs)
+            logging.info("Added KCP protocol.")
         else:
             logging.error(
                 f"Error: not implemented protocol %s", proto)
