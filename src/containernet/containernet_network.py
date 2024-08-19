@@ -258,6 +258,8 @@ class ContainerizedNetwork (INetwork):
         id1: the source host id.
         id2: the destination host id. Do the traffic shaping on `host2`.
         attached_inf: the interface to be set with the traffic shaping. 
+
+        Details of traffic shaping in Oasis, please refer to <docs/tc-strategy.md>
         """
         shaping_parameters = ""
         if self.net_loss_mat is not None:
