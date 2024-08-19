@@ -25,4 +25,4 @@ class TCPProtocol(IProtoSuite, IProtoInfo):
         pass
 
     def get_protocol_name(self) -> str:
-        return "tcp"
+        return "TCP"
