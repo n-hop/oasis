@@ -63,6 +63,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
                 hosts[i].name())
             hosts[i].cmd(
                 f'pkill -f {self.process_name}')
+            hosts[i].cmd(f'ip tuntap del mode tap tap')
         return True
 
     def _init_tun(self, host: IHost):

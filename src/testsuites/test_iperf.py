@@ -27,26 +27,30 @@ class IperfTest(ITestSuite):
 
     def _run_test(self, network: INetwork, proto: IProtoInfo):
         hosts = network.get_hosts()
-        client = None
-        server = None
-        receiver_ip = None
-        receiver_port = None
+
         if self.config.client_host is None or self.config.server_host is None:
-            client = hosts[0]
-            server = hosts[-1]
-            receiver_ip = proto.get_tun_ip(network, len(hosts) - 1)
-            receiver_port = proto.get_forward_port(network, len(hosts) - 1)
+            self.config.client_host = 0
+            self.config.server_host = len(hosts) - 1
+
+        client = hosts[self.config.client_host]
+        server = hosts[self.config.server_host]
+        receiver_ip = None
+        if proto.get_protocol_name().upper() == "KCP":
+            # kcp tun like a proxy, all traffic will be forwarded to the proxy server
+            tun_ip = proto.get_tun_ip(network, self.config.client_host)
+            if tun_ip is None or tun_ip == "":
+                tun_ip = client.IP()
+            receiver_ip = tun_ip
         else:
-            client = hosts[self.config.client_host]
-            server = hosts[self.config.server_host]
-            receiver_ip = proto.get_tun_ip(network, self.config.server_host)
-            receiver_port = proto.get_forward_port(
-                network, self.config.server_host)
-        logging.info(
-            "############### Oasis IperfTest from %s to %s ###############", client.name(), server.name())
-        if receiver_ip is None or receiver_ip == "":
-            receiver_ip = server.IP()
+            tun_ip = proto.get_tun_ip(network, self.config.server_host)
+            if tun_ip is None or tun_ip == "":
+                tun_ip = server.IP()
+            receiver_ip = tun_ip
+        receiver_port = proto.get_forward_port(
+            network, self.config.server_host)
         if receiver_port is None:
             receiver_port = 5201
+        logging.info(
+            "############### Oasis IperfTest from %s to %s ###############", client.name(), server.name())
 
         return self._run_iperf(client, server, receiver_port, receiver_ip)

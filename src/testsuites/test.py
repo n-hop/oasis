@@ -56,6 +56,7 @@ class TestResult:
         file name pattern: <class_name>_<test_type>_<client_host>_<server_host>.log
     """
     is_success: bool
+    pattern: str
     record: str
 
 
@@ -63,8 +64,9 @@ class ITestSuite(ABC):
     def __init__(self, config: TestConfig) -> None:
         self.config = config
         self.result = TestResult(
-            False, f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
-            f"_h{self.config.client_host}_h{self.config.server_host}.log")
+            False, pattern = f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
+            f"_h{self.config.client_host}_h{self.config.server_host}.log",
+            record="")
 
     @abstractmethod
     def post_process(self):
@@ -79,6 +81,7 @@ class ITestSuite(ABC):
         pass
 
     def run(self, network: 'INetwork', proto: IProtoInfo) -> TestResult:  # type: ignore
+        self.result.record = proto.get_protocol_name() + "_" + self.result.pattern
         self.result.is_success = self.pre_process()
         if not self.result.is_success:
             return self.result

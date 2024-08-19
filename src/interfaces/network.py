@@ -62,23 +62,26 @@ class INetwork(ABC):
             return False
         # Combination of protocol and test
         test_results = {}
-        for proto in self.proto_suites:
-            # start the protocol
-            proto.start(self)
-            for test in self.test_suites:
+        result_files = []
+        for test in self.test_suites:
+            for proto in self.proto_suites:
+                if not proto.is_distributed() and \
+                    test.config.client_host is not None and \
+                    test.config.server_host is not None:
+                    proto.get_config().hosts = [test.config.client_host, test.config.server_host]
+                # start the protocol
+                proto.start(self)
                 # run `test` on `network`(self) specified by `proto`
                 result = test.run(self, proto)
                 if test.type() not in test_results:
                     test_results[test.type()] = []
                 # save the test result
                 test_results[test.type()].append(result)
-            # stop the protocol
-            proto.stop(self)
+                result_files.append(result.record)
+                # stop the protocol
+                proto.stop(self)
         # Analyze the test results
         for test_type, test_results in test_results.items():
-            result_files = []
-            for result in test_results:
-                result_files.append(result.record)
             # analyze those results files according to the test type
             if test_type == TestType.throughput:
                 config = AnalyzerConfig(

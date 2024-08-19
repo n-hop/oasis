@@ -16,6 +16,9 @@ from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
 from protosuites.proto import (ProtoConfig, SupportedProto, SupportedBATSProto)
+from protosuites.tcp_protocol import TCPProtocol
+from protosuites.kcp_protocol import KCPProtocol
+from protosuites.cs_protocol import CSProtocol
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
@@ -116,6 +119,31 @@ def setup_test(test_case_yaml, network: INetwork):
                     bats = BRTPProxy(bats_proto_config)
                     logging.info("Added bats BRTP proxy protocol.")
                 network.add_protocol_suite(bats)
+        elif proto == 'tcp':
+            config = ProtoConfig()
+            network.add_protocol_suite(TCPProtocol(config))
+            logging.info("Added TCP protocol.")
+        elif proto == 'kcp':
+            kcp_client_cfg = ProtoConfig(
+                protocol_path="/root/bin/kcp/client_linux_amd64",
+                protocol_args="-l :5201"
+                            + " -mode fast3 --datashard 10 --parityshard 3"
+                            + " -nocomp -autoexpire 900"
+                            + " -sockbuf 16777217 -dscp 46 --crypt=none",
+                protocol_version="latest",
+                role="client")
+            kcp_server_cfg = ProtoConfig(
+                protocol_path="/root/bin/kcp/server_linux_amd64",
+                protocol_args= "-l :4000"
+                            + " -mode fast3 --datashard 10 --parityshard 3"
+                            + " -nocomp -sockbuf 16777217 -dscp 46 --crypt=none",
+                protocol_version="latest",
+                role="server")
+            cs = CSProtocol(config = ProtoConfig(hosts=[0, len(network.get_hosts()) - 1]),
+                            client = KCPProtocol(kcp_client_cfg),
+                            server = KCPProtocol(kcp_server_cfg))
+            network.add_protocol_suite(cs)
+            logging.info("Added KCP protocol.")
         else:
             logging.error(
                 f"Error: not implemented protocol %s", proto)
