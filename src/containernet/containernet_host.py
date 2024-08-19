@@ -1,4 +1,4 @@
-# adapter pattern
+import logging
 from interfaces.host import IHost
 
 
@@ -32,6 +32,24 @@ class ContainernetHostAdapter(IHost):
     def cleanup(self):
         """Cleanup the host.
         """
+        # clean up all tc qdisc rules.
+        for intf in self.containernet_host.intfList():
+            logging.debug(
+                f"clean up tc qdisc on host %s, interface %s",
+                self.containernet_host.name, intf.name)
+            tc_output = self.containernet_host.cmd(
+                f'tc qdisc show dev {intf.name}')
+            if "priomap" not in tc_output and "noqueue" not in tc_output:
+                self.containernet_host.cmd(
+                    f'tc qdisc del dev {intf.name} root')
+            intf_port = intf.name[-1]
+            if intf_port.isdigit():
+                ifb = f'ifb{intf_port}'
+                tc_output = self.containernet_host.cmd(
+                    f'tc qdisc show dev {ifb}')
+                if "priomap" not in tc_output and "noqueue" not in tc_output:
+                    self.containernet_host.cmd(
+                        f'tc qdisc del dev {ifb} root')
         return self.containernet_host.cleanup()
 
     def get_host(self):

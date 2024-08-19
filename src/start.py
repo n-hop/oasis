@@ -7,8 +7,8 @@ from containernet.containernet import (
     NestedContainernet, load_nested_config)
 
 """ ################# USAGE OF THE SCRIPT ##########################
-  start.py is used to initialize the nested containernet environment, 
-and inside the nested containernet, it will execute the test cases 
+  start.py is used to initialize the nested containernet environment,
+and inside the nested containernet, it will execute the test cases
 through the run_test.py script.
 """
 
@@ -68,8 +68,7 @@ if __name__ == '__main__':
     cur_workspace = ns.workspace
 
     if not os.path.exists(f'{cur_workspace}/{cur_config_yaml_file_path}'):
-        logging.info(f"Error: %s does not exist.", {
-                     cur_workspace}/{cur_config_yaml_file_path})
+        logging.info(f"Error: %s does not exist.", cur_config_yaml_file_path)
         sys.exit(1)
     nested_env = build_nested_env(
         nested_config_file, nested_containernet, cur_workspace)

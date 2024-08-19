@@ -77,7 +77,7 @@ class TopologyConfig:
     json_description: Optional[str] = field(default=None)
 
 
-supported_config_keys = ["node_config", "topology"]
+supported_config_keys = ["topology", "node_config"]
 
 
 class IConfig(ABC):
