@@ -1,11 +1,8 @@
 from interfaces.network import INetwork
-from protosuites.proto import (ProtoConfig, IProtoSuite)
+from protosuites.proto import (IProtoSuite)
 from .proto_info import IProtoInfo
 
 class TCPProtocol(IProtoSuite, IProtoInfo):
-    def __init__(self, config: ProtoConfig):
-        super().__init__(config)
-
     def post_run(self, network: INetwork):
         return True
 

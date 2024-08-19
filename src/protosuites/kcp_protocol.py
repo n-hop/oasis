@@ -42,9 +42,13 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
 
     def stop(self, network: INetwork):
         hosts = network.get_hosts()
-        for host in hosts:
-            res = host.cmdPrint(f'pkill -f {self.process_name}')
-        logging.info(f"############### Oasis stop kcp protocol ###############")
+        host = None
+        if self.config.role == "client":
+            host = hosts[self.config.hosts[0]]
+        elif self.config.role == "server":
+            host = hosts[self.config.hosts[-1]]
+        host.cmdPrint(f'pkill -f {self.process_name}')
+        logging.info(f"############### Oasis stop kcp protocol on %s ###############", host.name())
         return True
 
     def get_forward_port(self, network: 'INetwork', host_id: int) -> int:
