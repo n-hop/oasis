@@ -4,9 +4,13 @@ from interfaces.network import INetwork
 from protosuites.proto_info import IProtoInfo
 
 class CSProtocol(IProtoSuite, IProtoInfo):
-    def __init__(self, client:IProtoSuite, server:IProtoSuite):
+    def __init__(self, config, client:IProtoSuite, server:IProtoSuite):
+        super().__init__(config)
         self.client = client
         self.server = server
+
+    def is_distributed(self) -> bool:
+        return True
 
     def post_run(self, network: INetwork):
         return self.client.post_run(network) and self.server.post_run(network)
@@ -17,9 +21,11 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         return False
         # return self.client.pre_run(network) and self.server.pre_run(network)
 
-    def run(self, network: INetwork, client_host:int, server_host:int):
-        return self.client.run(network, client_host, server_host) \
-                and self.server.run(network, client_host, server_host)
+    def run(self, network: INetwork):
+        self.client.get_config().hosts = self.config.hosts
+        self.server.get_config().hosts = self.config.hosts
+        return self.client.run(network) \
+                and self.server.run(network)
 
     def stop(self, network: INetwork):
         return self.client.stop(network) and self.server.stop

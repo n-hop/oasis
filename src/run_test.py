@@ -126,13 +126,22 @@ def setup_test(test_case_yaml, network: INetwork):
         elif proto == 'kcp':
             kcp_client_cfg = ProtoConfig(
                 protocol_path="/root/bin/kcp/client_linux_amd64",
-                protocol_args="client",
-                protocol_version="latest")
+                protocol_args="-l :5201"
+                            + " -mode fast3 --datashard 10 --parityshard 3"
+                            + " -nocomp -autoexpire 900"
+                            + " -sockbuf 16777217 -dscp 46 --crypt=none",
+                protocol_version="latest",
+                role="client")
             kcp_server_cfg = ProtoConfig(
                 protocol_path="/root/bin/kcp/server_linux_amd64",
-                protocol_args= "server",
-                protocol_version="latest")
-            cs = CSProtocol(KCPProtocol(kcp_client_cfg), KCPProtocol(kcp_server_cfg))
+                protocol_args= "-l :4000"
+                            + " -mode fast3 --datashard 10 --parityshard 3"
+                            + " -nocomp -sockbuf 16777217 -dscp 46 --crypt=none",
+                protocol_version="latest",
+                role="server")
+            cs = CSProtocol(config = ProtoConfig(hosts=[0, len(network.get_hosts()) - 1]),
+                            client = KCPProtocol(kcp_client_cfg),
+                            server = KCPProtocol(kcp_server_cfg))
             network.add_protocol_suite(cs)
             logging.info("Added KCP protocol.")
         else:

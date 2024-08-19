@@ -12,7 +12,7 @@ class TCPProtocol(IProtoSuite, IProtoInfo):
     def pre_run(self, network: INetwork):
         return True
 
-    def run(self, network: INetwork, client_host:int, server_host:int):
+    def run(self, network: INetwork):
         return True
 
     def stop(self, network: INetwork):

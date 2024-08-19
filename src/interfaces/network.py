@@ -62,10 +62,14 @@ class INetwork(ABC):
             return False
         # Combination of protocol and test
         test_results = {}
-        for proto in self.proto_suites:
-            for test in self.test_suites:
+        for test in self.test_suites:
+            for proto in self.proto_suites:
+                if proto.is_distributed() and \
+                    test.config.client_host is not None and \
+                    test.config.server_host is not None:
+                    proto.get_config().hosts = [test.config.client_host, test.config.server_host]
                 # start the protocol
-                proto.start(self, test.config.client_host, test.config.server_host)
+                proto.start(self)
                 # run `test` on `network`(self) specified by `proto`
                 result = test.run(self, proto)
                 if test.type() not in test_results:

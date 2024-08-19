@@ -10,8 +10,9 @@ class ProtoConfig:
     protocol_version: Optional[str] = field(default='latest')
     hosts: Optional[List[int]] = field(default=None)
     port: Optional[int] = field(default=None)
+    role: Optional[str] = field(default='None')
 
-
+SupportedProtoRole = ['client', 'server', 'None']
 SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp']
 SupportedBATSProto = ['btp', 'brtp', 'brtp_proxy']
 
@@ -20,6 +21,12 @@ class IProtoSuite(ABC):
     def __init__(self, config: ProtoConfig):
         self.is_success = False
         self.config = config
+
+    def get_config(self) -> ProtoConfig:
+        return self.config
+
+    def is_distributed(self) -> bool:
+        return False
 
     @abstractmethod
     def post_run(self, network: 'INetwork'):  # type: ignore
@@ -33,11 +40,11 @@ class IProtoSuite(ABC):
     def run(self, network: 'INetwork'):  # type: ignore
         pass
 
-    def start(self, network: 'INetwork', client_host:int, server_host:int):  # type: ignore
+    def start(self, network: 'INetwork'):  # type: ignore
         self.is_success = self.pre_run(network)
         if not self.is_success:
             return
-        self.is_success = self.run(network, client_host, server_host)
+        self.is_success = self.run(network)
         if not self.is_success:
             return
         self.is_success = self.post_run(network)
