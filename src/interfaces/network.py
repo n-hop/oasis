@@ -62,6 +62,7 @@ class INetwork(ABC):
             return False
         # Combination of protocol and test
         test_results = {}
+        result_files = []
         for test in self.test_suites:
             for proto in self.proto_suites:
                 if proto.is_distributed() and \
@@ -76,13 +77,11 @@ class INetwork(ABC):
                     test_results[test.type()] = []
                 # save the test result
                 test_results[test.type()].append(result)
+                result_files.append(result.record)
                 # stop the protocol
                 proto.stop(self)
         # Analyze the test results
         for test_type, test_results in test_results.items():
-            result_files = []
-            for result in test_results:
-                result_files.append(result.record)
             # analyze those results files according to the test type
             if test_type == TestType.throughput:
                 config = AnalyzerConfig(
