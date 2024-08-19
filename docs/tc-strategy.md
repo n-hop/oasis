@@ -29,14 +29,14 @@ on host `h0`, set the rate limit on `eth0`:
 tc qdisc add dev eth0 root handle 5: tbf rate 100.0Mbit burst 150kb latency 1ms
 ```
 
-on host `h1`, we create a ifb interface `ifb0`:
+on host `h1`, we create an `ifb` interface `ifb0`:
 
 ```bash
 ip link add name ifb0 type ifb
 ip link set ifb0 up
 ```
 
-Then, we redirect the ip traffic from `eth0` to `ifb0`:
+Then, redirect the ingress ip traffic from `eth0` to `ifb0`:
 
 ```bash
 tc qdisc add dev eth0 ingress
@@ -48,3 +48,5 @@ Finally, apply the traffic shaping(loss, delay, jitter) on `ifb0`:
 ```bash
 tc qdisc add dev ifb0 root netem loss 5% delay 10ms limit 20000000
 ```
+
+In order to have a better simulation result for latency, a larger buffer/queue size is preferred(specified by `limit 20000000` in tc command) otherwise tc will drop more packets when buffer is overwhelmed.
