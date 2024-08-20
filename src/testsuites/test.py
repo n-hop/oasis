@@ -11,13 +11,15 @@ class TestType(IntEnum):
     throughput = 0
     latency = 1
     jitter = 2
+    rtt = 3
 
 
 # add mapping for the test type
 test_type_str_mapping = {
     TestType.throughput: "throughput",
     TestType.latency: "latency",
-    TestType.jitter: "jitter"
+    TestType.jitter: "jitter",
+    TestType.rtt: "rtt"
 }
 
 

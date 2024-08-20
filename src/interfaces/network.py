@@ -87,6 +87,13 @@ class INetwork(ABC):
                 analyzer.visualize()
                 logging.info(
                     "Analyzed and visualized the throughput test results")
+            if test_type == TestType.rtt:
+                config = AnalyzerConfig(
+                    input=result_files, output=f"{test_result[0].result_dir}rtt.svg")
+                analyzer = AnalyzerFactory.get_analyzer("rtt", config)
+                analyzer.analyze()
+                analyzer.visualize()
+                logging.info("Analyzed and visualized the RTT test results")
         return True
 
     def reset(self):

@@ -80,7 +80,7 @@ def add_test_to_network(network, tool, test_name):
     elif tool['name'] == 'rtt':
         test_conf.packet_count = tool['packet_count']
         test_conf.packet_size = tool['packet_size']
-        test_conf.test_type = TestType.latency
+        test_conf.test_type = TestType.rtt
         network.add_test_suite(RTTTest(test_conf))
         logging.info("Added rtt test to %s.", test_name)
     else:
