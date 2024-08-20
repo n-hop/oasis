@@ -3,7 +3,7 @@ import logging
 
 from interfaces.network import INetwork
 from protosuites.proto_info import IProtoInfo
-from .test import (ITestSuite)
+from .test import (ITestSuite, TestConfig)
 
 
 class RTTTest(ITestSuite):
@@ -12,6 +12,10 @@ class RTTTest(ITestSuite):
        Source of the tool is in https://github.com/n-hop/bats-documentation
     """
 
+    def __init__(self, config: TestConfig) -> None:
+        super().__init__(config)
+        self.run_times = 0
+
     def post_process(self):
         return True
 
@@ -19,12 +23,12 @@ class RTTTest(ITestSuite):
         return True
 
     def _run_tcp_endpoint(self, client, server, port, recv_ip):
-        server.cmd(f'/root/bin/tcp_message/tcp_endpoint -p {port} &')
+        server.cmdPrint(f'/root/bin/tcp_message/tcp_endpoint -p {port} &')
         tcp_client_cmd = f'/root/bin/tcp_message/tcp_endpoint -c {recv_ip} -p {port}'
         tcp_client_cmd += f' -i {self.config.interval}' \
             f' -w {self.config.packet_count} -l {self.config.packet_size}' \
             f' > {self.result.record}'
-        client.cmd(f'{tcp_client_cmd}')
+        client.cmdPrint(f'{tcp_client_cmd}')
         logging.info('rtt test result save to %s', self.result.record)
         time.sleep(1)
         client.cmd('pkill -f tcp_endpoint')
@@ -55,7 +59,9 @@ class RTTTest(ITestSuite):
         # KCP defines the forward port
         receiver_port = proto.get_forward_port()
         if receiver_port is None:
-            receiver_port = 10011
+            # for port conflict, use different port for each test
+            receiver_port = 10011 + self.run_times
+            self.run_times += 1
         logging.info(
             "############### Oasis RTTTest from %s to %s with forward port %s ###############",
             client.name(), server.name(), receiver_port)

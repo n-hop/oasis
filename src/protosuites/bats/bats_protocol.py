@@ -93,7 +93,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         return None
 
     def get_forward_port(self) -> int:
-        pass
+        return None
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass
