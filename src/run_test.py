@@ -61,18 +61,19 @@ def load_test(test_yaml_file: str):
     return test_list
 
 
-def add_test_to_network(network, tool):
+def add_test_to_network(network, tool, test_name):
     test_conf = TestConfig(
+        name=test_name,
         interval=tool['interval'], interval_num=tool['interval_num'],
         client_host=tool['client_host'], server_host=tool['server_host'])
     if tool['name'] == 'iperf':
         test_conf.test_type = TestType.throughput
         network.add_test_suite(IperfTest(test_conf))
-        logging.info("Added iperf test.")
+        logging.info("Added iperf test to %s.", test_name)
     elif tool['name'] == 'ping':
         test_conf.test_type = TestType.latency
         network.add_test_suite(PingTest(test_conf))
-        logging.info("Added ping test.")
+        logging.info("Added ping test to %s.", test_name)
     else:
         logging.error(
             f"Error: unsupported test tool %s", tool['name'])
@@ -151,7 +152,7 @@ def setup_test(test_case_yaml, network: INetwork):
     # convert test_tools to test suites
     test_tools = test_case_yaml['test_tools']
     for tool in test_tools:
-        add_test_to_network(network, tool)
+        add_test_to_network(network, tool, test_case_yaml['name'])
     # read route
     route = test_case_yaml['route']
     logging.info("Route: %s", route)

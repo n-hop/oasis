@@ -37,6 +37,7 @@ class TestConfig:
         If None, iperf server will be run on all hosts.
     allow_fail: A boolean value that indicates whether the test can fail.
     """
+    name: str = field(default="")
     interval: Optional[float] = field(default=1.0)
     interval_num: Optional[int] = field(default=10)
     packet_size: Optional[int] = field(default=1024)
@@ -109,7 +110,7 @@ class ITestSuite(ABC):
             return self.result
         self.result.is_success = self._run_test(network, proto)
         if not self.result.is_success:
-            logging.error("Test failed.")
+            logging.error("Test %s failed.", self.config.name)
             return self.result
         self.result.is_success = self.post_process()
         if not self.result.is_success:
