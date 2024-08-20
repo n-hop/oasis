@@ -15,6 +15,7 @@ class RTTTest(ITestSuite):
     def __init__(self, config: TestConfig) -> None:
         super().__init__(config)
         self.run_times = 0
+        self.first_rtt_repeats = 15
 
     def post_process(self):
         return True
@@ -23,15 +24,22 @@ class RTTTest(ITestSuite):
         return True
 
     def _run_tcp_endpoint(self, client, server, port, recv_ip):
-        server.cmdPrint(f'/root/bin/tcp_message/tcp_endpoint -p {port} &')
+        loop_cnt = 1
+        server.cmd(f'/root/bin/tcp_message/tcp_endpoint -p {port} &')
         tcp_client_cmd = f'/root/bin/tcp_message/tcp_endpoint -c {recv_ip} -p {port}'
         tcp_client_cmd += f' -i {self.config.interval}' \
-            f' -w {self.config.packet_count} -l {self.config.packet_size}' \
-            f' > {self.result.record}'
-        client.cmdPrint(f'{tcp_client_cmd}')
+            f' -w {self.config.packet_count} -l {self.config.packet_size}'
+        if self.config.packet_count == 1:
+            # measure the first rtt, repeat 10 times
+            loop_cnt = self.first_rtt_repeats
+            tcp_client_cmd += f' >> {self.result.record}'
+        else:
+            tcp_client_cmd += f' > {self.result.record}'
+        for _ in range(loop_cnt):
+            client.cmd(f'{tcp_client_cmd}')
+            client.cmd('pkill -f tcp_endpoint')
         logging.info('rtt test result save to %s', self.result.record)
         time.sleep(1)
-        client.cmd('pkill -f tcp_endpoint')
         server.cmd('pkill -f tcp_endpoint')
         return True
 
