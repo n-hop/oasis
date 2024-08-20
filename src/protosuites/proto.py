@@ -12,6 +12,7 @@ class ProtoConfig:
     port: Optional[int] = field(default=None)
     role: Optional[str] = field(default='None')
 
+
 SupportedProtoRole = ['client', 'server', 'None']
 SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp']
 SupportedBATSProto = ['btp', 'brtp', 'brtp_proxy']
@@ -24,9 +25,6 @@ class IProtoSuite(ABC):
 
     def get_config(self) -> ProtoConfig:
         return self.config
-
-    def is_distributed(self) -> bool:
-        return True
 
     @abstractmethod
     def post_run(self, network: 'INetwork'):  # type: ignore

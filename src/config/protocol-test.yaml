@@ -12,7 +12,7 @@ tests:
       config_file: src/config/predefined.topology.yaml
     strategy:
       matrix:
-        target_protocols: [brtp_proxy] # brtp, brtp_proxy, kcp, tcp
+        target_protocols: [brtp, kcp] # brtp, brtp_proxy, kcp, tcp
         bats_version: [latest] # v3.5.0, latest
         tcp_version: [cubic] # default:cubic; optional: bbr, reno
         kcp_version: [latest]

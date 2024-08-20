@@ -64,7 +64,7 @@ class ITestSuite(ABC):
     def __init__(self, config: TestConfig) -> None:
         self.config = config
         self.result = TestResult(
-            False, pattern = f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
+            False, pattern=f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
             f"_h{self.config.client_host}_h{self.config.server_host}.log",
             record="")
 
@@ -83,6 +83,28 @@ class ITestSuite(ABC):
     def run(self, network: 'INetwork', proto: IProtoInfo) -> TestResult:  # type: ignore
         self.result.record = proto.get_protocol_name() + "_" + self.result.pattern
         self.result.is_success = self.pre_process()
+        # checking for non-distributed protocols
+        if not proto.is_distributed():
+            if self.config.client_host is None:
+                logging.error(
+                    "Test non-distributed protocols without client host is not supported.")
+                return False
+            if self.config.server_host is None:
+                logging.error(
+                    "Test non-distributed protocols without server host is not supported.")
+                return False
+            if len(proto.get_config().hosts) != 2:
+                logging.error(
+                    "Test non-distributed protocols, but protocol server/client hosts are not set.")
+                return False
+            if proto.get_config().hosts[0] != self.config.client_host or \
+                    proto.get_config().hosts[1] != self.config.server_host:
+                logging.error(
+                    "Test non-distributed protocols, protocol client/server runs on %s/%s, "
+                    "but test tools client/server hosts are %s/%s.",
+                    proto.get_config().hosts[0], proto.get_config().hosts[1],
+                    self.config.client_host, self.config.server_host)
+                return False
         if not self.result.is_success:
             return self.result
         self.result.is_success = self._run_test(network, proto)

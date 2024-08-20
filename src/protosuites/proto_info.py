@@ -24,3 +24,6 @@ class IProtoInfo(ABC):
     def get_protocol_name(self) -> str:
         """The name of the protocol
         """
+
+    def is_distributed(self) -> bool:
+        return True
