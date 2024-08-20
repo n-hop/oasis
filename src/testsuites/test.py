@@ -1,4 +1,5 @@
 import logging
+import os
 from abc import ABC, abstractmethod
 from enum import IntEnum
 from dataclasses import dataclass, field
@@ -37,6 +38,7 @@ class TestConfig:
         If None, iperf server will be run on all hosts.
     allow_fail: A boolean value that indicates whether the test can fail.
     """
+    name: str = field(default="")
     interval: Optional[float] = field(default=1.0)
     interval_num: Optional[int] = field(default=10)
     packet_size: Optional[int] = field(default=1024)
@@ -58,15 +60,19 @@ class TestResult:
     is_success: bool
     pattern: str
     record: str
+    result_dir: str = field(default="/root/")
 
 
 class ITestSuite(ABC):
     def __init__(self, config: TestConfig) -> None:
         self.config = config
+        self.result_dir = f"/root/test_results/{self.config.name}/"
+        if not os.path.exists(f"{self.result_dir}"):
+            os.makedirs(f"{self.result_dir}")
         self.result = TestResult(
-            False, pattern = f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
+            False, pattern=f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
             f"_h{self.config.client_host}_h{self.config.server_host}.log",
-            record="")
+            record="", result_dir=self.result_dir)
 
     @abstractmethod
     def post_process(self):
@@ -81,13 +87,40 @@ class ITestSuite(ABC):
         pass
 
     def run(self, network: 'INetwork', proto: IProtoInfo) -> TestResult:  # type: ignore
-        self.result.record = proto.get_protocol_name() + "_" + self.result.pattern
+        if proto.get_protocol_version() not in ["latest", ""]:
+            base_name = proto.get_protocol_name() + "-" + proto.get_protocol_version()
+        else:
+            base_name = proto.get_protocol_name()
+        self.result.record = self.result.result_dir + \
+            base_name + "_" + self.result.pattern
         self.result.is_success = self.pre_process()
+        # checking for non-distributed protocols
+        if not proto.is_distributed():
+            if self.config.client_host is None:
+                logging.error(
+                    "Test non-distributed protocols without client host is not supported.")
+                return False
+            if self.config.server_host is None:
+                logging.error(
+                    "Test non-distributed protocols without server host is not supported.")
+                return False
+            if len(proto.get_config().hosts) != 2:
+                logging.error(
+                    "Test non-distributed protocols, but protocol server/client hosts are not set.")
+                return False
+            if proto.get_config().hosts[0] != self.config.client_host or \
+                    proto.get_config().hosts[1] != self.config.server_host:
+                logging.error(
+                    "Test non-distributed protocols, protocol client/server runs on %s/%s, "
+                    "but test tools client/server hosts are %s/%s.",
+                    proto.get_config().hosts[0], proto.get_config().hosts[1],
+                    self.config.client_host, self.config.server_host)
+                return False
         if not self.result.is_success:
             return self.result
         self.result.is_success = self._run_test(network, proto)
         if not self.result.is_success:
-            logging.error("Test failed.")
+            logging.error("Test %s failed.", self.config.name)
             return self.result
         self.result.is_success = self.post_process()
         if not self.result.is_success:

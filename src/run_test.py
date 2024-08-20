@@ -15,6 +15,8 @@ from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
+from routing.olsr_routing import OLSRRouting
+from routing.openr_routing import OpenrRouting
 from protosuites.proto import (ProtoConfig, SupportedProto, SupportedBATSProto)
 from protosuites.tcp_protocol import TCPProtocol
 from protosuites.kcp_protocol import KCPProtocol
@@ -61,18 +63,19 @@ def load_test(test_yaml_file: str):
     return test_list
 
 
-def add_test_to_network(network, tool):
+def add_test_to_network(network, tool, test_name):
     test_conf = TestConfig(
+        name=test_name,
         interval=tool['interval'], interval_num=tool['interval_num'],
         client_host=tool['client_host'], server_host=tool['server_host'])
     if tool['name'] == 'iperf':
         test_conf.test_type = TestType.throughput
         network.add_test_suite(IperfTest(test_conf))
-        logging.info("Added iperf test.")
+        logging.info("Added iperf test to %s.", test_name)
     elif tool['name'] == 'ping':
         test_conf.test_type = TestType.latency
         network.add_test_suite(PingTest(test_conf))
-        logging.info("Added ping test.")
+        logging.info("Added ping test to %s.", test_name)
     else:
         logging.error(
             f"Error: unsupported test tool %s", tool['name'])
@@ -82,6 +85,7 @@ def setup_test(test_case_yaml, network: INetwork):
     """setup the test case configuration.
     """
     # read the strategy matrix
+    test_case_name = test_case_yaml['name']
     strategy = test_case_yaml['strategy']
     if strategy is None:
         logging.error("Error: strategy is None.")
@@ -92,8 +96,7 @@ def setup_test(test_case_yaml, network: INetwork):
         return
     target_protocols = matrix['target_protocols']
     bats_version = matrix['bats_version']
-    # tcp_version = matrix['tcp_version']
-    # kcp_version = matrix['kcp_version']
+    tcp_version = matrix['tcp_version']
     for proto in target_protocols:
         if proto not in SupportedProto:
             logging.error(
@@ -103,6 +106,7 @@ def setup_test(test_case_yaml, network: INetwork):
             # combine the protocol with the its version
             for version in bats_version:
                 bats_proto_config = ProtoConfig(
+                    name=test_case_name,
                     protocol_path="/root/bats/bats_protocol",
                     protocol_args="--daemon_enabled=true",
                     protocol_version=version)
@@ -120,28 +124,35 @@ def setup_test(test_case_yaml, network: INetwork):
                     logging.info("Added bats BRTP proxy protocol.")
                 network.add_protocol_suite(bats)
         elif proto == 'tcp':
-            config = ProtoConfig()
-            network.add_protocol_suite(TCPProtocol(config))
-            logging.info("Added TCP protocol.")
+            for version in tcp_version:
+                config = ProtoConfig(name=test_case_name,
+                                     protocol_version=version)
+                network.add_protocol_suite(TCPProtocol(config))
+                logging.info("Added TCP protocol, version %s.", version)
         elif proto == 'kcp':
             kcp_client_cfg = ProtoConfig(
+                name=test_case_name,
                 protocol_path="/root/bin/kcp/client_linux_amd64",
                 protocol_args="-l :5201"
-                            + " -mode fast3 --datashard 10 --parityshard 3"
-                            + " -nocomp -autoexpire 900"
-                            + " -sockbuf 16777217 -dscp 46 --crypt=none",
+                + " -mode fast3 --datashard 10 --parityshard 3"
+                + " -nocomp -autoexpire 900"
+                + " -sockbuf 16777217 -dscp 46 --crypt=none",
                 protocol_version="latest",
                 role="client")
             kcp_server_cfg = ProtoConfig(
+                name=test_case_name,
                 protocol_path="/root/bin/kcp/server_linux_amd64",
-                protocol_args= "-l :4000"
-                            + " -mode fast3 --datashard 10 --parityshard 3"
-                            + " -nocomp -sockbuf 16777217 -dscp 46 --crypt=none",
+                protocol_args="-l :4000"
+                + " -mode fast3 --datashard 10 --parityshard 3"
+                + " -nocomp -sockbuf 16777217 -dscp 46 --crypt=none",
                 protocol_version="latest",
                 role="server")
-            cs = CSProtocol(config = ProtoConfig(hosts=[0, len(network.get_hosts()) - 1]),
-                            client = KCPProtocol(kcp_client_cfg),
-                            server = KCPProtocol(kcp_server_cfg))
+            # by default, client-server hosts are [0, -1]
+            cs = CSProtocol(config=ProtoConfig(
+                name=test_case_name,
+                hosts=[0, len(network.get_hosts()) - 1]),
+                client=KCPProtocol(kcp_client_cfg),
+                server=KCPProtocol(kcp_server_cfg))
             network.add_protocol_suite(cs)
             logging.info("Added KCP protocol.")
         else:
@@ -150,10 +161,7 @@ def setup_test(test_case_yaml, network: INetwork):
     # convert test_tools to test suites
     test_tools = test_case_yaml['test_tools']
     for tool in test_tools:
-        add_test_to_network(network, tool)
-    # read route
-    route = test_case_yaml['route']
-    logging.info("Route: %s", route)
+        add_test_to_network(network, tool, test_case_name)
 
 
 def load_node_config(file_path) -> NodeConfig:
@@ -207,7 +215,7 @@ def build_topology(top_config: TopologyConfig):
     return built_net_top
 
 
-def build_network(node_config: NodeConfig, top_config: TopologyConfig):
+def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: str = None):
     """Build a container network from the yaml configuration file.
 
     Args:
@@ -217,7 +225,14 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig):
         ContainerizedNetwork: the container network object
     """
     net_top = build_topology(top_config)
-    return ContainerizedNetwork(node_config, net_top, StaticRouting())
+    route_strategy = None
+    if route is None or route == "static_route":
+        route_strategy = StaticRouting()
+    if route == "olsr_route":
+        route_strategy = OLSRRouting()
+    elif route == "openr_route":
+        route_strategy = OpenrRouting()
+    return ContainerizedNetwork(node_config, net_top, route_strategy)
 
 
 if __name__ == '__main__':
@@ -245,7 +260,8 @@ if __name__ == '__main__':
     for test in all_tests:
         cur_top_config = load_top_config(test)
         if linear_network is None:
-            linear_network = build_network(cur_node_config, cur_top_config)
+            linear_network = build_network(
+                cur_node_config, cur_top_config, test['route'])
             linear_network.start()
         else:
             local_net_top = build_topology(cur_top_config)

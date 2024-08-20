@@ -47,14 +47,15 @@ class Iperf3Analyzer(IDataAnalyzer):
         return True
 
     def visualize(self):
-        # Implement visualization logic for iperf3 logs
-        # ... (visualization code)
         plt.rcParams["font.family"] = "serif"
         plt.xlabel("Time (s)", fontsize=8, fontweight="bold")
         plt.ylabel("Throughput (Mbits/sec)", fontsize=8, fontweight="bold")
         plt.title("Iperf3 throughput analyze", fontsize=10, fontweight="bold")
+        max_throughput = 0
         for input_log in self.config.input:
             logging.info(f"Visualize iperf3 log: %s", input_log)
+            # input_log format /a/b/c/iperf3_h1_h2.log
+            log_base_name = os.path.basename(input_log)
             with open(f"{input_log}", "r", encoding='utf-8') as f:
                 content = f.read()
                 throughput_pattern = r"(\d+) (K|M|G)?Bytes(\s+)(\d+(\.\d+)?) (K|M|G)?bits/sec"
@@ -62,13 +63,19 @@ class Iperf3Analyzer(IDataAnalyzer):
                 throughput_array = [str_to_mbps(
                     match[3], match[5]) for match in matches2]
                 if len(throughput_array) <= 1:
-                    logging.error(f"no throughput data in %s", input_log)
+                    logging.error(f"no throughput data in %s", log_base_name)
                     continue
+            logging.info(f"Added throughput data: %s  %s",
+                         throughput_array, log_base_name)
+            cur_max_throughput = max(throughput_array)
+            max_throughput = max(max_throughput, cur_max_throughput)
             x = np.arange(1, len(throughput_array))
+            log_label = log_base_name.split("_")[0]
             plt.plot(x, throughput_array[0: len(x)],
-                     'o-', markersize=3, linewidth=1.5, label=f"{input_log}")
-            plt.ylim(0, max(throughput_array) + 10)
+                     'o-', markersize=3, linewidth=1.5, label=f"{log_label}")
             plt.legend(loc="lower right", fontsize=8)
+
+        plt.ylim(0, max_throughput + 10)
         if not self.config.output:
             self.config.output = "iperf3_throughput.svg"
         plt.savefig(f"{self.config.output}")

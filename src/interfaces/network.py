@@ -63,14 +63,10 @@ class INetwork(ABC):
         # Combination of protocol and test
         test_results = {}
         result_files = []
-        for test in self.test_suites:
-            for proto in self.proto_suites:
-                if not proto.is_distributed() and \
-                    test.config.client_host is not None and \
-                    test.config.server_host is not None:
-                    proto.get_config().hosts = [test.config.client_host, test.config.server_host]
-                # start the protocol
-                proto.start(self)
+        for proto in self.proto_suites:
+            # start the protocol
+            proto.start(self)
+            for test in self.test_suites:
                 # run `test` on `network`(self) specified by `proto`
                 result = test.run(self, proto)
                 if test.type() not in test_results:
@@ -78,14 +74,14 @@ class INetwork(ABC):
                 # save the test result
                 test_results[test.type()].append(result)
                 result_files.append(result.record)
-                # stop the protocol
-                proto.stop(self)
+            # stop the protocol
+            proto.stop(self)
         # Analyze the test results
-        for test_type, test_results in test_results.items():
+        for test_type, test_result in test_results.items():
             # analyze those results files according to the test type
             if test_type == TestType.throughput:
                 config = AnalyzerConfig(
-                    input=result_files, output="iperf3_throughput.svg")
+                    input=result_files, output=f"{test_result[0].result_dir}iperf3_throughput.svg")
                 analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
                 analyzer.analyze()
                 analyzer.visualize()

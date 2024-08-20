@@ -44,8 +44,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         host_num = len(hosts)
         for i in range(host_num):
             res = hosts[i].cmdPrint(
-                f'nohup {self.config.protocol_path} {self.config.protocol_args} '
-                f' > bats_protocol_h{i}.log &')
+                f'{self.config.protocol_path} {self.config.protocol_args} '
+                f' > {self.log_dir}bats_protocol_h{i}.log &')
             logging.info(
                 f"############### Oasis run bats protocol on "
                 "%s, %s ###############",
@@ -97,3 +97,6 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass
+
+    def get_protocol_version(self) -> str:
+        return self.config.protocol_version

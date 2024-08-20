@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import (Optional, List)
@@ -5,12 +6,14 @@ from typing import (Optional, List)
 
 @dataclass
 class ProtoConfig:
+    name: str = field(default="")
     protocol_path: Optional[str] = field(default=None)
     protocol_args: Optional[str] = field(default=None)
     protocol_version: Optional[str] = field(default='latest')
     hosts: Optional[List[int]] = field(default=None)
     port: Optional[int] = field(default=None)
     role: Optional[str] = field(default='None')
+
 
 SupportedProtoRole = ['client', 'server', 'None']
 SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp']
@@ -21,12 +24,12 @@ class IProtoSuite(ABC):
     def __init__(self, config: ProtoConfig):
         self.is_success = False
         self.config = config
+        self.log_dir = f"/root/test_results/{self.config.name}/log/"
+        if not os.path.exists(f"{self.log_dir}"):
+            os.makedirs(f"{self.log_dir}")
 
     def get_config(self) -> ProtoConfig:
         return self.config
-
-    def is_distributed(self) -> bool:
-        return True
 
     @abstractmethod
     def post_run(self, network: 'INetwork'):  # type: ignore

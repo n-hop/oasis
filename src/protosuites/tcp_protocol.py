@@ -2,6 +2,7 @@ from interfaces.network import INetwork
 from protosuites.proto import (IProtoSuite)
 from .proto_info import IProtoInfo
 
+
 class TCPProtocol(IProtoSuite, IProtoInfo):
     def post_run(self, network: INetwork):
         return True
@@ -23,3 +24,6 @@ class TCPProtocol(IProtoSuite, IProtoInfo):
 
     def get_protocol_name(self) -> str:
         return "TCP"
+
+    def get_protocol_version(self) -> str:
+        return self.config.protocol_version
