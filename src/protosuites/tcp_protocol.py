@@ -16,8 +16,8 @@ class TCPProtocol(IProtoSuite, IProtoInfo):
     def stop(self, network: INetwork):
         return True
 
-    def get_forward_port(self, network: 'INetwork', host_id: int) -> int:
-        pass
+    def get_forward_port(self) -> int:
+        return None
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass

@@ -31,6 +31,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         generate_cfg_files(host_num, hosts_ip_range,
                            self.virtual_ip_prefix, self.source_path)
         for i in range(host_num):
+            hosts[i].cmd(f'iptables -F -t nat')
             self._init_tun(hosts[i])
             self._init_config(hosts[i])
             logging.info(
@@ -64,6 +65,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
             hosts[i].cmd(
                 f'pkill -f {self.process_name}')
             hosts[i].cmd(f'ip tuntap del mode tap tap')
+            hosts[i].cmd(f'iptables -F -t nat')
         return True
 
     def _init_tun(self, host: IHost):
@@ -92,8 +94,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
             return match.group(1)
         return None
 
-    def get_forward_port(self, network: 'INetwork', host_id: int) -> int:
-        pass
+    def get_forward_port(self) -> int:
+        return None
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass

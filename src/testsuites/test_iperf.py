@@ -50,8 +50,7 @@ class IperfTest(ITestSuite):
             if tun_ip is None or tun_ip == "":
                 tun_ip = server.IP()
             receiver_ip = tun_ip
-        receiver_port = proto.get_forward_port(
-            network, self.config.server_host)
+        receiver_port = proto.get_forward_port()
         if receiver_port is None:
             receiver_port = 5201
         logging.info(

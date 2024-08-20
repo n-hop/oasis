@@ -14,6 +14,7 @@ from containernet.config import (
 from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
+from testsuites.test_rtt import RTTTest
 from routing.static_routing import StaticRouting
 from routing.olsr_routing import OLSRRouting
 from routing.openr_routing import OpenrRouting
@@ -66,7 +67,7 @@ def load_test(test_yaml_file: str):
 def add_test_to_network(network, tool, test_name):
     test_conf = TestConfig(
         name=test_name,
-        interval=tool['interval'], interval_num=tool['interval_num'],
+        interval=tool['interval'], interval_num=tool['interval_num'] if 'interval_num' in tool else 10,
         client_host=tool['client_host'], server_host=tool['server_host'])
     if tool['name'] == 'iperf':
         test_conf.test_type = TestType.throughput
@@ -76,6 +77,12 @@ def add_test_to_network(network, tool, test_name):
         test_conf.test_type = TestType.latency
         network.add_test_suite(PingTest(test_conf))
         logging.info("Added ping test to %s.", test_name)
+    elif tool['name'] == 'rtt':
+        test_conf.packet_count = tool['packet_count']
+        test_conf.packet_size = tool['packet_size']
+        test_conf.test_type = TestType.rtt
+        network.add_test_suite(RTTTest(test_conf))
+        logging.info("Added rtt test to %s.", test_name)
     else:
         logging.error(
             f"Error: unsupported test tool %s", tool['name'])
@@ -133,8 +140,7 @@ def setup_test(test_case_yaml, network: INetwork):
             kcp_client_cfg = ProtoConfig(
                 name=test_case_name,
                 protocol_path="/root/bin/kcp/client_linux_amd64",
-                protocol_args="-l :5201"
-                + " -mode fast3 --datashard 10 --parityshard 3"
+                protocol_args=" -mode fast3 --datashard 10 --parityshard 3"
                 + " -nocomp -autoexpire 900"
                 + " -sockbuf 16777217 -dscp 46 --crypt=none",
                 protocol_version="latest",
@@ -160,8 +166,9 @@ def setup_test(test_case_yaml, network: INetwork):
                 f"Error: not implemented protocol %s", proto)
     # convert test_tools to test suites
     test_tools = test_case_yaml['test_tools']
-    for tool in test_tools:
-        add_test_to_network(network, tool, test_case_name)
+    for name in test_tools.keys():
+        test_tools[name]['name'] = name
+        add_test_to_network(network, test_tools[name], test_case_name)
 
 
 def load_node_config(file_path) -> NodeConfig:

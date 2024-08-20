@@ -80,4 +80,4 @@ jobs:
           -n src/config/nested-containernet-config.yaml \
           --containernet=default \
           -w ${{github.workspace}}/ \
-          -t src/config/protocol-test.yaml
+          -t src/config/protocol-single-hop-test.yaml
