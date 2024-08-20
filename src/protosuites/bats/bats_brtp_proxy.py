@@ -6,7 +6,7 @@ class BRTPProxy(BATSProtocol):
     """BATS protocol BRTP-proxy mode.
     """
 
-    def get_forward_port(self, network: 'INetwork', host_id: int) -> int:
+    def get_forward_port(self) -> int:
         # The Iperf3 default port 5201 is set to exclude_port on the ini, for TCP proxy we use 5202
         return 5202
 

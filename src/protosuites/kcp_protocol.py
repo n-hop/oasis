@@ -10,6 +10,7 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
         if self.config.protocol_path is None:
             logging.error("No protocol path specified.")
         self.process_name = self.config.protocol_path.split('/')[-1]
+        self.forward_port = 5201
 
     def post_run(self, network: INetwork):
         return True
@@ -23,7 +24,8 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
         if self.config.role == "client":
             id = conf_host[0]
             receiver_ip = hosts[conf_host[-1]].IP()
-            args = f'-r {receiver_ip}:4000' + ' ' + self.config.protocol_args
+            args = f'-r {receiver_ip}:4000' + f' -l :{self.forward_port}' + \
+                ' ' + self.config.protocol_args
             res = hosts[id].cmdPrint(f'{self.config.protocol_path} {args}'
                                      f' > {self.log_dir}kcp_protocol_h{id}.log &')
             logging.info(f"############### Oasis run kcp protocol on %s, %s ###############",
@@ -31,7 +33,8 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
         elif self.config.role == "server":
             id = conf_host[-1]
             target_ip = hosts[id].IP()
-            args = f'-t {target_ip}:5201' + ' ' + self.config.protocol_args
+            args = f'-t {target_ip}:{self.forward_port}' + \
+                ' ' + self.config.protocol_args
             res = hosts[id].cmdPrint(f'{self.config.protocol_path} {args}'
                                      f' > {self.log_dir}kcp_protocol_h{id}.log &')
             logging.info(f"############### Oasis run kcp protocol on %s, %s ###############",
@@ -53,8 +56,8 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
             f"############### Oasis stop kcp protocol on %s ###############", host.name())
         return True
 
-    def get_forward_port(self, network: 'INetwork', host_id: int) -> int:
-        pass
+    def get_forward_port(self) -> int:
+        return self.forward_port
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass

@@ -3,8 +3,9 @@ from interfaces.network import INetwork
 from protosuites.proto import (ProtoConfig, IProtoSuite)
 from protosuites.proto_info import IProtoInfo
 
+
 class CSProtocol(IProtoSuite, IProtoInfo):
-    def __init__(self, config:ProtoConfig, client:IProtoSuite, server:IProtoSuite):
+    def __init__(self, config: ProtoConfig, client: IProtoSuite, server: IProtoSuite):
         super().__init__(config)
         self.client = client
         self.server = server
@@ -25,13 +26,13 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         self.client.get_config().hosts = self.config.hosts
         self.server.get_config().hosts = self.config.hosts
         return self.client.run(network) \
-                and self.server.run(network)
+            and self.server.run(network)
 
     def stop(self, network: INetwork):
         return self.client.stop(network) and self.server.stop
 
-    def get_forward_port(self, network: 'INetwork', host_id: int) -> int:
-        return self.client.get_forward_port(network, host_id)
+    def get_forward_port(self) -> int:
+        return self.client.get_forward_port()
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         return self.client.get_tun_ip(network, host_id)

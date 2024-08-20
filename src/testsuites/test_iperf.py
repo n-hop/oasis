@@ -50,10 +50,7 @@ class IperfTest(ITestSuite):
             if tun_ip is None or tun_ip == "":
                 tun_ip = server.IP()
             receiver_ip = tun_ip
-        receiver_port = proto.get_forward_port(
-            network, self.config.server_host)
-        if receiver_port is None:
-            receiver_port = 5201
+        receiver_port = proto.get_forward_port()
         logging.info(
             "############### Oasis IperfTest from %s to %s ###############", client.name(), server.name())
         protocol_version = ""
