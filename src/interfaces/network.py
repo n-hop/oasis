@@ -71,29 +71,45 @@ class INetwork(ABC):
                 result = test.run(self, proto)
                 if test.type() not in test_results:
                     test_results[test.type()] = []
-                # save the test result
-                test_results[test.type()].append(result)
+                # save the test result/config
+                test_results[test.type()] = {}
+                test_results[test.type()]['config'] = test.get_config()
+                test_results[test.type()]['results'] = []
+                test_results[test.type()]['results'].append(result)
                 result_files.append(result.record)
             # stop the protocol
             proto.stop(self)
         # Analyze the test results
         for test_type, test_result in test_results.items():
+            test_config = test_result['config']
             # analyze those results files according to the test type
             if test_type == TestType.throughput:
                 config = AnalyzerConfig(
-                    input=result_files, output=f"{test_result[0].result_dir}iperf3_throughput.svg")
+                    input=result_files, output=f"{test_result['results'][0].result_dir}iperf3_throughput.svg")
                 analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
                 analyzer.analyze()
                 analyzer.visualize()
                 logging.info(
                     "Analyzed and visualized the throughput test results")
             if test_type == TestType.rtt:
-                config = AnalyzerConfig(
-                    input=result_files, output=f"{test_result[0].result_dir}rtt.svg")
-                analyzer = AnalyzerFactory.get_analyzer("rtt", config)
-                analyzer.analyze()
-                analyzer.visualize()
-                logging.info("Analyzed and visualized the RTT test results")
+                if test_config.packet_count > 1:
+                    config = AnalyzerConfig(
+                        input=result_files, output=f"{test_result['results'][0].result_dir}rtt.svg")
+                    analyzer = AnalyzerFactory.get_analyzer("rtt", config)
+                    analyzer.analyze()
+                    analyzer.visualize()
+                    logging.info(
+                        "Analyzed and visualized the RTT test results")
+                if test_config.packet_count == 1:
+                    config = AnalyzerConfig(
+                        input=result_files, output=f"{test_result['results'][0].result_dir}first_rtt.svg")
+                    analyzer = AnalyzerFactory.get_analyzer(
+                        "first_rtt", config)
+                    analyzer.analyze()
+                    analyzer.visualize()
+                    logging.info(
+                        "Analyzed and visualized the first RTT test results")
+
         return True
 
     def reset(self):
