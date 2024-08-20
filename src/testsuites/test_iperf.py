@@ -14,7 +14,7 @@ class IperfTest(ITestSuite):
         return True
 
     def _run_iperf(self, client, server, recv_port, recv_ip):
-        server.cmd(f'nohup iperf3 -s -p {recv_port} -i {int(self.config.interval)} -V --forceflush'
+        server.cmd(f'iperf3 -s -p {recv_port} -i {int(self.config.interval)} -V --forceflush'
                    f' --logfile {self.result.record} &')
         res = client.popen(f'iperf3 -c {recv_ip} -p {recv_port} -i {int(self.config.interval)}'
                            f' -t {int(self.config.interval_num * self.config.interval)}').stdout.read().decode('utf-8')

@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import (Optional, List)
@@ -5,6 +6,7 @@ from typing import (Optional, List)
 
 @dataclass
 class ProtoConfig:
+    name: str = field(default="")
     protocol_path: Optional[str] = field(default=None)
     protocol_args: Optional[str] = field(default=None)
     protocol_version: Optional[str] = field(default='latest')
@@ -22,6 +24,9 @@ class IProtoSuite(ABC):
     def __init__(self, config: ProtoConfig):
         self.is_success = False
         self.config = config
+        self.log_dir = f"/root/test_results/{self.config.name}/log/"
+        if not os.path.exists(f"{self.log_dir}"):
+            os.makedirs(f"{self.log_dir}")
 
     def get_config(self) -> ProtoConfig:
         return self.config

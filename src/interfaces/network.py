@@ -77,11 +77,11 @@ class INetwork(ABC):
             # stop the protocol
             proto.stop(self)
         # Analyze the test results
-        for test_type, test_results in test_results.items():
+        for test_type, test_result in test_results.items():
             # analyze those results files according to the test type
             if test_type == TestType.throughput:
                 config = AnalyzerConfig(
-                    input=result_files, output="iperf3_throughput.svg")
+                    input=result_files, output=f"{test_result[0].result_dir}iperf3_throughput.svg")
                 analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
                 analyzer.analyze()
                 analyzer.visualize()

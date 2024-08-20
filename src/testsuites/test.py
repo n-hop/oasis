@@ -1,4 +1,5 @@
 import logging
+import os
 from abc import ABC, abstractmethod
 from enum import IntEnum
 from dataclasses import dataclass, field
@@ -59,15 +60,19 @@ class TestResult:
     is_success: bool
     pattern: str
     record: str
+    result_dir: str = field(default="/root/")
 
 
 class ITestSuite(ABC):
     def __init__(self, config: TestConfig) -> None:
         self.config = config
+        self.result_dir = f"/root/test_results/{self.config.name}/"
+        if not os.path.exists(f"{self.result_dir}"):
+            os.makedirs(f"{self.result_dir}")
         self.result = TestResult(
             False, pattern=f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
             f"_h{self.config.client_host}_h{self.config.server_host}.log",
-            record="")
+            record="", result_dir=self.result_dir)
 
     @abstractmethod
     def post_process(self):
@@ -82,7 +87,8 @@ class ITestSuite(ABC):
         pass
 
     def run(self, network: 'INetwork', proto: IProtoInfo) -> TestResult:  # type: ignore
-        self.result.record = proto.get_protocol_name() + "_" + self.result.pattern
+        self.result.record = self.result.result_dir + \
+            proto.get_protocol_name() + "_" + self.result.pattern
         self.result.is_success = self.pre_process()
         # checking for non-distributed protocols
         if not proto.is_distributed():

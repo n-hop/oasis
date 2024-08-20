@@ -83,6 +83,7 @@ def setup_test(test_case_yaml, network: INetwork):
     """setup the test case configuration.
     """
     # read the strategy matrix
+    test_case_name = test_case_yaml['name']
     strategy = test_case_yaml['strategy']
     if strategy is None:
         logging.error("Error: strategy is None.")
@@ -104,6 +105,7 @@ def setup_test(test_case_yaml, network: INetwork):
             # combine the protocol with the its version
             for version in bats_version:
                 bats_proto_config = ProtoConfig(
+                    name=test_case_name,
                     protocol_path="/root/bats/bats_protocol",
                     protocol_args="--daemon_enabled=true",
                     protocol_version=version)
@@ -121,11 +123,12 @@ def setup_test(test_case_yaml, network: INetwork):
                     logging.info("Added bats BRTP proxy protocol.")
                 network.add_protocol_suite(bats)
         elif proto == 'tcp':
-            config = ProtoConfig()
+            config = ProtoConfig(name=test_case_name)
             network.add_protocol_suite(TCPProtocol(config))
             logging.info("Added TCP protocol.")
         elif proto == 'kcp':
             kcp_client_cfg = ProtoConfig(
+                name=test_case_name,
                 protocol_path="/root/bin/kcp/client_linux_amd64",
                 protocol_args="-l :5201"
                 + " -mode fast3 --datashard 10 --parityshard 3"
@@ -134,6 +137,7 @@ def setup_test(test_case_yaml, network: INetwork):
                 protocol_version="latest",
                 role="client")
             kcp_server_cfg = ProtoConfig(
+                name=test_case_name,
                 protocol_path="/root/bin/kcp/server_linux_amd64",
                 protocol_args="-l :4000"
                 + " -mode fast3 --datashard 10 --parityshard 3"
@@ -141,9 +145,11 @@ def setup_test(test_case_yaml, network: INetwork):
                 protocol_version="latest",
                 role="server")
             # by default, client-server hosts are [0, -1]
-            cs = CSProtocol(config=ProtoConfig(hosts=[0, len(network.get_hosts()) - 1]),
-                            client=KCPProtocol(kcp_client_cfg),
-                            server=KCPProtocol(kcp_server_cfg))
+            cs = CSProtocol(config=ProtoConfig(
+                name=test_case_name,
+                hosts=[0, len(network.get_hosts()) - 1]),
+                client=KCPProtocol(kcp_client_cfg),
+                server=KCPProtocol(kcp_server_cfg))
             network.add_protocol_suite(cs)
             logging.info("Added KCP protocol.")
         else:
@@ -152,7 +158,7 @@ def setup_test(test_case_yaml, network: INetwork):
     # convert test_tools to test suites
     test_tools = test_case_yaml['test_tools']
     for tool in test_tools:
-        add_test_to_network(network, tool, test_case_yaml['name'])
+        add_test_to_network(network, tool, test_case_name)
     # read route
     route = test_case_yaml['route']
     logging.info("Route: %s", route)
