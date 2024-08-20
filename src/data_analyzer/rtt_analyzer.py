@@ -65,7 +65,7 @@ class RTTAnalyzer(IDataAnalyzer):
                     data_agv10[log_base_name] += [5000] * \
                         (max_lines - len(data_agv10[log_base_name]))
                 # start plot x-y graph: x is time in ms,
-                log_label = log_base_name.split("_")[0]
+                log_label = log_base_name.split("_RTT")[0]
                 # set x range
                 if x is None:
                     x = np.arange(0, (end_time - start_time) *
