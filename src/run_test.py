@@ -15,6 +15,8 @@ from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from routing.static_routing import StaticRouting
+from routing.olsr_routing import OLSRRouting
+from routing.openr_routing import OpenrRouting
 from protosuites.proto import (ProtoConfig, SupportedProto, SupportedBATSProto)
 from protosuites.tcp_protocol import TCPProtocol
 from protosuites.kcp_protocol import KCPProtocol
@@ -159,9 +161,6 @@ def setup_test(test_case_yaml, network: INetwork):
     test_tools = test_case_yaml['test_tools']
     for tool in test_tools:
         add_test_to_network(network, tool, test_case_name)
-    # read route
-    route = test_case_yaml['route']
-    logging.info("Route: %s", route)
 
 
 def load_node_config(file_path) -> NodeConfig:
@@ -215,7 +214,7 @@ def build_topology(top_config: TopologyConfig):
     return built_net_top
 
 
-def build_network(node_config: NodeConfig, top_config: TopologyConfig):
+def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: str = None):
     """Build a container network from the yaml configuration file.
 
     Args:
@@ -225,7 +224,14 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig):
         ContainerizedNetwork: the container network object
     """
     net_top = build_topology(top_config)
-    return ContainerizedNetwork(node_config, net_top, StaticRouting())
+    route_strategy = None
+    if route is None or route == "static_route":
+        route_strategy = StaticRouting()
+    if route == "olsr_route":
+        route_strategy = OLSRRouting()
+    elif route == "openr_route":
+        route_strategy = OpenrRouting()
+    return ContainerizedNetwork(node_config, net_top, route_strategy)
 
 
 if __name__ == '__main__':
@@ -253,7 +259,8 @@ if __name__ == '__main__':
     for test in all_tests:
         cur_top_config = load_top_config(test)
         if linear_network is None:
-            linear_network = build_network(cur_node_config, cur_top_config)
+            linear_network = build_network(
+                cur_node_config, cur_top_config, test['route'])
             linear_network.start()
         else:
             local_net_top = build_topology(cur_top_config)
