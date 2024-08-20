@@ -166,8 +166,9 @@ def setup_test(test_case_yaml, network: INetwork):
                 f"Error: not implemented protocol %s", proto)
     # convert test_tools to test suites
     test_tools = test_case_yaml['test_tools']
-    for tool in test_tools:
-        add_test_to_network(network, tool, test_case_name)
+    for name in test_tools.keys():
+        test_tools[name]['name'] = name
+        add_test_to_network(network, test_tools[name], test_case_name)
 
 
 def load_node_config(file_path) -> NodeConfig:

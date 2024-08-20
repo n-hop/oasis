@@ -137,3 +137,6 @@ class ITestSuite(ABC):
 
     def get_result(self) -> TestResult:
         return self.result
+
+    def get_config(self) -> TestConfig:
+        return self.config
