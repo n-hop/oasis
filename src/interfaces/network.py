@@ -1,4 +1,5 @@
 import logging
+import copy
 from abc import ABC, abstractmethod
 from containernet.topology import (ITopology)
 from testsuites.test import (ITestSuite, TestType)
@@ -71,9 +72,11 @@ class INetwork(ABC):
                 if test.type() not in test_results:
                     test_results[test.type()] = {}
                     test_results[test.type()]['results'] = []
-                test_results[test.type()]['config'] = test.get_config()
-                test_results[test.type()]['results'].append(result)
-                logging.debug("Added Test result for %s", test.type())
+                test_results[test.type()]['config'] = copy.deepcopy(
+                    test.get_config())
+                test_results[test.type()]['results'].append(
+                    copy.deepcopy(result))
+                logging.debug("Added Test result for %s", result.record)
             # stop the protocol
             proto.stop(self)
         # Analyze the test results
