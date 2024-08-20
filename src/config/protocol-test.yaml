@@ -12,10 +12,9 @@ tests:
       config_file: src/config/predefined.topology.yaml
     strategy:
       matrix:
-        target_protocols: [brtp_proxy, btp, kcp] # brtp, brtp_proxy, kcp, tcp
+        target_protocols: [brtp_proxy, btp, kcp, tcp] # brtp, brtp_proxy, kcp, tcp
         bats_version: [latest] # v3.5.0, latest
-        tcp_version: [cubic] # default:cubic; optional: bbr, reno
-        kcp_version: [latest]
+        tcp_version: [bbr] # default:cubic; optional: bbr, reno
     route: static_route
     test_tools:
       - name: iperf

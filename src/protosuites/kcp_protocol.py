@@ -61,3 +61,6 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
 
     def get_protocol_name(self) -> str:
         return "KCP"
+
+    def get_protocol_version(self) -> str:
+        return self.config.protocol_version

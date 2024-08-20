@@ -97,3 +97,6 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
         pass
+
+    def get_protocol_version(self) -> str:
+        return self.config.protocol_version

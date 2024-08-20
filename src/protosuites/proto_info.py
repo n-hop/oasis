@@ -27,3 +27,6 @@ class IProtoInfo(ABC):
 
     def is_distributed(self) -> bool:
         return True
+
+    def get_protocol_version(self) -> str:
+        return ""

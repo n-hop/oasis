@@ -87,8 +87,12 @@ class ITestSuite(ABC):
         pass
 
     def run(self, network: 'INetwork', proto: IProtoInfo) -> TestResult:  # type: ignore
+        if proto.get_protocol_version() not in ["latest", ""]:
+            base_name = proto.get_protocol_name() + "-" + proto.get_protocol_version()
+        else:
+            base_name = proto.get_protocol_name()
         self.result.record = self.result.result_dir + \
-            proto.get_protocol_name() + "_" + self.result.pattern
+            base_name + "_" + self.result.pattern
         self.result.is_success = self.pre_process()
         # checking for non-distributed protocols
         if not proto.is_distributed():

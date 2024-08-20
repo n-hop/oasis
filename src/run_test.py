@@ -96,8 +96,7 @@ def setup_test(test_case_yaml, network: INetwork):
         return
     target_protocols = matrix['target_protocols']
     bats_version = matrix['bats_version']
-    # tcp_version = matrix['tcp_version']
-    # kcp_version = matrix['kcp_version']
+    tcp_version = matrix['tcp_version']
     for proto in target_protocols:
         if proto not in SupportedProto:
             logging.error(
@@ -125,9 +124,11 @@ def setup_test(test_case_yaml, network: INetwork):
                     logging.info("Added bats BRTP proxy protocol.")
                 network.add_protocol_suite(bats)
         elif proto == 'tcp':
-            config = ProtoConfig(name=test_case_name)
-            network.add_protocol_suite(TCPProtocol(config))
-            logging.info("Added TCP protocol.")
+            for version in tcp_version:
+                config = ProtoConfig(name=test_case_name,
+                                     protocol_version=version)
+                network.add_protocol_suite(TCPProtocol(config))
+                logging.info("Added TCP protocol, version %s.", version)
         elif proto == 'kcp':
             kcp_client_cfg = ProtoConfig(
                 name=test_case_name,

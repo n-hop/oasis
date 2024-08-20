@@ -67,8 +67,8 @@ class Iperf3Analyzer(IDataAnalyzer):
                     continue
             logging.info(f"Added throughput data: %s  %s",
                          throughput_array, log_base_name)
-            if max(throughput_array) > max_throughput:
-                max_throughput = max(throughput_array)
+            cur_max_throughput = max(throughput_array)
+            max_throughput = max(max_throughput, cur_max_throughput)
             x = np.arange(1, len(throughput_array))
             log_label = log_base_name.split("_")[0]
             plt.plot(x, throughput_array[0: len(x)],
