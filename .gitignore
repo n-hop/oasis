@@ -91,3 +91,5 @@ id_rsa*
 *.pub
 **/bats_licence
 
+# results
+test_results
