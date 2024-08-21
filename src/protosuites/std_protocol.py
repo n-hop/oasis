@@ -5,7 +5,7 @@ from .proto_info import IProtoInfo
 
 
 class StdProtocol(IProtoSuite, IProtoInfo):
-    """StdProtocol is used to load the protocol which be described in YAML.
+    """StdProtocol is used to load the protocol which be described by YAML.
     """
 
     def __init__(self, config: ProtoConfig):
@@ -32,14 +32,15 @@ class StdProtocol(IProtoSuite, IProtoInfo):
             return False
         hosts = network.get_hosts()
         for host in hosts:
-            kcp_args = ''
+            protocol_args = ''
             for arg in self.config.args:
-                kcp_args += arg + ' '
-            logging.info("host %s args: %s", host, kcp_args)
-            if "%s" in kcp_args:
+                protocol_args += arg + ' '
+            logging.info("host %s args: %s", host.name(), protocol_args)
+            if "%s" in protocol_args:
                 receiver_ip = hosts[-1].IP()
-                kcp_args = kcp_args % (receiver_ip, self.forward_port)
-            host.cmdPrint(f'{self.config.path} {kcp_args} ')
+                protocol_args = protocol_args % (
+                    receiver_ip, self.forward_port)
+            host.cmdPrint(f'{self.config.path} {protocol_args}')
             logging.info(
                 f"############### Oasis start %s protocol on %s ###############", self.config.name, host.name())
         return True

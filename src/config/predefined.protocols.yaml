@@ -1,30 +1,35 @@
 protocols:
+  - name: tcp-cubic
+    version: cubic
+  - name: tcp-reno
+    version: reno
+  - name: tcp-bbr
+    version: bbr
   - name: btp
     type: distributed
     path: bats/bats_protocol
     args:
       - "--daemon_enabled=true"
       - "--tun_protocol=BTP"
-    version: [latest]
+    version: latest
   - name: brtp
     type: distributed
     path: bats/bats_protocol
     args:
       - "--daemon_enabled=true"
       - "--tun_protocol=BRTP"
-    version: [latest]
+    version: latest
   - name: brtp_proxy
     type: distributed
     path: bats/bats_protocol
     args:
       - "--daemon_enabled=true"
-    version: [latest]
+    version: latest
   - name: kcp
     type: none_distributed
     args: # global args for kcp
       - "-mode fast3"
-      - "--datashard 10 --parityshard 3"
-      - "-nocomp"
+      - "--datashard 10 --parityshard 3 -nocomp"
       - "-sockbuf 16777217 -dscp 46 --crypt=none"
     port: 5201
     protocols: # iterative

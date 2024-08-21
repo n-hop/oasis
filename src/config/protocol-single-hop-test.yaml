@@ -13,10 +13,9 @@ tests:
     target_protocols:
       - name: kcp
         type: none_distributed
-        args: # global args for kcp
+        args:
           - "-mode fast3"
-          - "--datashard 10 --parityshard 3"
-          - "-nocomp"
+          - "--datashard 10 --parityshard 3 -nocomp"
           - "-sockbuf 16777217 -dscp 46 --crypt=none"
         port: 5201
         protocols: # iterative
@@ -34,7 +33,7 @@ tests:
         args:
           - "--daemon_enabled=true"
           - "--tun_protocol=BTP"
-        version: [latest]
+        version: latest
       - name: brtp
         type: distributed
         path: bats/bats_protocol
