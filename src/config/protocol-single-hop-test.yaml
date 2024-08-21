@@ -10,11 +10,37 @@ tests:
     topology:
       config_name: linear_network_1
       config_file: src/config/predefined.topology.yaml
-    strategy:
-      matrix:
-        target_protocols: [brtp_proxy, btp, kcp, tcp] # brtp, brtp_proxy, kcp, tcp
-        bats_version: [latest] # v3.5.0, latest
-        tcp_version: [cubic] # default:cubic; optional: bbr, reno
+    target_protocols:
+      - name: kcp
+        type: none_distributed
+        args: # global args for kcp
+          - "-mode fast3"
+          - "--datashard 10 --parityshard 3"
+          - "-nocomp -autoexpire 900"
+          - "-sockbuf 16777217 -dscp 46 --crypt=none"
+        port: 5201
+        protocols: # iterative
+          - name: kcp_client
+            path: bin/kcp/client_linux_amd64
+            args:
+              - "-r %s:4000 -l :%s" # %s is the ip address of the server, %s is the protocol forward port.
+          - name: kcp_server
+            path: bin/kcp/server_linux_amd64
+            args:
+              - "-l :4000"
+      - name: btp
+        type: distributed
+        path: bats/bats_protocol
+        args:
+          - "--daemon_enabled=true"
+          - "--tun_protocol=BTP"
+        version: [latest]
+      - name: brtp
+        type: distributed
+        path: bats/bats_protocol
+        args:
+          - "--daemon_enabled=true"
+          - "--tun_protocol=BRTP"
     route: static_route
     test_tools:
       iperf:

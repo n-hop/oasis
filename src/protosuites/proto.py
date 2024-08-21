@@ -10,16 +10,21 @@ class ProtoType(IntEnum):
     none_distributed = 1
 
 
+proto_type_str_mapping = {
+    "distributed": ProtoType.distributed,
+    "none_distributed": ProtoType.none_distributed
+}
+
+
 @dataclass
 class ProtoConfig:
     name: str = field(default="")
     path: Optional[str] = field(default=None)
-    args: Optional[str] = field(default=None)
-    version: Optional[str] = field(default='latest')
+    args: Optional[List[str]] = field(default=None)
+    version: Optional[List[str]] = field(default=None)
     hosts: Optional[List[int]] = field(default=None)
     port: Optional[int] = field(default=None)
-    type: Optional[ProtoType] = field(default=ProtoType.distributed)
-    role: Optional[str] = field(default='None')
+    type: Optional[str] = field(default='distributed')
     protocols: Optional[List['ProtoConfig']] = field(
         default=None)  # type: ignore
 

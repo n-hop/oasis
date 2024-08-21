@@ -89,8 +89,10 @@ class ITestSuite(ABC):
         pass
 
     def run(self, network: 'INetwork', proto_info: IProtoInfo) -> TestResult:  # type: ignore
-        if proto_info.get_protocol_version() not in ["latest", ""]:
-            base_name = proto_info.get_protocol_name() + "-" + proto_info.get_protocol_version()
+        if proto_info.get_protocol_version() is not None and len(
+                proto_info.get_protocol_version()) > 0 and proto_info.get_protocol_version()[0] != 'latest':
+            base_name = proto_info.get_protocol_name(
+            ) + "-" + proto_info.get_protocol_version()[0]
         else:
             base_name = proto_info.get_protocol_name()
         self.result.record = self.result.result_dir + \

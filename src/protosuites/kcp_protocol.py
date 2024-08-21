@@ -20,40 +20,27 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
 
     def run(self, network: INetwork):
         hosts = network.get_hosts()
-        conf_host = self.config.hosts
-        if self.config.role == "client":
-            id = conf_host[0]
-            receiver_ip = hosts[conf_host[-1]].IP()
-            args = f'-r {receiver_ip}:4000' + f' -l :{self.forward_port}' + \
-                ' ' + self.config.args
-            res = hosts[id].cmdPrint(f'{self.config.path} {args}'
-                                     f' > {self.log_dir}kcp_protocol_h{id}.log &')
-            logging.info(f"############### Oasis run kcp protocol on %s, %s ###############",
-                         hosts[id].name(), res)
-        elif self.config.role == "server":
-            id = conf_host[-1]
-            target_ip = hosts[id].IP()
-            args = f'-t {target_ip}:{self.forward_port}' + \
-                ' ' + self.config.args
-            res = hosts[id].cmdPrint(f'{self.config.path} {args}'
-                                     f' > {self.log_dir}kcp_protocol_h{id}.log &')
-            logging.info(f"############### Oasis run kcp protocol on %s, %s ###############",
-                         hosts[id].name(), res)
-        else:
-            logging.error("No role specified.")
+        if len(self.config.hosts) != 1:
+            logging.error(
+                "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
             return False
+        host_id = self.config.hosts[0]
+        kcp_args = ''
+        for arg in self.config.args:
+            kcp_args += arg + ' '
+        logging.info("host %s args: %s", host_id, kcp_args)
+        if "%s" in kcp_args:
+            receiver_ip = hosts[-1].IP()
+            kcp_args = kcp_args % (receiver_ip, self.forward_port)
+        hosts[host_id].cmdPrint(f'{self.config.path} {kcp_args} ')
         return True
 
     def stop(self, network: INetwork):
+        host_id = self.config.hosts[0]
         hosts = network.get_hosts()
-        host = None
-        if self.config.role == "client":
-            host = hosts[self.config.hosts[0]]
-        elif self.config.role == "server":
-            host = hosts[self.config.hosts[-1]]
-        host.cmdPrint(f'pkill -f {self.process_name}')
+        hosts[host_id].cmdPrint(f'pkill -f {self.process_name}')
         logging.info(
-            f"############### Oasis stop kcp protocol on %s ###############", host.name())
+            f"############### Oasis stop kcp protocol on %s ###############", hosts[host_id].name())
         return True
 
     def get_forward_port(self) -> int:
