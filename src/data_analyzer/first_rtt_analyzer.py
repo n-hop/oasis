@@ -40,7 +40,7 @@ class FirstRTTAnalyzer(IDataAnalyzer):
                         first_rtt_list.append(first_rtt)
                 # first_rtt_agv
                 first_rtt_agv = sum(first_rtt_list) / len(first_rtt_list)
-                log_label = log_base_name.split("_RTT")[0]
+                log_label = log_base_name.split("_")[0]
                 data_first_rtt[log_label] = first_rtt_agv
         x = np.array(list(data_first_rtt.keys()))
         y = np.array(list(data_first_rtt.values()))
