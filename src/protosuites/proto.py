@@ -1,7 +1,13 @@
 import os
 from abc import ABC, abstractmethod
+from enum import IntEnum
 from dataclasses import dataclass, field
 from typing import (Optional, List)
+
+
+class ProtoType(IntEnum):
+    distributed = 0
+    none_distributed = 1
 
 
 @dataclass
@@ -12,7 +18,10 @@ class ProtoConfig:
     version: Optional[str] = field(default='latest')
     hosts: Optional[List[int]] = field(default=None)
     port: Optional[int] = field(default=None)
+    type: Optional[ProtoType] = field(default=ProtoType.distributed)
     role: Optional[str] = field(default='None')
+    protocols: Optional[List['ProtoConfig']] = field(
+        default=None)  # type: ignore
 
 
 SupportedProtoRole = ['client', 'server', 'None']
