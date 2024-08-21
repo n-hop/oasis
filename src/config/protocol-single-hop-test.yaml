@@ -16,7 +16,7 @@ tests:
         args: # global args for kcp
           - "-mode fast3"
           - "--datashard 10 --parityshard 3"
-          - "-nocomp -autoexpire 900"
+          - "-nocomp"
           - "-sockbuf 16777217 -dscp 46 --crypt=none"
         port: 5201
         protocols: # iterative

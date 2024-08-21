@@ -19,8 +19,7 @@ from routing.static_routing import StaticRouting
 from routing.olsr_routing import OLSRRouting
 from routing.openr_routing import OpenrRouting
 from protosuites.proto import (ProtoConfig, SupportedProto)
-from protosuites.tcp_protocol import TCPProtocol
-from protosuites.kcp_protocol import KCPProtocol
+from protosuites.std_protocol import StdProtocol
 from protosuites.cs_protocol import CSProtocol
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
@@ -188,7 +187,7 @@ def setup_test(test_case_yaml, network: INetwork):
                 network.add_protocol_suite(BRTPProxy(proto_config))
                 continue
             if proto_config.name == 'tcp':
-                network.add_protocol_suite(TCPProtocol(proto_config))
+                network.add_protocol_suite(StdProtocol(proto_config))
                 continue
         if proto_config.type == 'none_distributed':
             # none distributed protocol
@@ -203,8 +202,8 @@ def setup_test(test_case_yaml, network: INetwork):
             proto_config.name = test_case_name
             # wrapper of client-server protocol
             cs = CSProtocol(config=proto_config,
-                            client=KCPProtocol(client_conf),
-                            server=KCPProtocol(server_conf))
+                            client=StdProtocol(client_conf),
+                            server=StdProtocol(server_conf))
             network.add_protocol_suite(cs)
             continue
         logging.error("Error: unsupported protocol type %s.%s",

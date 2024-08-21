@@ -20,7 +20,6 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         if self.client.pre_run(network):
             return self.server.pre_run(network)
         return False
-        # return self.client.pre_run(network) and self.server.pre_run(network)
 
     def run(self, network: INetwork):
         if len(self.config.hosts) != 2:
