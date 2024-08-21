@@ -47,6 +47,7 @@ class Iperf3Analyzer(IDataAnalyzer):
         return True
 
     def visualize(self):
+        plt.clf()
         plt.rcParams["font.family"] = "serif"
         plt.xlabel("Time (s)", fontsize=8, fontweight="bold")
         plt.ylabel("Throughput (Mbits/sec)", fontsize=8, fontweight="bold")

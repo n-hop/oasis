@@ -18,6 +18,7 @@ class RTTAnalyzer(IDataAnalyzer):
         plot rtt graph
         """
         data_agv10 = {}
+        plt.clf()
         plt.rcParams['font.family'] = 'serif'
         plt.xlabel('Time (ms)', fontsize=8,
                    fontweight='bold')
