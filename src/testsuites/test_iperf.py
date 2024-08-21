@@ -13,13 +13,11 @@ class IperfTest(ITestSuite):
     def pre_process(self):
         return True
 
-    def _run_iperf(self, client, server, recv_port, recv_ip, version):
+    def _run_iperf(self, client, server, recv_port, recv_ip):
         server.cmd(f'iperf3 -s -p {recv_port} -i {int(self.config.interval)} -V --forceflush'
                    f' --logfile {self.result.record} &')
         iperf3_client_cmd = f'iperf3 -c {recv_ip} -p {recv_port} -i {int(self.config.interval)}' \
                             f' -t {int(self.config.interval_num * self.config.interval)}'
-        if version is not None and version != "":
-            iperf3_client_cmd += f' --congestion {version}'
         res = client.popen(
             f'{iperf3_client_cmd}').stdout.read().decode('utf-8')
         logging.info('iperf client output: %s', res)
@@ -55,9 +53,4 @@ class IperfTest(ITestSuite):
             receiver_port = 5201
         logging.info(
             "############### Oasis IperfTest from %s to %s ###############", client.name(), server.name())
-        version = ""
-        if proto_info.get_protocol_name() == "TCP":
-            version = proto_info.get_protocol_version()
-            logging.info(
-                "############### Oasis IperfTest protocol version %s ###############", version)
-        return self._run_iperf(client, server, receiver_port, receiver_ip, version)
+        return self._run_iperf(client, server, receiver_port, receiver_ip)

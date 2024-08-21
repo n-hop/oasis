@@ -1,10 +1,13 @@
 protocols:
   - name: tcp-cubic
     version: cubic
+    type: distributed
   - name: tcp-reno
     version: reno
+    type: distributed
   - name: tcp-bbr
     version: bbr
+    type: distributed
   - name: btp
     type: distributed
     path: bats/bats_protocol

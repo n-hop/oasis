@@ -20,6 +20,9 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         return True
 
     def pre_run(self, network: INetwork):
+        if 'tcp' in self.config.name:
+            self.__handle_tcp_version_setup(network)
+            return True
         return True
 
     def run(self, network: INetwork):
@@ -65,3 +68,17 @@ class StdProtocol(IProtoSuite, IProtoInfo):
 
     def get_protocol_version(self) -> str:
         return self.config.version
+
+    def __handle_tcp_version_setup(self, network: INetwork):
+        tcp_version = self.get_protocol_version()
+        if tcp_version not in ['cubic', 'bbr', 'reno']:
+            logging.error(
+                "TCP version %s is not supported, please check the configuration.", tcp_version)
+            return
+        for host in network.get_hosts():
+            host.cmdPrint(
+                f'sysctl -w net.ipv4.tcp_congestion_control={tcp_version}')
+            host.cmdPrint(f"sysctl -p")
+            logging.info(
+                "############### Oasis change the congestion control"
+                " algorithm to %s on %s ###############", tcp_version, host.name())
