@@ -12,7 +12,7 @@ class PingTest(ITestSuite):
     def pre_process(self):
         return True
 
-    def _run_test(self, network: INetwork, proto: IProtoInfo):
+    def _run_test(self, network: INetwork, proto_info: IProtoInfo):
         hosts = network.get_hosts()
         hosts_num = len(hosts)
         if self.config.client_host is None or self.config.server_host is None:

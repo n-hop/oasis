@@ -37,12 +37,12 @@ class NodeConfig:
     """Configuration for the Docker node.
     """
     name: str
-    node_img: str
-    node_vols: Optional[list] = field(default=None)
-    node_bind_port: Optional[bool] = field(default=True)
-    node_name_prefix: Optional[str] = field(default='h')
-    node_ip_range: Optional[str] = field(default='10.0.0.0/8')
-    node_route: Optional[str] = field(default='ip')
+    img: str
+    vols: Optional[list] = field(default=None)
+    bind_port: Optional[bool] = field(default=True)
+    name_prefix: Optional[str] = field(default='h')
+    ip_range: Optional[str] = field(default='10.0.0.0/8')
+    route: Optional[str] = field(default='ip')
 
 
 @dataclass

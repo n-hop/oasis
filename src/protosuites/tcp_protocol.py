@@ -26,4 +26,4 @@ class TCPProtocol(IProtoSuite, IProtoInfo):
         return "TCP"
 
     def get_protocol_version(self) -> str:
-        return self.config.protocol_version
+        return self.config.version

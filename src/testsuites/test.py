@@ -85,19 +85,19 @@ class ITestSuite(ABC):
         pass
 
     @abstractmethod
-    def _run_test(self, network: 'INetwork', proto: IProtoInfo):  # type: ignore
+    def _run_test(self, network: 'INetwork', proto_info: IProtoInfo):  # type: ignore
         pass
 
-    def run(self, network: 'INetwork', proto: IProtoInfo) -> TestResult:  # type: ignore
-        if proto.get_protocol_version() not in ["latest", ""]:
-            base_name = proto.get_protocol_name() + "-" + proto.get_protocol_version()
+    def run(self, network: 'INetwork', proto_info: IProtoInfo) -> TestResult:  # type: ignore
+        if proto_info.get_protocol_version() not in ["latest", ""]:
+            base_name = proto_info.get_protocol_name() + "-" + proto_info.get_protocol_version()
         else:
-            base_name = proto.get_protocol_name()
+            base_name = proto_info.get_protocol_name()
         self.result.record = self.result.result_dir + \
             base_name + "_" + self.result.pattern
         self.result.is_success = self.pre_process()
         # checking for non-distributed protocols
-        if not proto.is_distributed():
+        if not proto_info.is_distributed():
             if self.config.client_host is None:
                 logging.error(
                     "Test non-distributed protocols without client host is not supported.")
@@ -106,21 +106,22 @@ class ITestSuite(ABC):
                 logging.error(
                     "Test non-distributed protocols without server host is not supported.")
                 return False
-            if len(proto.get_config().hosts) != 2:
+            if len(proto_info.get_config().hosts) != 2:
                 logging.error(
                     "Test non-distributed protocols, but protocol server/client hosts are not set.")
                 return False
-            if proto.get_config().hosts[0] != self.config.client_host or \
-                    proto.get_config().hosts[1] != self.config.server_host:
+            if proto_info.get_config().hosts[0] != self.config.client_host or \
+                    proto_info.get_config().hosts[1] != self.config.server_host:
                 logging.error(
                     "Test non-distributed protocols, protocol client/server runs on %s/%s, "
                     "but test tools client/server hosts are %s/%s.",
-                    proto.get_config().hosts[0], proto.get_config().hosts[1],
+                    proto_info.get_config(
+                    ).hosts[0], proto_info.get_config().hosts[1],
                     self.config.client_host, self.config.server_host)
                 return False
         if not self.result.is_success:
             return self.result
-        self.result.is_success = self._run_test(network, proto)
+        self.result.is_success = self._run_test(network, proto_info)
         if not self.result.is_success:
             logging.error("Test %s failed.", self.config.name)
             return self.result

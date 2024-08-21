@@ -114,16 +114,16 @@ def setup_test(test_case_yaml, network: INetwork):
             for version in bats_version:
                 bats_proto_config = ProtoConfig(
                     name=test_case_name,
-                    protocol_path="/root/bats/bats_protocol",
-                    protocol_args="--daemon_enabled=true",
-                    protocol_version=version)
+                    path="/root/bats/bats_protocol",
+                    args="--daemon_enabled=true",
+                    version=version)
                 # map `proto` into python object BTP, BRTP, BRTPProxy
                 bats = None
                 if proto == 'btp':
                     bats = BTP(bats_proto_config)
                     logging.info("Added bats BTP protocol.")
                 elif proto == 'brtp':
-                    bats_proto_config.protocol_args += " --tun_protocol=BRTP"
+                    bats_proto_config.args += " --tun_protocol=BRTP"
                     bats = BRTP(bats_proto_config)
                     logging.info("Added bats BRTP protocol.")
                 elif proto == 'brtp_proxy':
@@ -133,25 +133,25 @@ def setup_test(test_case_yaml, network: INetwork):
         elif proto == 'tcp':
             for version in tcp_version:
                 config = ProtoConfig(name=test_case_name,
-                                     protocol_version=version)
+                                     version=version)
                 network.add_protocol_suite(TCPProtocol(config))
                 logging.info("Added TCP protocol, version %s.", version)
         elif proto == 'kcp':
             kcp_client_cfg = ProtoConfig(
                 name=test_case_name,
-                protocol_path="/root/bin/kcp/client_linux_amd64",
-                protocol_args=" -mode fast3 --datashard 10 --parityshard 3"
+                path="/root/bin/kcp/client_linux_amd64",
+                args=" -mode fast3 --datashard 10 --parityshard 3"
                 + " -nocomp -autoexpire 900"
                 + " -sockbuf 16777217 -dscp 46 --crypt=none",
-                protocol_version="latest",
+                version="latest",
                 role="client")
             kcp_server_cfg = ProtoConfig(
                 name=test_case_name,
-                protocol_path="/root/bin/kcp/server_linux_amd64",
-                protocol_args="-l :4000"
+                path="/root/bin/kcp/server_linux_amd64",
+                args="-l :4000"
                 + " -mode fast3 --datashard 10 --parityshard 3"
                 + " -nocomp -sockbuf 16777217 -dscp 46 --crypt=none",
-                protocol_version="latest",
+                version="latest",
                 role="server")
             # by default, client-server hosts are [0, -1]
             cs = CSProtocol(config=ProtoConfig(
@@ -260,7 +260,7 @@ if __name__ == '__main__':
         logging.error("Error: no containernet node config.")
         sys.exit(1)
     # mount the workspace
-    cur_node_config.node_vols.append(f'{cur_workspace}:{mapped_workspace}')
+    cur_node_config.vols.append(f'{cur_workspace}:{mapped_workspace}')
 
     # load all cases
     all_tests = load_test(yaml_file_path)

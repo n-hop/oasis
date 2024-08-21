@@ -7,9 +7,9 @@ from typing import (Optional, List)
 @dataclass
 class ProtoConfig:
     name: str = field(default="")
-    protocol_path: Optional[str] = field(default=None)
-    protocol_args: Optional[str] = field(default=None)
-    protocol_version: Optional[str] = field(default='latest')
+    path: Optional[str] = field(default=None)
+    args: Optional[str] = field(default=None)
+    version: Optional[str] = field(default='latest')
     hosts: Optional[List[int]] = field(default=None)
     port: Optional[int] = field(default=None)
     role: Optional[str] = field(default='None')

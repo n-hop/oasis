@@ -29,7 +29,7 @@ class IperfTest(ITestSuite):
         server.cmd('pkill -f iperf3')
         return True
 
-    def _run_test(self, network: INetwork, proto: IProtoInfo):
+    def _run_test(self, network: INetwork, proto_info: IProtoInfo):
         hosts = network.get_hosts()
 
         if self.config.client_host is None or self.config.server_host is None:
@@ -39,25 +39,25 @@ class IperfTest(ITestSuite):
         client = hosts[self.config.client_host]
         server = hosts[self.config.server_host]
         receiver_ip = None
-        if proto.get_protocol_name().upper() == "KCP":
+        if proto_info.get_protocol_name().upper() == "KCP":
             # kcp tun like a proxy, all traffic will be forwarded to the proxy server
-            tun_ip = proto.get_tun_ip(network, self.config.client_host)
+            tun_ip = proto_info.get_tun_ip(network, self.config.client_host)
             if tun_ip is None or tun_ip == "":
                 tun_ip = client.IP()
             receiver_ip = tun_ip
         else:
-            tun_ip = proto.get_tun_ip(network, self.config.server_host)
+            tun_ip = proto_info.get_tun_ip(network, self.config.server_host)
             if tun_ip is None or tun_ip == "":
                 tun_ip = server.IP()
             receiver_ip = tun_ip
-        receiver_port = proto.get_forward_port()
+        receiver_port = proto_info.get_forward_port()
         if receiver_port is None:
             receiver_port = 5201
         logging.info(
             "############### Oasis IperfTest from %s to %s ###############", client.name(), server.name())
-        protocol_version = ""
-        if proto.get_protocol_name() == "TCP":
-            protocol_version = proto.get_protocol_version()
+        version = ""
+        if proto_info.get_protocol_name() == "TCP":
+            version = proto_info.get_protocol_version()
             logging.info(
-                "############### Oasis IperfTest protocol version %s ###############", protocol_version)
-        return self._run_iperf(client, server, receiver_port, receiver_ip, protocol_version)
+                "############### Oasis IperfTest protocol version %s ###############", version)
+        return self._run_iperf(client, server, receiver_port, receiver_ip, version)

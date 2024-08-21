@@ -11,10 +11,10 @@ from protosuites.proto_info import IProtoInfo
 class BATSProtocol(IProtoSuite, IProtoInfo):
     def __init__(self, config: ProtoConfig):
         super().__init__(config)
-        if self.config.protocol_path is None:
+        if self.config.path is None:
             logging.error("No protocol path specified.")
-        self.process_name = self.config.protocol_path.split('/')[-1]
-        self.source_path = '/'.join(self.config.protocol_path.split('/')[:-1])
+        self.process_name = self.config.path.split('/')[-1]
+        self.source_path = '/'.join(self.config.path.split('/')[:-1])
         if self.source_path == '':
             self.source_path = '.'
         self.virtual_ip_prefix = '1.0.0.'
@@ -45,7 +45,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         host_num = len(hosts)
         for i in range(host_num):
             res = hosts[i].cmdPrint(
-                f'{self.config.protocol_path} {self.config.protocol_args} '
+                f'{self.config.path} {self.config.args} '
                 f' > {self.log_dir}bats_protocol_h{i}.log &')
             logging.info(
                 f"############### Oasis run bats protocol on "
@@ -101,4 +101,4 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         pass
 
     def get_protocol_version(self) -> str:
-        return self.config.protocol_version
+        return self.config.version

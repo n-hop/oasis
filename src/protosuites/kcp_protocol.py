@@ -7,9 +7,9 @@ from .proto_info import IProtoInfo
 class KCPProtocol(IProtoSuite, IProtoInfo):
     def __init__(self, config: ProtoConfig):
         super().__init__(config)
-        if self.config.protocol_path is None:
+        if self.config.path is None:
             logging.error("No protocol path specified.")
-        self.process_name = self.config.protocol_path.split('/')[-1]
+        self.process_name = self.config.path.split('/')[-1]
         self.forward_port = 5201
 
     def post_run(self, network: INetwork):
@@ -25,8 +25,8 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
             id = conf_host[0]
             receiver_ip = hosts[conf_host[-1]].IP()
             args = f'-r {receiver_ip}:4000' + f' -l :{self.forward_port}' + \
-                ' ' + self.config.protocol_args
-            res = hosts[id].cmdPrint(f'{self.config.protocol_path} {args}'
+                ' ' + self.config.args
+            res = hosts[id].cmdPrint(f'{self.config.path} {args}'
                                      f' > {self.log_dir}kcp_protocol_h{id}.log &')
             logging.info(f"############### Oasis run kcp protocol on %s, %s ###############",
                          hosts[id].name(), res)
@@ -34,8 +34,8 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
             id = conf_host[-1]
             target_ip = hosts[id].IP()
             args = f'-t {target_ip}:{self.forward_port}' + \
-                ' ' + self.config.protocol_args
-            res = hosts[id].cmdPrint(f'{self.config.protocol_path} {args}'
+                ' ' + self.config.args
+            res = hosts[id].cmdPrint(f'{self.config.path} {args}'
                                      f' > {self.log_dir}kcp_protocol_h{id}.log &')
             logging.info(f"############### Oasis run kcp protocol on %s, %s ###############",
                          hosts[id].name(), res)
@@ -66,4 +66,4 @@ class KCPProtocol(IProtoSuite, IProtoInfo):
         return "KCP"
 
     def get_protocol_version(self) -> str:
-        return self.config.protocol_version
+        return self.config.version

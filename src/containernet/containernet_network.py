@@ -37,12 +37,12 @@ class ContainerizedNetwork (INetwork):
         self.routing_strategy = routing_strategy
         self.hosts = []
         # NodeConfig: Docker node related
-        self.node_img = node_config.node_img
-        self.node_vols = node_config.node_vols
-        self.node_bind_port = node_config.node_bind_port
-        self.node_name_prefix = node_config.node_name_prefix
-        self.node_ip_range = node_config.node_ip_range
-        self.node_route = node_config.node_route
+        self.node_img = node_config.img
+        self.node_vols = node_config.vols
+        self.node_bind_port = node_config.bind_port
+        self.node_name_prefix = node_config.name_prefix
+        self.node_ip_range = node_config.ip_range
+        self.node_route = node_config.route
         self.topology_type = net_topology.get_topology_type()
         # `node_ip_start` init from node_ip_range
         base, _ = netParse(self.node_ip_range)
