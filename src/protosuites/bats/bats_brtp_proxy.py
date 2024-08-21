@@ -14,4 +14,4 @@ class BRTPProxy(BATSProtocol):
         pass
 
     def get_protocol_name(self) -> str:
-        return 'BRTP_PROXY'
+        return 'BRTP-PROXY'
