@@ -15,8 +15,19 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         else:
             self.process_name = None
         self.forward_port = self.config.port
+        self.default_version_dict = {}
 
     def post_run(self, network: INetwork):
+        # reset back to default version
+        if 'tcp' in self.config.name:
+            for host in network.get_hosts():
+                default_ver = self.default_version_dict[host.name()]
+                host.cmd(
+                    f'sysctl -w net.ipv4.tcp_congestion_control={default_ver}')
+                host.cmd(f"sysctl -p")
+                logging.info(
+                    "############### Oasis change the congestion control"
+                    " algorithm back to %s on %s ###############", default_ver, host.name())
         return True
 
     def pre_run(self, network: INetwork):
@@ -55,6 +66,7 @@ class StdProtocol(IProtoSuite, IProtoInfo):
 
     def stop(self, network: INetwork):
         if self.process_name is None:
+            # means no need to stop the protocol
             return True
         for host in network.get_hosts():
             host.cmd(f'pkill -f {self.process_name}')
@@ -81,6 +93,13 @@ class StdProtocol(IProtoSuite, IProtoInfo):
                 "TCP version %s is not supported, please check the configuration.", tcp_version)
             return
         for host in network.get_hosts():
+            # read `tcp_congestion_control` before change
+            res = host.popen(
+                f"sysctl net.ipv4.tcp_congestion_control").stdout.read().decode('utf-8')
+            default_version = res.split('=')[-1].strip()
+            logging.debug("tcp default version on %s is %s",
+                          host.name(), default_version)
+            self.default_version_dict[host.name()] = default_version
             host.cmd(
                 f'sysctl -w net.ipv4.tcp_congestion_control={tcp_version}')
             host.cmd(f"sysctl -p")
