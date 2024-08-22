@@ -11,18 +11,18 @@ sudo python3 src/start.py -n src/config/nested-containernet-config.yaml \
 
 If image `bats_containernet:dev` is available in local, use `--containernet=nuc_sz`; otherwise, use `--containernet=default`.
 
-This will run the `src/run_test.py` in a nested containernet environment. If you have installed the containernet, run the `src/run_test.py` directly:
+This will run the `src/run_test.py` in a nested containernet environment. If `containernet` is installed, run the `src/run_test.py` directly:
 
 ```bash
 python3 src/run_test.py {workspace} src/config/one-concrete-network.yaml
 ```
 
-{workspace} is the path to the root directory of the project oasis.
+`{workspace}` is the path to the root directory of the project oasis.
 
-### 2. Check test
+### 2. Test results
 
-Output of the test is located in {workspace}/test_results/{test_case_name}, the test name is defined in the test case YAML file.
-In the folder, there are two diagram files which were named "iperf3_throughput.svg" and "rtt.svg". Those files shows test data of throughput and RTT.
+The test results are located in `{workspace}/test_results/{test_case_name}`, the test name is defined in the test case YAML file.
+In this folder, there are two svg files("iperf3_throughput.svg","rtt.svg") which shows throughput and RTT of current test case.
 
 ## Build docker image
 
