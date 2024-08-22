@@ -1,5 +1,7 @@
 ## Get Started
 
+### 1. Run test
+
 ```bash
 sudo python3 src/start.py -n src/config/nested-containernet-config.yaml \
     --containernet=nuc_sz \
@@ -16,6 +18,11 @@ python3 src/run_test.py {workspace} src/config/one-concrete-network.yaml
 ```
 
 {workspace} is the path to the root directory of the project oasis.
+
+### 2. Check test
+
+Output of the test is located in {workspace}/test_results/{test_case_name}, the test name is defined in the test case YAML file.
+In the folder, there are two diagram files which were named "iperf3_throughput.svg" and "rtt.svg". Those files shows test data of throughput and RTT.
 
 ## Build docker image
 
