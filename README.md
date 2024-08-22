@@ -22,6 +22,8 @@ Oasis is built on top of [Containernet](https://github.com/containernet/containe
 
 ## Get started
 
-### Nested Docker deployment
+A simple guide to get started with Oasis can be found in [Get Started](docs/get-started.md).
 
-TODO
+## Protocols and Tools
+
+Find details in [Protocols and Tools](docs/protocols_and_tools.md).

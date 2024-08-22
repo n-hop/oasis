@@ -1,4 +1,4 @@
-## HOWTO
+## Get Started
 
 ```bash
 sudo python3 src/start.py -n src/config/nested-containernet-config.yaml \
