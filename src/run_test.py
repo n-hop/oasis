@@ -111,6 +111,8 @@ def load_predefined_protocols():
         predefined_proto_conf_dict[protocol['name']] = ProtoConfig(
             **protocol)
         predefined_proto_conf_dict[protocol['name']].protocols = []
+        logging.info("load predefined protocol: %s",
+                     predefined_proto_conf_dict[protocol['name']])
         for sub_proto in protocol['protocols']:
             predefined_proto_conf_dict[protocol['name']].protocols.append(
                 ProtoConfig(**sub_proto))
@@ -198,6 +200,8 @@ def setup_test(test_case_yaml, network: INetwork):
                 continue
             client_conf = proto_config.protocols[0]
             server_conf = proto_config.protocols[1]
+            client_conf.port = proto_config.port
+            server_conf.port = proto_config.port
             # by default, client-server hosts are [0, -1]
             proto_config.hosts = [0, len(network.get_hosts()) - 1]
             # wrapper of client-server protocol

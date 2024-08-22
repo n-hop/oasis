@@ -34,25 +34,30 @@ class StdProtocol(IProtoSuite, IProtoInfo):
                 "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
             return False
         hosts = network.get_hosts()
-        for host in hosts:
+        if self.config.hosts is None:
+            # if not defined, then run on all hosts
+            self.config.hosts = [0, len(hosts) - 1]
+        for host_id in self.config.hosts:
             protocol_args = ''
             for arg in self.config.args:
                 protocol_args += arg + ' '
-            logging.info("host %s args: %s", host.name(), protocol_args)
-            if "%s" in protocol_args:
-                receiver_ip = hosts[-1].IP()
+            logging.debug("host %s args: %s",
+                          hosts[host_id].name(), protocol_args)
+            if "%s" in protocol_args and 'kcp_' in self.config.name:
+                receiver_ip = hosts[-1].IP()  # ?fixme
                 protocol_args = protocol_args % (
                     receiver_ip, self.forward_port)
-            host.cmdPrint(f'{self.config.path} {protocol_args}')
+            hosts[host_id].cmd(f'{self.config.path} {protocol_args} &')
             logging.info(
-                f"############### Oasis start %s protocol on %s ###############", self.config.name, host.name())
+                f"############### Oasis start %s protocol on %s ###############",
+                self.config.name, hosts[host_id].name())
         return True
 
     def stop(self, network: INetwork):
         if self.process_name is None:
             return True
         for host in network.get_hosts():
-            host.cmdPrint(f'pkill -f {self.process_name}')
+            host.cmd(f'pkill -f {self.process_name}')
             logging.info(
                 f"############### Oasis stop %s protocol on %s ###############", self.config.name, host.name())
         return True
@@ -76,9 +81,9 @@ class StdProtocol(IProtoSuite, IProtoInfo):
                 "TCP version %s is not supported, please check the configuration.", tcp_version)
             return
         for host in network.get_hosts():
-            host.cmdPrint(
+            host.cmd(
                 f'sysctl -w net.ipv4.tcp_congestion_control={tcp_version}')
-            host.cmdPrint(f"sysctl -p")
+            host.cmd(f"sysctl -p")
             logging.info(
                 "############### Oasis change the congestion control"
                 " algorithm to %s on %s ###############", tcp_version, host.name())

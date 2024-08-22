@@ -31,6 +31,10 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         # add self.config.args to client and server
         self.client.get_config().args += self.config.args
         self.server.get_config().args += self.config.args
+        logging.info("host %s args: %s",
+                     self.client.get_config().hosts, self.config.args)
+        logging.info("host %s args: %s",
+                     self.server.get_config().hosts, self.config.args)
         return self.client.run(network) \
             and self.server.run(network)
 
@@ -44,4 +48,4 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         return self.client.get_tun_ip(network, host_id)
 
     def get_protocol_name(self) -> str:
-        return self.client.get_protocol_name()
+        return self.config.name

@@ -43,4 +43,4 @@ protocols:
       - name: kcp_server
         path: bin/kcp/server_linux_amd64
         args:
-          - "-l :4000"
+          - "-l :4000 -t %s:%s"

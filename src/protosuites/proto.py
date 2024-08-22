@@ -21,7 +21,7 @@ class ProtoConfig:
     name: str = field(default="")
     path: Optional[str] = field(default=None)
     args: Optional[List[str]] = field(default=None)
-    version: Optional[str] = field(default="")
+    version: Optional[str] = field(default=None)
     hosts: Optional[List[int]] = field(default=None)
     port: Optional[int] = field(default=None)
     type: Optional[str] = field(default='distributed')
