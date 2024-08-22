@@ -1,4 +1,4 @@
-# import logging
+import logging
 from interfaces.network import INetwork
 from protosuites.proto import (ProtoConfig, IProtoSuite)
 from protosuites.proto_info import IProtoInfo
@@ -20,11 +20,21 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         if self.client.pre_run(network):
             return self.server.pre_run(network)
         return False
-        # return self.client.pre_run(network) and self.server.pre_run(network)
 
     def run(self, network: INetwork):
-        self.client.get_config().hosts = self.config.hosts
-        self.server.get_config().hosts = self.config.hosts
+        if len(self.config.hosts) != 2:
+            logging.error(
+                "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
+            return False
+        self.client.get_config().hosts = [self.config.hosts[0]]
+        self.server.get_config().hosts = [self.config.hosts[1]]
+        # add self.config.args to client and server
+        self.client.get_config().args += self.config.args
+        self.server.get_config().args += self.config.args
+        logging.info("host %s args: %s",
+                     self.client.get_config().hosts, self.config.args)
+        logging.info("host %s args: %s",
+                     self.server.get_config().hosts, self.config.args)
         return self.client.run(network) \
             and self.server.run(network)
 
@@ -38,4 +48,4 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         return self.client.get_tun_ip(network, host_id)
 
     def get_protocol_name(self) -> str:
-        return self.client.get_protocol_name()
+        return self.config.name

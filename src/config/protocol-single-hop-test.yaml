@@ -10,11 +10,7 @@ tests:
     topology:
       config_name: linear_network_1
       config_file: src/config/predefined.topology.yaml
-    strategy:
-      matrix:
-        target_protocols: [brtp_proxy, btp, kcp, tcp] # brtp, brtp_proxy, kcp, tcp
-        bats_version: [latest] # v3.5.0, latest
-        tcp_version: [cubic] # default:cubic; optional: bbr, reno
+    target_protocols: [btp, brtp, kcp, tcp-bbr]
     route: static_route
     test_tools:
       iperf:

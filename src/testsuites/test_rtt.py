@@ -64,9 +64,10 @@ class RTTTest(ITestSuite):
             if tun_ip is None or tun_ip == "":
                 tun_ip = server.IP()
             receiver_ip = tun_ip
-        # KCP defines the forward port
+        # KCP defines the forward port `10100`
         receiver_port = proto_info.get_forward_port()
         if receiver_port is None:
+            # if no forward port defined, use random port start from 10011
             # for port conflict, use different port for each test
             receiver_port = 10011 + self.run_times
             self.run_times += 1

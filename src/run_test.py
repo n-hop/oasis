@@ -18,9 +18,8 @@ from testsuites.test_rtt import RTTTest
 from routing.static_routing import StaticRouting
 from routing.olsr_routing import OLSRRouting
 from routing.openr_routing import OpenrRouting
-from protosuites.proto import (ProtoConfig, SupportedProto, SupportedBATSProto)
-from protosuites.tcp_protocol import TCPProtocol
-from protosuites.kcp_protocol import KCPProtocol
+from protosuites.proto import (ProtoConfig, SupportedProto)
+from protosuites.std_protocol import StdProtocol
 from protosuites.cs_protocol import CSProtocol
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
@@ -88,82 +87,131 @@ def add_test_to_network(network, tool, test_name):
             f"Error: unsupported test tool %s", tool['name'])
 
 
+def load_predefined_protocols():
+    """
+    Load predefined protocols from the yaml file.
+    """
+    predefined_protocols = None
+    with open('src/config/predefined.protocols.yaml', 'r', encoding='utf-8') as stream:
+        try:
+            yaml_content = yaml.safe_load(stream)
+            predefined_protocols = yaml_content['protocols']
+        except yaml.YAMLError as exc:
+            logging.error(exc)
+            return None
+    predefined_proto_conf_dict = {}
+    for protocol in predefined_protocols:
+        if 'protocols' not in protocol:
+            predefined_proto_conf_dict[protocol['name']] = ProtoConfig(
+                **protocol)
+            logging.info("load predefined protocol: %s",
+                         predefined_proto_conf_dict[protocol['name']])
+            continue
+        # iterate over the protocols
+        predefined_proto_conf_dict[protocol['name']] = ProtoConfig(
+            **protocol)
+        predefined_proto_conf_dict[protocol['name']].protocols = []
+        logging.info("load predefined protocol: %s",
+                     predefined_proto_conf_dict[protocol['name']])
+        for sub_proto in protocol['protocols']:
+            predefined_proto_conf_dict[protocol['name']].protocols.append(
+                ProtoConfig(**sub_proto))
+            logging.info("load predefined sub-protocol: %s",
+                         sub_proto)
+    return predefined_proto_conf_dict
+
+
+def load_target_protocols_config(test_case_yaml):
+    """
+        read target protocols from the test case yaml,
+        And convert them into a list of `ProtoConfig`.
+    """
+    predefined = load_predefined_protocols()
+    target_protocols_yaml = test_case_yaml['target_protocols']
+    logging.info("target_protocols_yaml: %s", target_protocols_yaml)
+    if target_protocols_yaml is None:
+        logging.error("Error: target_protocols is None.")
+        return None
+    target_protocols = []
+    if all(isinstance(protocol, str) for protocol in target_protocols_yaml):
+        logging.debug("target_protocols is a list of strings.")
+        target_protocols = [predefined[protocol]
+                            for protocol in target_protocols_yaml if protocol in predefined]
+        if 'tcp' in target_protocols_yaml:
+            target_protocols.append(ProtoConfig(
+                name='tcp', type='distributed',))
+        logging.debug("loaded protocol config: %s", target_protocols)
+        return target_protocols
+    if all(isinstance(protocol, dict) for protocol in target_protocols_yaml):
+        logging.info("target_protocols is a list of dictionaries.")
+        for protocol in target_protocols_yaml:
+            if protocol['name'] not in SupportedProto:
+                logging.error(
+                    f"Error: unsupported protocol %s", protocol['name'])
+                continue
+            if 'protocols' not in protocol:
+                target_protocols.append(ProtoConfig(**protocol))
+            else:
+                # iterate over the protocols
+                local_proto_conf = ProtoConfig(
+                    **protocol)
+                local_proto_conf.protocols = []
+                for sub_proto in protocol['protocols']:
+                    local_proto_conf.protocols.append(
+                        ProtoConfig(**sub_proto))
+                    logging.info("load sub-protocol: %s",
+                                 sub_proto)
+                target_protocols.append(local_proto_conf)
+        logging.debug("loaded protocol config: %s", target_protocols)
+        return target_protocols
+    logging.error("Error: unsupported target_protocols format.")
+    return None
+
+
 def setup_test(test_case_yaml, network: INetwork):
     """setup the test case configuration.
     """
     # read the strategy matrix
     test_case_name = test_case_yaml['name']
-    strategy = test_case_yaml['strategy']
-    if strategy is None:
-        logging.error("Error: strategy is None.")
-        return
-    matrix = strategy['matrix']
-    if matrix is None:
-        logging.error("Error: strategy is empty.")
-        return
-    target_protocols = matrix['target_protocols']
-    bats_version = matrix['bats_version']
-    tcp_version = matrix['tcp_version']
-    for proto in target_protocols:
-        if proto not in SupportedProto:
-            logging.error(
-                f"Error: unsupported protocol %s", proto)
-            continue
-        if proto in SupportedBATSProto:
-            # combine the protocol with the its version
-            for version in bats_version:
-                bats_proto_config = ProtoConfig(
-                    name=test_case_name,
-                    path="/root/bats/bats_protocol",
-                    args="--daemon_enabled=true",
-                    version=version)
-                # map `proto` into python object BTP, BRTP, BRTPProxy
-                bats = None
-                if proto == 'btp':
-                    bats = BTP(bats_proto_config)
-                    logging.info("Added bats BTP protocol.")
-                elif proto == 'brtp':
-                    bats_proto_config.args += " --tun_protocol=BRTP"
-                    bats = BRTP(bats_proto_config)
-                    logging.info("Added bats BRTP protocol.")
-                elif proto == 'brtp_proxy':
-                    bats = BRTPProxy(bats_proto_config)
-                    logging.info("Added bats BRTP proxy protocol.")
-                network.add_protocol_suite(bats)
-        elif proto == 'tcp':
-            for version in tcp_version:
-                config = ProtoConfig(name=test_case_name,
-                                     version=version)
-                network.add_protocol_suite(TCPProtocol(config))
-                logging.info("Added TCP protocol, version %s.", version)
-        elif proto == 'kcp':
-            kcp_client_cfg = ProtoConfig(
-                name=test_case_name,
-                path="/root/bin/kcp/client_linux_amd64",
-                args=" -mode fast3 --datashard 10 --parityshard 3"
-                + " -nocomp -autoexpire 900"
-                + " -sockbuf 16777217 -dscp 46 --crypt=none",
-                version="latest",
-                role="client")
-            kcp_server_cfg = ProtoConfig(
-                name=test_case_name,
-                path="/root/bin/kcp/server_linux_amd64",
-                args="-l :4000"
-                + " -mode fast3 --datashard 10 --parityshard 3"
-                + " -nocomp -sockbuf 16777217 -dscp 46 --crypt=none",
-                version="latest",
-                role="server")
+    target_protocols = load_target_protocols_config(test_case_yaml)
+    for proto_config in target_protocols:
+        proto_config.test_name = test_case_name
+        logging.info("Added %s protocol, version %s.",
+                     proto_config.name, proto_config.version)
+        if proto_config.type == 'distributed':
+            # distributed protocol
+            if proto_config.name == 'btp':
+                network.add_protocol_suite(BTP(proto_config))
+                continue
+            if proto_config.name == 'brtp':
+                network.add_protocol_suite(BRTP(proto_config))
+                continue
+            if proto_config.name == 'brtp_proxy':
+                network.add_protocol_suite(BRTPProxy(proto_config))
+                continue
+            if 'tcp' in proto_config.name:
+                network.add_protocol_suite(StdProtocol(proto_config))
+                continue
+        if proto_config.type == 'none_distributed':
+            # none distributed protocol
+            if len(proto_config.protocols) != 2:
+                logging.error(
+                    "Error: none distributed protocol invalid setup.")
+                continue
+            client_conf = proto_config.protocols[0]
+            server_conf = proto_config.protocols[1]
+            client_conf.port = proto_config.port
+            server_conf.port = proto_config.port
             # by default, client-server hosts are [0, -1]
-            cs = CSProtocol(config=ProtoConfig(
-                name=test_case_name,
-                hosts=[0, len(network.get_hosts()) - 1]),
-                client=KCPProtocol(kcp_client_cfg),
-                server=KCPProtocol(kcp_server_cfg))
+            proto_config.hosts = [0, len(network.get_hosts()) - 1]
+            # wrapper of client-server protocol
+            cs = CSProtocol(config=proto_config,
+                            client=StdProtocol(client_conf),
+                            server=StdProtocol(server_conf))
             network.add_protocol_suite(cs)
-            logging.info("Added KCP protocol.")
-        else:
-            logging.error(
-                f"Error: not implemented protocol %s", proto)
+            continue
+        logging.error("Error: unsupported protocol type %s.%s",
+                      proto_config.type, proto_config.name)
     # convert test_tools to test suites
     test_tools = test_case_yaml['test_tools']
     for name in test_tools.keys():

@@ -5,21 +5,17 @@ containernet:
     config_file: src/config/predefined.node_config.yaml
 
 tests:
-    test_first_rtt:
-      description: "Test protocol first rtt on single hop"
-      topology:
-        config_name: linear_network_1
-        config_file: src/config/predefined.topology.yaml
-      strategy:
-        matrix:
-          target_protocols: [brtp_proxy, btp, kcp, tcp]
-          bats_version: [latest]
-          tcp_version: [cubic]
-      route: static_route
-      test_tools:
-        rtt:
-          interval: 0.01
-          packet_count: 1
-          packet_size: 20
-          client_host: 0
-          server_host: 1
+  test_first_rtt:
+    description: "Test protocol first rtt on single hop"
+    topology:
+      config_name: linear_network_1
+      config_file: src/config/predefined.topology.yaml
+    target_protocols: [btp, brtp_proxy, kcp, tcp] # use default config from predefined.protocols.yaml
+    route: static_route
+    test_tools:
+      rtt:
+        interval: 0.01
+        packet_count: 1
+        packet_size: 20
+        client_host: 0
+        server_host: 1

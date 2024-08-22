@@ -55,10 +55,10 @@ class INetwork(ABC):
     def perform_test(self):
         """Perform the test for each input case from YAML file
         """
-        if self.proto_suites is None:
+        if self.proto_suites is None or len(self.proto_suites) == 0:
             logging.error("No protocol set")
             return False
-        if self.test_suites is None:
+        if self.test_suites is None or len(self.test_suites) == 0:
             logging.error("No test suite set")
             return False
         # Combination of protocol and test
