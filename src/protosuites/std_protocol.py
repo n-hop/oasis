@@ -69,7 +69,7 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         pass
 
     def get_protocol_name(self) -> str:
-        return self.config.name.upper()
+        return self.config.name
 
     def get_protocol_version(self) -> str:
         return self.config.version

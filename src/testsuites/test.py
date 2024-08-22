@@ -91,11 +91,12 @@ class ITestSuite(ABC):
     def run(self, network: 'INetwork', proto_info: IProtoInfo) -> TestResult:  # type: ignore
         if proto_info.get_protocol_version() is not None and proto_info.get_protocol_version() != 'latest':
             if 'tcp' not in proto_info.get_protocol_name():
-                base_name = proto_info.get_protocol_name() + "-" + proto_info.get_protocol_version()
+                base_name = proto_info.get_protocol_name().upper() + "-" + \
+                    proto_info.get_protocol_version()
             else:
-                base_name = proto_info.get_protocol_name()
+                base_name = proto_info.get_protocol_name().upper()
         else:
-            base_name = proto_info.get_protocol_name()
+            base_name = proto_info.get_protocol_name().upper()
         self.result.record = self.result.result_dir + \
             base_name + "_" + self.result.pattern
         self.result.is_success = self.pre_process()
