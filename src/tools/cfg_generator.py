@@ -2,6 +2,7 @@ import argparse
 import logging
 from mininet.util import ipStr, netParse
 
+
 class ConfigGenerator:
     def __init__(self, node_ip_range="10.0.0.0/8", path="/tmp"):
         self.node_ip_range = node_ip_range
@@ -25,7 +26,7 @@ class ConfigGenerator:
         self.template += "{routes}\n"
         self.template += "\n"
         self.template += "proxies.tcp.proxy.cnt = {tcp_proxy_cnt}\n"
-        self.template += "proxies.tcp.exclude_ports = 5201\n"
+        self.template += "proxies.tcp.exclude_ports = 10100\n"
         self.template += "{tcp_proxies}\n"
         self.template += "\n"
         self.template += "tun.name = tun_session\n"
@@ -50,10 +51,12 @@ class ConfigGenerator:
         links = ""
         cnt = 0
         if index != 0:
-            links += self._generate_link_item(cnt, node_ips[index][0], node_ips[index - 1][-1])
+            links += self._generate_link_item(cnt,
+                                              node_ips[index][0], node_ips[index - 1][-1])
             cnt += 1
         if index != len(node_ips) - 1:
-            links += self._generate_link_item(cnt, node_ips[index][-1], node_ips[index + 1][0])
+            links += self._generate_link_item(cnt,
+                                              node_ips[index][-1], node_ips[index + 1][0])
             cnt += 1
         return cnt, links
 
@@ -63,7 +66,8 @@ class ConfigGenerator:
     def _generate_tun_cfg(self, node_ips, tun_prefix="1.0.0."):
         tun_mappings = ""
         for i in range(len(node_ips)):
-            tun_mappings += self._generate_tun_mapping(i, f"{tun_prefix}{i+1}", node_ips[i][0])
+            tun_mappings += self._generate_tun_mapping(
+                i, f"{tun_prefix}{i+1}", node_ips[i][0])
         return tun_mappings
 
     def _generate_tcp_proxy_item(self, index, from_ip, to_ip):
@@ -76,10 +80,12 @@ class ConfigGenerator:
         cfg = ""
         for i in range(len(node_ips)):
             if i != index:
-                cfg += self._generate_tcp_proxy_item(cnt, node_ips[i][0], node_ips[i][0])
+                cfg += self._generate_tcp_proxy_item(
+                    cnt, node_ips[i][0], node_ips[i][0])
                 cnt += 1
                 if len(node_ips[i]) > 1:
-                    cfg += self._generate_tcp_proxy_item(cnt, node_ips[i][-1], node_ips[i][-1])
+                    cfg += self._generate_tcp_proxy_item(
+                        cnt, node_ips[i][-1], node_ips[i][-1])
                     cnt += 1
         return cnt, cfg
 
@@ -101,14 +107,17 @@ class ConfigGenerator:
             cfg += self._generate_route_item(cnt, src_left, node_ips[i][0], gw)
             cnt += 1
             if len(node_ips[i]) > 1:
-                cfg += self._generate_route_item(cnt, src_left, node_ips[i][-1], gw)
+                cfg += self._generate_route_item(cnt,
+                                                 src_left, node_ips[i][-1], gw)
                 cnt += 1
         for i in range(index + 1, len(node_ips)):
             gw = node_ips[index + 1][0]
-            cfg += self._generate_route_item(cnt, src_right, node_ips[i][0], gw)
+            cfg += self._generate_route_item(cnt,
+                                             src_right, node_ips[i][0], gw)
             cnt += 1
             if len(node_ips[i]) > 1:
-                cfg += self._generate_route_item(cnt, src_right, node_ips[i][-1], gw)
+                cfg += self._generate_route_item(cnt,
+                                                 src_right, node_ips[i][-1], gw)
                 cnt += 1
         return cnt, cfg
 
@@ -143,7 +152,8 @@ class ConfigGenerator:
         for i in range(len(node_ips)):
             link_cnt, links = self._generate_link_cfg(node_ips, i)
             route_cnt, routes = self._generate_route_cfg(node_ips, i)
-            tcp_proxy_cnt, tcp_proxies = self._generate_tcp_proxy_cfg(node_ips, i)
+            tcp_proxy_cnt, tcp_proxies = self._generate_tcp_proxy_cfg(
+                node_ips, i)
             with open(f"{self.path}/h{i}.ini", "w", encoding="utf-8") as f:
                 f.write(self.template.format(link_cnt=link_cnt, links=links,
                                              route_cnt=route_cnt, routes=routes,
@@ -152,17 +162,24 @@ class ConfigGenerator:
                                              tun_mappings=tun_mappings))
                 logging.info("Generated %s/h%d.ini", self.path, i)
 
+
 def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8", virtual_ip_prefix="1.0.0.", output_dir="/tmp"):
     generator = ConfigGenerator(node_ip_range, output_dir)
     generator.generate_cfg(num_nodes, virtual_ip_prefix)
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser(description='Generate INI configuration files for each node.')
+    parser = argparse.ArgumentParser(
+        description='Generate INI configuration files for each node.')
     parser.add_argument('-n', type=int, required=True, help='Number of nodes')
-    parser.add_argument('-ip', type=str, default="10.0.0.0/8", help='Node IP range (default: 10.0.0.0/8)')
-    parser.add_argument('-o', type=str, default="/tmp", help='Output directory (default: /tmp)')
-    parser.add_argument('-p', type=str, default="1.0.0.", help='Virtual IP prefix (default: 1.0.0.)')
+    parser.add_argument('-ip', type=str, default="10.0.0.0/8",
+                        help='Node IP range (default: 10.0.0.0/8)')
+    parser.add_argument('-o', type=str, default="/tmp",
+                        help='Output directory (default: /tmp)')
+    parser.add_argument('-p', type=str, default="1.0.0.",
+                        help='Virtual IP prefix (default: 1.0.0.)')
     args = parser.parse_args()
 
-    generate_cfg_files(num_nodes = args.n, node_ip_range = args.ip, virtual_ip_prefix = args.p, output_dir = args.o)
+    generate_cfg_files(num_nodes=args.n, node_ip_range=args.ip,
+                       virtual_ip_prefix=args.p, output_dir=args.o)

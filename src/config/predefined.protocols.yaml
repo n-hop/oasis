@@ -34,7 +34,7 @@ protocols:
       - "-mode fast3"
       - "--datashard 10 --parityshard 3 -nocomp"
       - "-sockbuf 16777217 -dscp 46 --crypt=none"
-    port: 5201
+    port: 10100 # add it to bats proxy exclude list
     protocols: # iterative
       - name: kcp_client
         path: bin/kcp/client_linux_amd64
