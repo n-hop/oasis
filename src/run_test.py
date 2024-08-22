@@ -173,6 +173,7 @@ def setup_test(test_case_yaml, network: INetwork):
     test_case_name = test_case_yaml['name']
     target_protocols = load_target_protocols_config(test_case_yaml)
     for proto_config in target_protocols:
+        proto_config.test_name = test_case_name
         logging.info("Added %s protocol, version %s.",
                      proto_config.name, proto_config.version)
         if proto_config.type == 'distributed':
@@ -199,7 +200,6 @@ def setup_test(test_case_yaml, network: INetwork):
             server_conf = proto_config.protocols[1]
             # by default, client-server hosts are [0, -1]
             proto_config.hosts = [0, len(network.get_hosts()) - 1]
-            proto_config.name = test_case_name
             # wrapper of client-server protocol
             cs = CSProtocol(config=proto_config,
                             client=StdProtocol(client_conf),

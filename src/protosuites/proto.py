@@ -25,11 +25,11 @@ class ProtoConfig:
     hosts: Optional[List[int]] = field(default=None)
     port: Optional[int] = field(default=None)
     type: Optional[str] = field(default='distributed')
+    test_name: str = field(default="")
     protocols: Optional[List['ProtoConfig']] = field(
         default=None)  # type: ignore
 
 
-SupportedProtoRole = ['client', 'server', 'None']
 SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp']
 SupportedBATSProto = ['btp', 'brtp', 'brtp_proxy']
 
@@ -38,7 +38,7 @@ class IProtoSuite(ABC):
     def __init__(self, config: ProtoConfig):
         self.is_success = False
         self.config = config
-        self.log_dir = f"/root/test_results/{self.config.name}/log/"
+        self.log_dir = f"/root/test_results/{self.config.test_name}/{self.config.name}/log/"
         if not os.path.exists(f"{self.log_dir}"):
             os.makedirs(f"{self.log_dir}")
 
