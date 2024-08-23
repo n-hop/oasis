@@ -39,16 +39,12 @@ class StdProtocol(IProtoSuite, IProtoInfo):
             # if not defined, then run on all hosts
             self.config.hosts = [0, len(hosts) - 1]
         for host_id in self.config.hosts:
-            protocol_args = ''
-            for arg in self.config.args:
-                protocol_args += arg + ' '
-            logging.debug("host %s args: %s",
-                          hosts[host_id].name(), protocol_args)
-            if "%s" in protocol_args and 'kcp_' in self.config.name:
+            cur_protocol_args = ""
+            if "%s" in self.protocol_args and 'kcp_' in self.config.name:
                 receiver_ip = hosts[-1].IP()  # ?fixme
-                protocol_args = protocol_args % (
+                cur_protocol_args = self.protocol_args % (
                     receiver_ip, self.forward_port)
-            hosts[host_id].cmd(f'{self.config.path} {protocol_args} &')
+            hosts[host_id].cmd(f'{self.config.path} {cur_protocol_args} &')
             logging.info(
                 f"############### Oasis start %s protocol on %s ###############",
                 self.config.name, hosts[host_id].name())

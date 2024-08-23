@@ -1,4 +1,5 @@
 import os
+import logging
 from abc import ABC, abstractmethod
 from enum import IntEnum
 from dataclasses import dataclass, field
@@ -41,6 +42,12 @@ class IProtoSuite(ABC):
         self.log_dir = f"/root/test_results/{self.config.test_name}/{self.config.name}/log/"
         if not os.path.exists(f"{self.log_dir}"):
             os.makedirs(f"{self.log_dir}")
+
+        self.protocol_args = ''
+        for arg in self.config.args:
+            self.protocol_args += arg + ' '
+        logging.info("protocol %s args: %s",
+                     self.config.name, self.protocol_args)
 
     def get_config(self) -> ProtoConfig:
         return self.config
