@@ -49,7 +49,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         host_num = len(hosts)
         for i in range(host_num):
             res = hosts[i].cmdPrint(
-                f'{self.config.path} {self.config.args} '
+                f'nphup {self.config.path} {self.config.args} '
                 f' > {self.log_dir}bats_protocol_h{i}.log &')
             logging.info(
                 f"############### Oasis run bats protocol on "
