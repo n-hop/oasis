@@ -44,10 +44,11 @@ class IProtoSuite(ABC):
             os.makedirs(f"{self.log_dir}")
 
         self.protocol_args = ''
-        for arg in self.config.args:
-            self.protocol_args += arg + ' '
-        logging.info("protocol %s args: %s",
-                     self.config.name, self.protocol_args)
+        if self.config.args:
+            for arg in self.config.args:
+                self.protocol_args += arg + ' '
+            logging.info("protocol %s args: %s",
+                         self.config.name, self.protocol_args)
 
     def get_config(self) -> ProtoConfig:
         return self.config
