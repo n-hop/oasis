@@ -14,6 +14,7 @@ protocols:
     args:
       - "--daemon_enabled=true"
       - "--tun_protocol=BTP"
+      - "--bcmp_congestion_type=BBM"
     version: latest
   - name: brtp
     type: distributed
@@ -21,12 +22,14 @@ protocols:
     args:
       - "--daemon_enabled=true"
       - "--tun_protocol=BRTP"
+      - "--bcmp_congestion_type=BBM"
     version: latest
   - name: brtp_proxy
     type: distributed
     path: bats/bats_protocol
     args:
       - "--daemon_enabled=true"
+      - "--bcmp_congestion_type=BBM"
     version: latest
   - name: kcp
     type: none_distributed
