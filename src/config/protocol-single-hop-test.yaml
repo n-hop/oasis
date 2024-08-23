@@ -5,7 +5,7 @@ containernet:
     config_file: src/config/predefined.node_config.yaml
 
 tests:
-  test2:
+  test1:
     description: "Test protocol throughput/rtt on single hop"
     topology:
       config_name: linear_network_1

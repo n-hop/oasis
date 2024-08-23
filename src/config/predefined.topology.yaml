@@ -23,7 +23,7 @@ topology:
       - link_loss:
         init_value: [5]
       - link_latency:
-        init_value: [5]
+        init_value: [10]
       - link_jitter:
         init_value: [0]
       - link_bandwidth_forward:
@@ -37,7 +37,7 @@ topology:
       - link_loss:
         init_value: [5]
       - link_latency:
-        init_value: [5]
+        init_value: [10]
       - link_jitter:
         init_value: [0]
       - link_bandwidth_forward:
