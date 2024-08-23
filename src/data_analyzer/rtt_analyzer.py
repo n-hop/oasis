@@ -82,7 +82,6 @@ class RTTAnalyzer(IDataAnalyzer):
                 plt.plot(x[:valid_point_num], data_rtt_agv10[log_base_name][:valid_point_num],
                          label=f"{log_label}")
                 plt.legend(loc='upper left', fontsize=8)
-        self.plot_rtt_cdf(data_rtt_all)
         if not self.config.output:
             self.config.output = "rtt.svg"
         if '.svg' not in self.config.output:
@@ -93,6 +92,7 @@ class RTTAnalyzer(IDataAnalyzer):
             plt.savefig(f"{self.config.output}")
             logging.info("Visualize rtt diagram saved to %s",
                          self.config.output)
+        self.plot_rtt_cdf(data_rtt_all)
 
     def find_agv10_rtt(self, line):
         """
