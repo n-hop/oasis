@@ -56,7 +56,8 @@ class StdProtocol(IProtoSuite, IProtoInfo):
 
     def stop(self, network: INetwork):
         # reset back to default version
-        if 'tcp' in self.config.name:
+        tcp_version = self.get_protocol_version()
+        if 'tcp' in self.config.name and tcp_version in ['cubic', 'bbr', 'reno']:
             for host in network.get_hosts():
                 default_ver = self.default_version_dict[host.name()]
                 host.cmd(
