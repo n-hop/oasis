@@ -23,7 +23,21 @@ topology:
       - link_loss:
         init_value: [5]
       - link_latency:
-        init_value: [10]
+        init_value: [5]
+      - link_jitter:
+        init_value: [0]
+      - link_bandwidth_forward:
+        init_value: [100]
+      - link_bandwidth_backward:
+        init_value: [100]
+  - name: linear_network_3
+    topology_type: linear
+    nodes: 4
+    array_description:
+      - link_loss:
+        init_value: [5]
+      - link_latency:
+        init_value: [5]
       - link_jitter:
         init_value: [0]
       - link_bandwidth_forward:

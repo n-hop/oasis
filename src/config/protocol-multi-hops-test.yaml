@@ -5,22 +5,22 @@ containernet:
     config_file: src/config/predefined.node_config.yaml
 
 tests:
-  test_multi_hops:
+  test2:
     description: "Test protocol throughput/rtt on multiple hops"
     topology:
-      config_name: linear_network_6
+      config_name: linear_network_3
       config_file: src/config/predefined.topology.yaml
-    target_protocols: [btp, brtp_proxy, kcp, tcp] # use default config from predefined.protocols.yaml
+    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr]
     route: static_route
     test_tools:
       iperf:
         interval: 1
-        interval_num: 30
+        interval_num: 40
         client_host: 0
-        server_host: 6
+        server_host: 3
       rtt:
         interval: 0.01
-        packet_count: 1000
+        packet_count: 2000
         packet_size: 1014
         client_host: 0
-        server_host: 6
+        server_host: 3
