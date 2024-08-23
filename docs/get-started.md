@@ -4,12 +4,10 @@
 
 ```bash
 sudo python3 src/start.py -n src/config/nested-containernet-config.yaml \
-    --containernet=nuc_sz \
+    --containernet=default \
     -w {workspace} \
     -t src/config/protocol-single-hop-test.yaml
 ```
-
-If image `bats_containernet:dev` is available in local, use `--containernet=nuc_sz`; otherwise, use `--containernet=default`.
 
 This will run the `src/run_test.py` in a nested containernet environment. If `containernet` is installed, run the `src/run_test.py` directly:
 
@@ -22,7 +20,7 @@ python3 src/run_test.py {workspace} src/config/one-concrete-network.yaml
 ### 2. Test results
 
 The test results are located in `{workspace}/test_results/{test_case_name}`, the test name is defined in the test case YAML file.
-In this folder, there are two svg files("iperf3_throughput.svg","rtt.svg") which shows throughput and RTT of current test case.
+In this folder, there are svg files(`iperf3_throughput.svg`,`rtt.svg`, `rtt_cdf.svg`) which shows throughput and RTT performance.
 
 ## Build docker image
 
