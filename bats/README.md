@@ -65,7 +65,7 @@ To evaluate the performance of the BATS Protocol, we have conducted the followin
 
 In the test, we used some protocols and tools which are listed in [Protocols and Tools](docs/protocols_and_tools.md).
 
-In RTT measurement, `KCP` represents the RTT for TCP messages transmitted over `KCP`; And `BTP`,`BRTP`,`BRTP_PROXY` have the same meaning.
+In RTT measurement, `KCP` represents the RTT for TCP messages transmitted over `KCP`; and `BTP`,`BRTP`,`BRTP_PROXY` have the same meaning. TCP messages are transmitted in a rate of 100 packets per second with fixed length of 1024 bytes.
 
 ### 3.1 Single hop test
 
