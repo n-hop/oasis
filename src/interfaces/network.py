@@ -99,7 +99,7 @@ class INetwork(ABC):
             if test_type == TestType.rtt:
                 if test_config.packet_count > 1:
                     config = AnalyzerConfig(
-                        input=result_files, output=f"{test_result['results'][0].result_dir}rtt.svg")
+                        input=result_files, output=f"{test_result['results'][0].result_dir}")
                     analyzer = AnalyzerFactory.get_analyzer("rtt", config)
                     analyzer.analyze()
                     analyzer.visualize()
