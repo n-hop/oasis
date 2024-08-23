@@ -9,6 +9,18 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         super().__init__(config)
         self.client = client
         self.server = server
+        if len(self.config.hosts) != 2:
+            logging.error(
+                "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
+        self.client.get_config().hosts = [self.config.hosts[0]]
+        self.server.get_config().hosts = [self.config.hosts[1]]
+        # rewrite the protocol_args of client and server
+        self.client.protocol_args += self.protocol_args
+        self.server.protocol_args += self.protocol_args
+        logging.info("client protocol %s args: %s",
+                     self.client.config.name, self.client.protocol_args)
+        logging.info("server protocol %s args: %s",
+                     self.server.config.name, self.server.protocol_args)
 
     def is_distributed(self) -> bool:
         return False
@@ -22,19 +34,6 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         return False
 
     def run(self, network: INetwork):
-        if len(self.config.hosts) != 2:
-            logging.error(
-                "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
-            return False
-        self.client.get_config().hosts = [self.config.hosts[0]]
-        self.server.get_config().hosts = [self.config.hosts[1]]
-        # add self.config.args to client and server
-        self.client.get_config().args += self.config.args
-        self.server.get_config().args += self.config.args
-        logging.info("host %s args: %s",
-                     self.client.get_config().hosts, self.config.args)
-        logging.info("host %s args: %s",
-                     self.server.get_config().hosts, self.config.args)
         return self.client.run(network) \
             and self.server.run(network)
 
