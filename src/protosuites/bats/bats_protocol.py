@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 import re
 from interfaces.network import INetwork
@@ -18,6 +19,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         if self.source_path == '':
             self.source_path = '.'
         self.virtual_ip_prefix = '1.0.0.'
+        self.license_path = f'{self.source_path}/licence'
 
     def post_run(self, network: INetwork):
         return True
@@ -30,6 +32,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         hosts_ip_range = network.get_host_ip_range()
         generate_cfg_files(host_num, hosts_ip_range,
                            self.virtual_ip_prefix, self.source_path)
+        if self._verify_license() is False:
+            return False
         for i in range(host_num):
             hosts[i].cmd(f'iptables -F -t nat')
             self._init_tun(hosts[i])
@@ -74,13 +78,30 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         host.cmd(f'ip tuntap add mode tap tap')
         return True
 
+    def _verify_license(self) -> bool:
+        if not self.license_path:
+            logging.error(
+                "############### No license file specified ###############")
+            return False
+        if not os.path.exists(self.license_path):
+            logging.error(
+                "############### License file does not exist ###############")
+            return False
+        with open(self.license_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            if content.find('Hardware_info') == -1 or content.find('Licence_id') == -1:
+                logging.error(
+                    "############### License file is not correct ###############")
+                return False
+        return True
+
     def _init_config(self, host: IHost):
         # {host.name()} = h0, h1, h2, ... the last character is the index of the host
         host_idx = int(host.name()[-1])
         host.cmd(
             f'mkdir -p /etc/cfg')
         host.cmd(
-            f'cp {self.source_path}/licence /etc/cfg/')
+            f'cp {self.license_path} /etc/cfg/')
         host.cmd(
             f'mkdir -p /etc/bats-protocol')
         host.cmd(
