@@ -47,12 +47,9 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
     def run(self, network: INetwork):
         hosts = network.get_hosts()
         host_num = len(hosts)
-        protocol_args = ''
-        for arg in self.config.args:
-            protocol_args += arg + ' '
         for i in range(host_num):
             res = hosts[i].cmdPrint(
-                f'nohup {self.config.path} {protocol_args} '
+                f'nohup {self.config.path} {self.config.args} '
                 f' > {self.log_dir}bats_protocol_h{i}.log &')
             logging.info(
                 f"############### Oasis run bats protocol on "
