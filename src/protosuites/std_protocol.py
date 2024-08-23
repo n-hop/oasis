@@ -18,16 +18,6 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         self.default_version_dict = {}
 
     def post_run(self, network: INetwork):
-        # reset back to default version
-        if 'tcp' in self.config.name:
-            for host in network.get_hosts():
-                default_ver = self.default_version_dict[host.name()]
-                host.cmd(
-                    f'sysctl -w net.ipv4.tcp_congestion_control={default_ver}')
-                host.cmd(f"sysctl -p")
-                logging.info(
-                    "############### Oasis change the congestion control"
-                    " algorithm back to %s on %s ###############", default_ver, host.name())
         return True
 
     def pre_run(self, network: INetwork):
@@ -65,6 +55,16 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         return True
 
     def stop(self, network: INetwork):
+        # reset back to default version
+        if 'tcp' in self.config.name:
+            for host in network.get_hosts():
+                default_ver = self.default_version_dict[host.name()]
+                host.cmd(
+                    f'sysctl -w net.ipv4.tcp_congestion_control={default_ver}')
+                host.cmd(f"sysctl -p")
+                logging.info(
+                    "############### Oasis change the congestion control"
+                    " algorithm back to %s on %s ###############", default_ver, host.name())
         if self.process_name is None:
             # means no need to stop the protocol
             return True
