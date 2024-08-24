@@ -32,6 +32,8 @@
     "BRTP",
     "qdisc",
     "noqueue",
-    "priomap"
+    "priomap",
+    "pkill",
+    "openr"
   ]
 }
