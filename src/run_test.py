@@ -204,6 +204,9 @@ def setup_test(test_case_yaml, network: INetwork):
             server_conf.port = proto_config.port
             # by default, client-server hosts are [0, -1]
             proto_config.hosts = [0, len(network.get_hosts()) - 1]
+            proto_config.test_name = test_case_name
+            client_conf.test_name = proto_config.test_case_name
+            server_conf.test_name = proto_config.test_case_name
             # wrapper of client-server protocol
             cs = CSProtocol(config=proto_config,
                             client=StdProtocol(client_conf),
