@@ -294,7 +294,7 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: st
 
 
 if __name__ == '__main__':
-    setLogLevel('info')
+    setLogLevel('warning')
     logging.basicConfig(level=logging.INFO)
     logging.info("Platform: %s", platform.platform())
     logging.info("Python version: %s", platform.python_version())

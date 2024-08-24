@@ -17,6 +17,7 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         self.forward_port = self.config.port
         self.default_version_dict = {}
 
+
     def post_run(self, network: INetwork):
         return True
 
@@ -37,11 +38,7 @@ class StdProtocol(IProtoSuite, IProtoInfo):
             # if not defined, then run on all hosts
             self.config.hosts = [0, len(hosts) - 1]
         for host_id in self.config.hosts:
-            cur_protocol_args = ""
-            if "%s" in self.protocol_args and 'kcp_' in self.config.name:
-                receiver_ip = hosts[-1].IP()  # ?fixme
-                cur_protocol_args = self.protocol_args % (
-                    receiver_ip, self.forward_port)
+            cur_protocol_args = self.get_protocol_args(hosts)
             hosts[host_id].cmd(f'{self.config.path} {cur_protocol_args} &')
             logging.info(
                 f"############### Oasis start %s protocol on %s ###############",
@@ -72,6 +69,14 @@ class StdProtocol(IProtoSuite, IProtoInfo):
 
     def get_protocol_version(self) -> str:
         return self.config.version
+
+    def get_protocol_args(self, hosts) -> str:
+        if "%s" in self.protocol_args and 'kcp' in self.config.name:
+            receiver_ip = hosts[-1].IP()  # ?fixme
+            tmp_protocol_args = self.protocol_args % (
+                receiver_ip, self.forward_port)
+            return tmp_protocol_args
+        return self.protocol_args
 
     def __set_protocol_version(self, network: INetwork, version: str):
         if 'tcp' in self.config.name:
