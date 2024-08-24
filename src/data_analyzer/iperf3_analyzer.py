@@ -66,7 +66,7 @@ class Iperf3Analyzer(IDataAnalyzer):
                 if len(throughput_array) <= 1:
                     logging.error(f"no throughput data in %s", log_base_name)
                     continue
-            logging.info(f"Added throughput data: %s  %s",
+            logging.debug(f"Added throughput data: %s  %s",
                          throughput_array, log_base_name)
             cur_max_throughput = max(throughput_array)
             max_throughput = max(max_throughput, cur_max_throughput)

@@ -49,6 +49,9 @@ class IProtoSuite(ABC):
                 self.protocol_args += arg + ' '
             logging.info("protocol %s args: %s",
                          self.config.name, self.protocol_args)
+        if self.config.path and not os.path.isfile(f"/root/{self.config.path}"):
+            logging.error("protocol %s binary %s is not found.",
+                          self.config.name, self.config.path)
 
     def get_config(self) -> ProtoConfig:
         return self.config

@@ -35,5 +35,7 @@
     "priomap",
     "pkill",
     "openr"
-  ]
+  ],
+  "python.analysis.typeCheckingMode": "off",
+  "python.analysis.autoImportCompletions": true
 }

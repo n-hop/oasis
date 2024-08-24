@@ -46,7 +46,7 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         return True
 
     def stop(self, network: INetwork):
-        # reset back to default version
+        # restore the protocol version
         self.__restore_protocol_version(network)
         if self.process_name is None:
             # means no need to stop the protocol
