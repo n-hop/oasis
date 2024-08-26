@@ -59,14 +59,10 @@ class NestedContainernet():
         logging.info(
             "NestedContainernet tearDown the Containernet.")
         mount_config = os.path.join(self.oasis_workspace, "config")
+        # unmount the mounted directories
         if os.path.exists(mount_config):
             os.system(f"umount {mount_config}")
             os.system(f"rm -rf {mount_config}")
-        # unmount the mounted directories
-        unmount_cmd = f"docker exec {self.test_container_name} "\
-                      f"/bin/bash -c \"umount /root/config/ || true \""
-        os.system(unmount_cmd)
-        # stop all the running containers with the name "containernet**"
         os.system(
             "docker stop $(docker ps -a -q "
             f"-fname={self.test_container_name}) || true")
