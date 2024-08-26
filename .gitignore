@@ -93,5 +93,7 @@ id_rsa*
 
 # results
 test_results
-test
-config
+test/
+config/
+!src/config/
+!src/test/
