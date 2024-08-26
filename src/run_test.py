@@ -92,7 +92,7 @@ def load_predefined_protocols():
     Load predefined protocols from the yaml file.
     """
     predefined_protocols = None
-    with open('src/config/predefined.protocols.yaml', 'r', encoding='utf-8') as stream:
+    with open('config/predefined.protocols.yaml', 'r', encoding='utf-8') as stream:
         try:
             yaml_content = yaml.safe_load(stream)
             predefined_protocols = yaml_content['protocols']
@@ -277,7 +277,7 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: st
     """Build a container network from the yaml configuration file.
 
     Args:
-        yaml_file_path (str): the path of the yaml configuration file
+        yaml_test_file_path (str): the path of the yaml configuration file
 
     Returns:
         ContainerizedNetwork: the container network object
@@ -298,23 +298,38 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     logging.info("Platform: %s", platform.platform())
     logging.info("Python version: %s", platform.python_version())
-    cur_workspace = sys.argv[1]
-    mapped_workspace = '/root/'
-    cur_config_yaml_file_path = sys.argv[2]
-    yaml_file_path = f'{mapped_workspace}/{cur_config_yaml_file_path}'
-    if not os.path.exists(yaml_file_path):
-        logging.info(f"Error: %s does not exist.", yaml_file_path)
+
+    # mapped to `/root/config/`
+    yaml_config_base_path = sys.argv[1]
+    config_mapped_prefix = '/root/config/'
+    # mapped to `/root/`
+    oasis_workspace = sys.argv[2]
+    oasis_mapped_prefix = '/root/'
+    logging.info(
+        f"run_test.py: Base path of the oasis project: %s", oasis_workspace)
+    cur_test_file = sys.argv[3]
+    # ls -alh /root/config/
+    res = os.system(f"ls -alh {config_mapped_prefix}")
+    if res != 0:
+        logging.error("Error: %s does not exist.", yaml_config_base_path)
+        sys.exit(1)
+    logging.info(f"ls -alh output %s", res)
+    yaml_test_file_path = f'{config_mapped_prefix}/{cur_test_file}'
+    if not os.path.exists(yaml_test_file_path):
+        logging.info(f"Error: %s does not exist.", yaml_test_file_path)
         sys.exit(1)
     linear_network = None
-    cur_node_config = load_node_config(yaml_file_path)
+    cur_node_config = load_node_config(yaml_test_file_path)
     if cur_node_config is None:
         logging.error("Error: no containernet node config.")
         sys.exit(1)
     # mount the workspace
-    cur_node_config.vols.append(f'{cur_workspace}:{mapped_workspace}')
+    cur_node_config.vols.append(f'{oasis_workspace}:{oasis_mapped_prefix}')
+    cur_node_config.vols.append(
+        f'{yaml_config_base_path}:{config_mapped_prefix}')
 
     # load all cases
-    all_tests = load_test(yaml_file_path)
+    all_tests = load_test(yaml_test_file_path)
     for test in all_tests:
         cur_top_config = load_top_config(test)
         if linear_network is None:
