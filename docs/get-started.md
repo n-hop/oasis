@@ -3,19 +3,25 @@
 ### 1. Run test
 
 ```bash
-sudo python3 src/start.py -p {base_path_of_yaml_config_files} -n nested-containernet-config.yaml --containernet=default -t protocol-single-hop-test.yaml
+sudo python3 src/start.py -p {base_path_of_yaml_config_files} \
+    -n nested-containernet-config.yaml \
+    --containernet=default \
+    -t protocol-single-hop-test.yaml
 ```
 
 `{base_path_of_yaml_config_files}` is the path to all the yaml configuration files. Oasis will search `nested-containernet-config.yaml`, `protocol-single-hop-test.yaml` in this folder.
 
 `--containernet=default` is the containernet configuration. `default` means use the default containernet configuration from `nested-containernet-config.yaml`.
 
-`-t protocol-single-hop-test.yaml` is the test case file. The test case file is a YAML file that defines the test case. The test case file is located in `{base_path_of_yaml_config_files}`.
+`-t protocol-single-hop-test.yaml` is the test case file. The test case file is a YAML file that defines the test case.
 
 A concrete example can be as follows:
 
 ```bash
-sudo python3 src/start.py -p /home/runner/oasis/src/config -n nested-containernet-config.yaml --containernet=default -t protocol-single-hop-test.yaml
+sudo python3 src/start.py -p /home/runner/oasis/src/config \
+    -n nested-containernet-config.yaml \
+    --containernet=default \
+    -t protocol-single-hop-test.yaml
 ```
 
 This will run the `src/run_test.py` in a nested containernet environment. If `containernet` is installed, run the `src/run_test.py` directly:
@@ -26,8 +32,10 @@ python3 src/run_test.py {base_path_of_yaml_config_files} one-concrete-network.ya
 
 ### 2. Test results
 
-The test results are located in `{workspace}/test_results/{test_case_name}`, the test name is defined in the test case YAML file.
+The test results are located in `{oasis_workspace}/test_results/{test_case_name}`, the test name is defined in the test case YAML file.
 In this folder, there are svg files(`iperf3_throughput.svg`,`rtt.svg`, `rtt_cdf.svg`) which shows throughput and RTT performance.
+
+`{oasis_workspace}` is the base path of Oasis.
 
 ## Build docker image
 
