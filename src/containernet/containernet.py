@@ -58,6 +58,14 @@ class NestedContainernet():
     def tearDown(self) -> None:
         logging.info(
             "NestedContainernet tearDown the Containernet.")
+        mount_config = os.path.join(self.oasis_workspace, "config")
+        if os.path.exists(mount_config):
+            os.system(f"umount {mount_config}")
+            os.system(f"rm -rf {mount_config}")
+        # unmount the mounted directories
+        unmount_cmd = f"docker exec {self.test_container_name} "\
+                      f"/bin/bash -c \"umount /root/config/ || true \""
+        os.system(unmount_cmd)
         # stop all the running containers with the name "containernet**"
         os.system(
             "docker stop $(docker ps -a -q "
@@ -101,9 +109,11 @@ class NestedContainernet():
         return ret == 0
 
     def install_dependencies(self):
+        if not os.path.exists(f"{self.oasis_workspace}/src/containernet/requirements.txt"):
+            return
         install_cmd = f"docker exec {self.test_container_name} "\
-            f"/ bin/bash - c \"python3 -m pip install - r /root/src/containernet/requirements.txt"\
-            f" -i https: // pypi.tuna.tsinghua.edu.cn/simple\""
+            f"/bin/bash -c \"python3 -m pip install -r /root/src/containernet/requirements.txt"\
+            f" -i https://pypi.tuna.tsinghua.edu.cn/simple\""
         logging.info(
             f"Oasis execute install command \" %s \"", install_cmd)
         os.system(install_cmd)
