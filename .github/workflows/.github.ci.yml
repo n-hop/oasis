@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install -r ${{github.workspace}}/src/requirements.txt
+          pip install -r ${{github.workspace}}/src/containernet/requirements.txt
       - name: Restore Cached Containernet Image
         id: cache-containernet-image
         uses: actions/cache@v4
