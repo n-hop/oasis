@@ -41,9 +41,10 @@ class NestedContainernet():
     on the Nested Containernet.
     """
 
-    def __init__(self, config: NestedConfig, workspace: str, test_name: str):
+    def __init__(self, config: NestedConfig, yaml_base_path: str, oasis_workspace: str, test_name: str):
         self.config = config
-        self.workspace = workspace
+        self.yaml_base_path = yaml_base_path
+        self.oasis_workspace = oasis_workspace
         self.test_name = test_name
         self.test_container_name = ""
         self.setUp()
@@ -124,10 +125,15 @@ class NestedContainernet():
             f"Nested Containernet config mounts: %s", self.config.mounts)
         if self.config.mounts is None:
             return ""
-        # mount workspace directory to /root
+        # 1. mount oasis_workspace directory to /root
         self.formatted_mounts = f" --mount "\
-            f"type=bind,source={self.workspace},"\
+            f"type=bind,source={self.oasis_workspace},"\
             f"target=/root,bind-propagation=shared "
+        # 2. mount yaml_base_path directory to /root/config/
+        self.formatted_mounts += f" --mount "\
+            f"type=bind,source={self.yaml_base_path},"\
+            f"target=/root/config/,bind-propagation=shared "
+
         for mount in self.config.mounts:
             source, target, *readonly = mount.split(":")
             if len(readonly) == 0:

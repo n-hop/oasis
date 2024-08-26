@@ -33,18 +33,22 @@ def parse_args():
                         dest='tests_config_file',
                         type=str,
                         default="")
-    parser.add_argument('-w',
-                        help='workspace directory',
-                        dest='workspace',
+    parser.add_argument('-p',
+                        help='base path of all the YAML files',
+                        dest='yaml_base_path',
                         type=str,
                         default="")
     return parser
 
 
-def build_nested_env(config_file, containernet_name, workspace):
+def build_nested_env(config_file, containernet_name, yaml_base_path_input, oasis_workspace_input):
     # join cur_workspace with nested_config_file
     absolute_path_of_config_file = os.path.join(
-        workspace + "/", config_file)
+        yaml_base_path_input + "/", config_file)
+    if not os.path.exists(f'{absolute_path_of_config_file}'):
+        logging.info(f"Error: %s does not exist.", {
+                     absolute_path_of_config_file})
+        return None
     nested_config = load_nested_config(
         absolute_path_of_config_file, containernet_name)
     if nested_config is None:
@@ -54,26 +58,43 @@ def build_nested_env(config_file, containernet_name, workspace):
     test_name = "default "
     # execute the test cases on nested containernet
     return NestedContainernet(
-        nested_config, workspace, test_name)
+        nested_config, yaml_base_path_input, oasis_workspace_input, test_name)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
+    current_process_dir = os.getcwd()
+    logging.info(f"Current directory the process: %s", current_process_dir)
 
     local_parser = parse_args()
     ns, args = local_parser.parse_known_args()
-    cur_config_yaml_file_path = ns.tests_config_file
+    cur_test_yaml_file = ns.tests_config_file
     nested_config_file = ns.nested_config_file
     nested_containernet = ns.containernet
-    cur_workspace = ns.workspace
+    yaml_base_path = ns.yaml_base_path
 
-    if not os.path.exists(f'{cur_workspace}/{cur_config_yaml_file_path}'):
-        logging.info(f"Error: %s does not exist.", cur_config_yaml_file_path)
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    oasis_workspace = os.path.dirname(base_path)
+    logging.info(f"Base path of the oasis project: %s", oasis_workspace)
+    if current_process_dir == oasis_workspace:
+        logging.info("running in the workspace directory of oasis")
+    else:
+        logging.info("running outside the workspace directory of oasis")
+    # ############### workspace dir and process dir ################
+    # python source files are always started from the `oasis_workspace`
+    # none py source files are always started from the `yaml_base_path`
+    test_case_file = os.path.join(
+        yaml_base_path, cur_test_yaml_file)
+    if not os.path.exists(f'{test_case_file}'):
+        logging.info(f"Error: %s does not exist.", {test_case_file})
         sys.exit(1)
     nested_env = build_nested_env(
-        nested_config_file, nested_containernet, cur_workspace)
+        nested_config_file, nested_containernet, yaml_base_path, oasis_workspace)
+    if nested_env is None:
+        logging.info("Error: failed to build the nested containernet.")
+        sys.exit(1)
     nested_env.start()
     nested_env.execute(
-        f"python3 src/run_test.py {cur_workspace} "
-        f"{cur_config_yaml_file_path}")
+        f"python3 src/run_test.py {yaml_base_path} {oasis_workspace} "
+        f"{cur_test_yaml_file}")
     nested_env.stop()

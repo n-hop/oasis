@@ -47,4 +47,4 @@ topology:
   - name: 4-hops-linear-network
     topology_type: linear
     nodes: 5
-    json_description: src/config/4-hops-linear-network.json
+    json_description: config/4-hops-linear-network.json

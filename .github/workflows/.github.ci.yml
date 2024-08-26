@@ -77,7 +77,7 @@ jobs:
           echo "Hardware_info=${{secrets.BATS_HARDWARE_INFO}}" >> ${{github.workspace}}/bats/licence
           echo "Licence_id=${{secrets.BATS_LICENCE_ID}}" >> ${{github.workspace}}/bats/licence
           python3 ${{github.workspace}}/src/start.py \
-          -n src/config/nested-containernet-config.yaml \
+          -p ${{github.workspace}}/src/config \
+          -n nested-containernet-config.yaml \
           --containernet=default \
-          -w ${{github.workspace}}/ \
-          -t src/config/protocol-single-hop-test.yaml
+          -t protocol-single-hop-test.yaml
