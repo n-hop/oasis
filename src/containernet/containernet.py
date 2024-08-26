@@ -36,8 +36,8 @@ def load_nested_config(nested_config_file: str,
 
 
 class NestedContainernet():
-    """NestedContainernet is used to initialize the Nested Containernet 
-    environment; then, users can use `execute` to run the test cases 
+    """NestedContainernet is used to initialize the Nested Containernet
+    environment; then, users can use `execute` to run the test cases
     on the Nested Containernet.
     """
 
@@ -96,7 +96,17 @@ class NestedContainernet():
         logging.debug(
             f"Nested Containernet start_cmd: %s", start_cmd)
         ret = os.system(start_cmd)
+        if ret == 0:
+            self.install_dependencies()
         return ret == 0
+
+    def install_dependencies(self):
+        install_cmd = f"docker exec {self.test_container_name} "\
+            f"/ bin/bash - c \"python3 -m pip install - r /root/src/containernet/requirements.txt"\
+            f" -i https: // pypi.tuna.tsinghua.edu.cn/simple\""
+        logging.info(
+            f"Oasis execute install command \" %s \"", install_cmd)
+        os.system(install_cmd)
 
     def patch(self):
         '''Apply patches to the nested containernet source code.'''
