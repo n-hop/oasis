@@ -106,6 +106,8 @@ class ContainerizedNetwork (INetwork):
         """
         Reload the network with new configurations.
         """
+        logging.info(
+            "############### Oasis reload Networking ###########")
         # check topology change only.
         if self._check_topology_change(top):
             self._init_matrix(top)
@@ -140,6 +142,8 @@ class ContainerizedNetwork (INetwork):
         if self.net_jitter_mat != top.get_matrix(MatrixType.JITTER_MATRIX):
             is_changed = True
             logging.info("Oasis detected the jitter matrix change.")
+        if is_changed is False:
+            logging.info("Oasis detected the topology no change.")
         return is_changed
 
     def _init_matrix(self, net_topology: ITopology):
@@ -303,7 +307,8 @@ class ContainerizedNetwork (INetwork):
         logging.info("shaping_parameters %s", shaping_parameters)
         port = attached_inf[-1]
         ifb_interface = f"ifb{port}"
-        self.hosts[id2].cmd(f"ip link add name {ifb_interface} type ifb")
+        self.hosts[id2].cmd(
+            f"ip link add name {ifb_interface} type ifb")
         self.hosts[id2].cmd(f"ip link set {ifb_interface} up")
         self.hosts[id2].cmd(
             f"tc qdisc add dev {attached_inf} ingress")
@@ -311,6 +316,7 @@ class ContainerizedNetwork (INetwork):
                             f"match u32 0 0 action mirred egress redirect dev {ifb_interface}")
         self.hosts[id2].cmd(
             f"tc qdisc add dev {ifb_interface} root netem{shaping_parameters} limit 20000000")
+
         return True
 
     def _check_node_vols(self):
@@ -361,6 +367,9 @@ class ContainerizedNetwork (INetwork):
 
     def _reset_network(self, num, diff):
         logging.info("Oasis reset the network.")
+        for host in self.hosts:
+            host.cmd('ip route flush table main')
+            host.cleanup()
         # remove all links
         for i in range(num - 1):
             logging.info("removeLink: %s-%s",
@@ -372,9 +381,7 @@ class ContainerizedNetwork (INetwork):
         # remove all routes.
         logging.info("Oasis reset the routes and interfaces.")
         for host in self.hosts:
-            host.cmd('ip route flush table main')
             host.deleteIntfs()
-            host.cleanup()
         self.net_routes = [range(self.num_of_hosts + diff)]
         self.pair_to_link = {}
         self.pair_to_link_ip = {}
