@@ -1,3 +1,4 @@
+from math import log
 import os
 import sys
 import argparse
@@ -38,6 +39,11 @@ def parse_args():
                         dest='yaml_base_path',
                         type=str,
                         default="")
+    parser.add_argument('-d',
+                        help='enable debug mode',
+                        dest='debug_log',
+                        type=str,
+                        default='False')
     return parser
 
 
@@ -62,9 +68,6 @@ def build_nested_env(config_file, containernet_name, yaml_base_path_input, oasis
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    current_process_dir = os.getcwd()
-    logging.info(f"Current directory the process: %s", current_process_dir)
 
     local_parser = parse_args()
     ns, args = local_parser.parse_known_args()
@@ -72,6 +75,15 @@ if __name__ == '__main__':
     nested_config_file = ns.nested_config_file
     nested_containernet = ns.containernet
     yaml_base_path = ns.yaml_base_path
+    debug_log = ns.debug_log
+    if debug_log == 'True':
+        logging.basicConfig(level=logging.DEBUG)
+        logging.info("Debug mode is enabled.")
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.info("Debug mode is disabled.")
+    current_process_dir = os.getcwd()
+    logging.info(f"Current directory the process: %s", current_process_dir)
 
     base_path = os.path.dirname(os.path.abspath(__file__))
     oasis_workspace = os.path.dirname(base_path)
@@ -96,5 +108,5 @@ if __name__ == '__main__':
     nested_env.start()
     nested_env.execute(
         f"python3 src/run_test.py {yaml_base_path} {oasis_workspace} "
-        f"{cur_test_yaml_file}")
+        f"{cur_test_yaml_file} {debug_log}")
     nested_env.stop()

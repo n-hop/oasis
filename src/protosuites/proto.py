@@ -71,12 +71,15 @@ class IProtoSuite(ABC):
     def start(self, network: 'INetwork'):  # type: ignore
         self.is_success = self.pre_run(network)
         if not self.is_success:
+            logging.debug("pre_run failed")
             return
         self.is_success = self.run(network)
         if not self.is_success:
+            logging.debug("run failed")
             return
         self.is_success = self.post_run(network)
         if not self.is_success:
+            logging.debug("post_run failed")
             return
 
     @abstractmethod

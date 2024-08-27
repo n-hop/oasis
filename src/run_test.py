@@ -294,11 +294,19 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: st
 
 
 if __name__ == '__main__':
-    setLogLevel('warning')
-    logging.basicConfig(level=logging.INFO)
+    debug_log = 'False'
+    if len(sys.argv) == 5:
+        debug_log = sys.argv[4]
+    if debug_log == 'True':
+        setLogLevel('info')
+        logging.basicConfig(level=logging.INFO)
+        logging.info("Debug mode is enabled.")
+    else:
+        setLogLevel('warning')
+        logging.basicConfig(level=logging.DEBUG)
+        logging.info("Debug mode is disabled.")
     logging.info("Platform: %s", platform.platform())
     logging.info("Python version: %s", platform.python_version())
-
     # mapped to `/root/config/`
     yaml_config_base_path = sys.argv[1]
     config_mapped_prefix = '/root/config/'
@@ -308,12 +316,6 @@ if __name__ == '__main__':
     logging.info(
         f"run_test.py: Base path of the oasis project: %s", oasis_workspace)
     cur_test_file = sys.argv[3]
-    # ls -alh /root/config/
-    res = os.system(f"ls -alh {config_mapped_prefix}")
-    if res != 0:
-        logging.error("Error: %s does not exist.", yaml_config_base_path)
-        sys.exit(1)
-    logging.info(f"ls -alh output %s", res)
     yaml_test_file_path = f'{config_mapped_prefix}/{cur_test_file}'
     if not os.path.exists(yaml_test_file_path):
         logging.info(f"Error: %s does not exist.", yaml_test_file_path)
