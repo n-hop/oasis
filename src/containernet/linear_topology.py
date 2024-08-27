@@ -40,6 +40,9 @@ class LinearTopology(ITopology):
 
     def generate_value_matrix(self, adj_matrix, type: MatrixType):
         value_mat = copy.deepcopy(adj_matrix)
+        if self.top_config.array_description is None:
+            logging.warning("No array_description in the topology config")
+            return value_mat
         for param in self.top_config.array_description:
             for attr_name in param:
                 if attr_name in LinkAttr.__members__ and \

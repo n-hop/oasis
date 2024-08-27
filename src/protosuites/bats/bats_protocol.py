@@ -14,6 +14,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         super().__init__(config)
         if self.config.path is None:
             logging.error("No protocol path specified.")
+            return
         self.process_name = self.config.path.split('/')[-1]
         self.source_path = '/'.join(self.config.path.split('/')[:-1])
         if self.source_path == '':
@@ -27,9 +28,14 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
     def pre_run(self, network: INetwork):
         # Init the license file for bats, otherwise it will not run.
         hosts = network.get_hosts()
+        if hosts is None:
+            return False
         host_num = len(hosts)
         # prepare the bats protocol config files
         hosts_ip_range = network.get_host_ip_range()
+        if hosts_ip_range == "":
+            logging.error("Hosts ip range is not set.")
+            return False
         generate_cfg_files(host_num, hosts_ip_range,
                            self.virtual_ip_prefix, self.source_path)
         # generate some error log if the license file is not correct
@@ -46,6 +52,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
 
     def run(self, network: INetwork):
         hosts = network.get_hosts()
+        if hosts is None:
+            return False
         host_num = len(hosts)
         for i in range(host_num):
             hosts[i].cmd(
@@ -60,6 +68,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
 
     def stop(self, network: INetwork):
         hosts = network.get_hosts()
+        if hosts is None:
+            return False
         host_num = len(hosts)
         for i in range(host_num):
             logging.info(
@@ -109,17 +119,20 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         return True
 
     def _get_ip_from_host(self, host: IHost, dev: str) -> str:
-        ip = host.popen(f"ip addr show {dev}").stdout.read().decode('utf-8')
+        pf = host.popen(f"ip addr show {dev}")
+        if pf is None:
+            return ""
+        ip = pf.stdout.read().decode('utf-8')
         match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', ip)
         if match:
             return match.group(1)
-        return None
+        return ""
 
     def get_forward_port(self) -> int:
-        return None
+        return 0
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
-        pass
+        return ""
 
     def get_protocol_version(self) -> str:
-        return self.config.version
+        return str(self.config.version)

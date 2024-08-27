@@ -29,4 +29,4 @@ class IProtoInfo(ABC):
         return True
 
     def get_protocol_version(self) -> str:
-        return None
+        return ""

@@ -61,17 +61,17 @@ class RTTTest(ITestSuite):
         if proto_info.get_protocol_name().upper() == "KCP":
             # kcp tun like a proxy, all traffic will be forwarded to the proxy server
             tun_ip = proto_info.get_tun_ip(network, self.config.client_host)
-            if tun_ip is None or tun_ip == "":
+            if tun_ip == "":
                 tun_ip = client.IP()
             receiver_ip = tun_ip
         else:
             tun_ip = proto_info.get_tun_ip(network, self.config.server_host)
-            if tun_ip is None or tun_ip == "":
+            if tun_ip == "":
                 tun_ip = server.IP()
             receiver_ip = tun_ip
         # KCP defines the forward port `10100`
         receiver_port = proto_info.get_forward_port()
-        if receiver_port is None:
+        if receiver_port == 0:
             # if no forward port defined, use random port start from 10011
             # for port conflict, use different port for each test
             receiver_port = 10011 + self.run_times

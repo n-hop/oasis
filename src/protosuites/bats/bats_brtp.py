@@ -14,7 +14,7 @@ class BRTP(BATSProtocol):
         if routing_type_name == 'OLSRRouting':
             host = network.get_hosts()[host_id]
             return self._get_ip_from_host(host, 'olsr_tun_BRTP')
-        return None
+        return ""
 
     def get_protocol_name(self) -> str:
         return 'BRTP'

@@ -1,6 +1,6 @@
 import logging
 import os
-from mininet.net import Containernet
+from mininet.net import Containernet  # type: ignore
 from mininet.util import ipStr, netParse
 from containernet.topology import (ITopology, MatrixType)
 from containernet.containernet_host import ContainernetHostAdapter
@@ -28,9 +28,9 @@ class ContainerizedNetwork (INetwork):
     """
 
     def __init__(self,
-                 node_config: NodeConfig = None,
-                 net_topology: ITopology = None,
-                 routing_strategy: IRoutingStrategy = None,
+                 node_config: NodeConfig,
+                 net_topology: ITopology,
+                 routing_strategy: IRoutingStrategy,
                  ** params) -> None:
         super().__init__(**params)
         self.containernet = Containernet()
@@ -41,7 +41,7 @@ class ContainerizedNetwork (INetwork):
         self.node_vols = node_config.vols
         self.node_bind_port = node_config.bind_port
         self.node_name_prefix = node_config.name_prefix
-        self.node_ip_range = node_config.ip_range
+        self.node_ip_range = node_config.ip_range or ""
         self.node_route = node_config.route
         self.topology_type = net_topology.get_topology_type()
         # `node_ip_start` init from node_ip_range
@@ -75,12 +75,16 @@ class ContainerizedNetwork (INetwork):
         return self.routing_strategy
 
     def get_topology_description(self):
+        if self.net_loss_mat is None or self.net_bw_mat is None or \
+                self.net_latency_mat is None or self.net_jitter_mat is None:
+            logging.warning("The network matrices are not initialized.")
+            return ""
         if self.topology_type == 'linear':
             loss_rate = self.net_loss_mat[0][1]
             latency = self.net_latency_mat[0][1]
             jitter = self.net_jitter_mat[0][1]
             bandwidth = self.net_bw_mat[0][1]
-            description = f"Linear {self.num_of_hosts} hops \n"
+            description = f"Linear {self.num_of_hosts - 1} hops \n"
             description += f"loss {loss_rate}%,"
             description += f"latency {latency}ms,"
             description += f"jitter {jitter}ms,"
@@ -105,7 +109,12 @@ class ContainerizedNetwork (INetwork):
         # check topology change only.
         if self._check_topology_change(top):
             self._init_matrix(top)
-            diff = self.num_of_hosts - len(self.net_mat)
+            if self.net_mat is not None:
+                diff = self.num_of_hosts - len(self.net_mat)
+            else:
+                diff = 0
+                logging.warning(
+                    "The topology matrix is None. topology change is not supported.")
             if diff < 0:
                 self._expand_network(-diff)
             else:
@@ -188,6 +197,9 @@ class ContainerizedNetwork (INetwork):
         """
         Setup the topology of the network by adding routes, links, etc.
         """
+        if self.net_mat is None:
+            logging.warning("The network matrix is None.")
+            return False
         link_subnets = subnets(self.node_ip_start, self.node_ip_range)
         _, link_prefix = netParse(self.node_ip_start)
         # for adjacent matrix, only the upper triangle is used.
@@ -302,11 +314,14 @@ class ContainerizedNetwork (INetwork):
         return True
 
     def _check_node_vols(self):
+        if self.node_vols is None:
+            return False
         if not os.path.exists('/usr/bin/perf') or \
                 not os.path.isfile('/usr/bin/perf'):
             logging.warning("perf is not available.")
             self.node_vols = [
                 vol for vol in self.node_vols if '/usr/bin/perf' not in vol]
+        return True
 
     def _expand_network(self, diff):
         """

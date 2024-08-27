@@ -71,10 +71,14 @@ class ITestSuite(ABC):
         self.result_dir = f"/root/test_results/{self.config.name}/"
         if not os.path.exists(f"{self.result_dir}"):
             os.makedirs(f"{self.result_dir}")
-        self.result = TestResult(
-            False, pattern=f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
-            f"_h{self.config.client_host}_h{self.config.server_host}.log",
-            record="", result_dir=self.result_dir)
+        if self.config.test_type is not None:
+            self.result = TestResult(
+                False, pattern=f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
+                f"_h{self.config.client_host}_h{self.config.server_host}.log",
+                record="", result_dir=self.result_dir)
+        else:
+            logging.error("Test type is not set. %s", self.config.test_type)
+            self.result = TestResult(False, pattern="", record="")
 
     @abstractmethod
     def post_process(self):
@@ -89,7 +93,9 @@ class ITestSuite(ABC):
         pass
 
     def run(self, network: 'INetwork', proto_info: IProtoInfo) -> TestResult:  # type: ignore
-        if proto_info.get_protocol_version() is not None and proto_info.get_protocol_version() != 'latest':
+        if self.result.pattern == "":
+            return self.result
+        if proto_info.get_protocol_version() != "" and proto_info.get_protocol_version() != 'latest':
             if 'tcp' not in proto_info.get_protocol_name():
                 base_name = proto_info.get_protocol_name().upper() + "-" + \
                     proto_info.get_protocol_version()
@@ -99,37 +105,25 @@ class ITestSuite(ABC):
             base_name = proto_info.get_protocol_name().upper()
         self.result.record = self.result.result_dir + \
             base_name + "_" + self.result.pattern
-        self.result.is_success = self.pre_process()
+        self.result.is_success = self.pre_process()  # type: ignore
         # checking for non-distributed protocols
         if not proto_info.is_distributed():
             if self.config.client_host is None:
                 logging.error(
                     "Test non-distributed protocols without client host is not supported.")
-                return False
+                return self.result
             if self.config.server_host is None:
                 logging.error(
                     "Test non-distributed protocols without server host is not supported.")
-                return False
-            if len(proto_info.get_config().hosts) != 2:
-                logging.error(
-                    "Test non-distributed protocols, but protocol server/client hosts are not set.")
-                return False
-            if proto_info.get_config().hosts[0] != self.config.client_host or \
-                    proto_info.get_config().hosts[1] != self.config.server_host:
-                logging.error(
-                    "Test non-distributed protocols, protocol client/server runs on %s/%s, "
-                    "but test tools client/server hosts are %s/%s.",
-                    proto_info.get_config(
-                    ).hosts[0], proto_info.get_config().hosts[1],
-                    self.config.client_host, self.config.server_host)
-                return False
+                return self.result
         if not self.result.is_success:
             return self.result
-        self.result.is_success = self._run_test(network, proto_info)
+        self.result.is_success = self._run_test(
+            network, proto_info)  # type: ignore
         if not self.result.is_success:
             logging.error("Test %s failed.", self.config.name)
             return self.result
-        self.result.is_success = self.post_process()
+        self.result.is_success = self.post_process()  # type: ignore
         if not self.result.is_success:
             return self.result
         return self.result
@@ -138,7 +132,7 @@ class ITestSuite(ABC):
         return self.result.is_success
 
     def type(self) -> TestType:
-        return self.config.test_type
+        return self.config.test_type if self.config.test_type is not None else TestType.throughput
 
     def get_result(self) -> TestResult:
         return self.result

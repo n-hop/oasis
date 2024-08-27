@@ -38,7 +38,7 @@ class NodeConfig:
     """
     name: str
     img: str
-    vols: Optional[list] = field(default=None)
+    vols: Optional[list] = field(default_factory=list)
     bind_port: Optional[bool] = field(default=True)
     name_prefix: Optional[str] = field(default='h')
     ip_range: Optional[str] = field(default='10.0.0.0/8')
@@ -143,13 +143,14 @@ class IConfig(ABC):
         if all(key in yaml_description for key in is_load_from_file):
             # load from the yaml file `config_file`
             config_data = IConfig.load_config_reference(
-                yaml_description['config_file'],
-                yaml_description['config_name'], config_key)
+                yaml_description['config_file'],  # type: ignore
+                yaml_description['config_name'], config_key)  # type: ignore
         else:
             # load directly from the yaml_description
             logging.info('load_yaml_config: %s', yaml_description)
             if config_key == "node_config":
-                config_data = NodeConfig(**yaml_description)
+                config_data = NodeConfig(**yaml_description)  # type: ignore
             if config_key == "topology":
-                config_data = TopologyConfig(**yaml_description)
+                config_data = TopologyConfig(
+                    **yaml_description)  # type: ignore
         return config_data

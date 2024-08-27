@@ -11,7 +11,7 @@ def load_nested_config(nested_config_file: str,
     Load the nested configuration from a yaml file.
     """
     if nested_config_file == "" or containernet_name == "":
-        return None
+        return NestedConfig(image="")
     containernet_list = []
     logging.info(
         f"process yaml file: %s", {nested_config_file})
@@ -23,7 +23,7 @@ def load_nested_config(nested_config_file: str,
             containernet_list = nested_config["containernet"]
         except yaml.YAMLError as exc:
             logging.error(exc)
-            return None
+            return NestedConfig(image="")
     containernet_names = containernet_list.keys()
     logging.info(
         f"loaded containernet: %s", containernet_list)
@@ -32,7 +32,7 @@ def load_nested_config(nested_config_file: str,
             logging.info(
                 f"loaded containernet: %s", containernet_list[containernet])
             return NestedConfig(**containernet_list[containernet])
-    return None
+    return NestedConfig(image="")
 
 
 class NestedContainernet():
