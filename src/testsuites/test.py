@@ -121,7 +121,7 @@ class ITestSuite(ABC):
         self.result.is_success = self._run_test(
             network, proto_info)  # type: ignore
         if not self.result.is_success:
-            logging.error("Test %s failed.", self.config.name)
+            logging.error("ITestSuite %s failed.", self.config.name)
             return self.result
         self.result.is_success = self.post_process()  # type: ignore
         if not self.result.is_success:

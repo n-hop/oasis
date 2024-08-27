@@ -369,7 +369,13 @@ if __name__ == '__main__':
         setup_test(test, linear_network)
 
         # perform the test
-        linear_network.perform_test()
+        is_success = linear_network.perform_test()
+        if is_success is False:
+            logging.error("Test %s failed.", test['name'])
+            # create a regular file to indicate the test failure
+            with open(f"/root/test.failed", 'w', encoding='utf-8') as f:
+                f.write(f"{test['name']}")
+            break
         linear_network.reset()
 
     if linear_network:

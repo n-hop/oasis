@@ -75,6 +75,11 @@ class INetwork(ABC):
                     continue
                 # run `test` on `network`(self) specified by `proto`
                 result = test.run(self, proto)
+                if result.is_success is False:
+                    logging.error(
+                        "Test %s failed, please check the log file %s",
+                        test.config.name, result.record)
+                    return False
                 if test.type() not in test_results:
                     test_results[test.type()] = {}
                     test_results[test.type()]['results'] = []
@@ -101,7 +106,10 @@ class INetwork(ABC):
                     output=f"{test_result['results'][0].result_dir}iperf3_throughput.svg",
                     subtitle=top_des)
                 analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
-                analyzer.analyze()
+                if analyzer.analyze() is False:
+                    logging.error(
+                        "Test %s failed at throughput test", test_config.name)
+                    return False
                 analyzer.visualize()
                 logging.info(
                     "Analyzed and visualized the throughput test results")
@@ -112,7 +120,10 @@ class INetwork(ABC):
                         output=f"{test_result['results'][0].result_dir}",
                         subtitle=top_des)
                     analyzer = AnalyzerFactory.get_analyzer("rtt", config)
-                    analyzer.analyze()
+                    if analyzer.analyze() is False:
+                        logging.error(
+                            "Test %s failed at rtt test", test_config.name)
+                        return False
                     analyzer.visualize()
                     logging.info(
                         "Analyzed and visualized the RTT test results")
@@ -123,11 +134,13 @@ class INetwork(ABC):
                         subtitle=top_des)
                     analyzer = AnalyzerFactory.get_analyzer(
                         "first_rtt", config)
-                    analyzer.analyze()
+                    if analyzer.analyze() is False:
+                        logging.error(
+                            "Test %s failed at first_rtt test", test_config.name)
+                        return False
                     analyzer.visualize()
                     logging.info(
                         "Analyzed and visualized the first RTT test results")
-
         return True
 
     def reset(self):
