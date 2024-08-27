@@ -51,7 +51,9 @@ class Iperf3Analyzer(IDataAnalyzer):
         plt.rcParams["font.family"] = "serif"
         plt.xlabel("Time (s)", fontsize=8, fontweight="bold")
         plt.ylabel("Throughput (Mbits/sec)", fontsize=8, fontweight="bold")
-        plt.title("Iperf3 throughput analyze", fontsize=10, fontweight="bold")
+        default_title = "Iperf3 throughput \n"
+        default_title += self.config.subtitle
+        plt.title(default_title, fontsize=10, fontweight="bold")
         max_throughput = 0
         for input_log in self.config.input:
             logging.info(f"Visualize iperf3 log: %s", input_log)
@@ -67,7 +69,7 @@ class Iperf3Analyzer(IDataAnalyzer):
                     logging.error(f"no throughput data in %s", log_base_name)
                     continue
             logging.debug(f"Added throughput data: %s  %s",
-                         throughput_array, log_base_name)
+                          throughput_array, log_base_name)
             cur_max_throughput = max(throughput_array)
             max_throughput = max(max_throughput, cur_max_throughput)
             x = np.arange(1, len(throughput_array))

@@ -25,8 +25,9 @@ class RTTAnalyzer(IDataAnalyzer):
                    fontweight='bold')
         plt.ylabel('RTT (ms)', fontsize=8,
                    fontweight='bold')
-        plt.title("Average RTT for each consecutive 10 packets",
-                  fontsize=10, fontweight="bold")
+        default_title = "Average RTT for each consecutive 10 packets\n"
+        default_title += self.config.subtitle
+        plt.title(default_title, fontsize=10, fontweight="bold")
         max_lines = 0
         x = None
         for input_log in self.config.input:
@@ -124,7 +125,9 @@ class RTTAnalyzer(IDataAnalyzer):
                    fontweight='bold')
         plt.ylabel('Cumulative Probability', fontsize=8,
                    fontweight='bold')
-        plt.title(f"RTT of all TCP messages", fontsize=10, fontweight="bold")
+        default_title = "TCP messages RTT CDF\n"
+        default_title += self.config.subtitle
+        plt.title(default_title, fontsize=10, fontweight="bold")
         for log_base_name, rtt_list in rtt_data.items():
             if len(rtt_list) == 0:
                 logging.warning(

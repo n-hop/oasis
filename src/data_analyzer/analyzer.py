@@ -7,6 +7,7 @@ from typing import List
 class AnalyzerConfig:
     input: List[str]   # A series of input files
     output:  str  # The output visualization diagram file
+    subtitle: str  # The subtitle of the diagram
 
 
 class IDataAnalyzer(ABC):

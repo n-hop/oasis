@@ -22,7 +22,9 @@ class FirstRTTAnalyzer(IDataAnalyzer):
                    fontweight='bold')
         plt.ylabel('RTT (ms)', fontsize=8,
                    fontweight='bold')
-        plt.title("First RTT analyze", fontsize=10, fontweight="bold")
+        default_title = "The first TCP message RTT\n"
+        default_title += self.config.subtitle
+        plt.title(default_title, fontsize=10, fontweight="bold")
         data_first_rtt = {}
         for input_log in self.config.input:
             logging.info(f"Visualize rtt log: %s", input_log)

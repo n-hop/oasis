@@ -46,6 +46,10 @@ class INetwork(ABC):
     def reload(self, top: ITopology):
         pass
 
+    @abstractmethod
+    def get_topology_description(self):
+        pass
+
     def add_protocol_suite(self, proto_suite: IProtoSuite):
         self.proto_suites.append(proto_suite)
 
@@ -79,6 +83,7 @@ class INetwork(ABC):
                 logging.debug("Added Test result for %s", result.record)
             # stop the protocol
             proto.stop(self)
+        top_des = self.get_topology_description()
         # Analyze the test results
         for test_type, test_result in test_results.items():
             test_config = test_result['config']
@@ -90,7 +95,9 @@ class INetwork(ABC):
             # analyze those results files according to the test type
             if test_type == TestType.throughput:
                 config = AnalyzerConfig(
-                    input=result_files, output=f"{test_result['results'][0].result_dir}iperf3_throughput.svg")
+                    input=result_files,
+                    output=f"{test_result['results'][0].result_dir}iperf3_throughput.svg",
+                    subtitle=top_des)
                 analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
                 analyzer.analyze()
                 analyzer.visualize()
@@ -99,7 +106,9 @@ class INetwork(ABC):
             if test_type == TestType.rtt:
                 if test_config.packet_count > 1:
                     config = AnalyzerConfig(
-                        input=result_files, output=f"{test_result['results'][0].result_dir}")
+                        input=result_files,
+                        output=f"{test_result['results'][0].result_dir}",
+                        subtitle=top_des)
                     analyzer = AnalyzerFactory.get_analyzer("rtt", config)
                     analyzer.analyze()
                     analyzer.visualize()
@@ -107,7 +116,9 @@ class INetwork(ABC):
                         "Analyzed and visualized the RTT test results")
                 if test_config.packet_count == 1:
                     config = AnalyzerConfig(
-                        input=result_files, output=f"{test_result['results'][0].result_dir}first_rtt.svg")
+                        input=result_files,
+                        output=f"{test_result['results'][0].result_dir}first_rtt.svg",
+                        subtitle=top_des)
                     analyzer = AnalyzerFactory.get_analyzer(
                         "first_rtt", config)
                     analyzer.analyze()

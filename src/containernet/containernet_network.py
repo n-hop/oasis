@@ -6,7 +6,7 @@ from containernet.topology import (ITopology, MatrixType)
 from containernet.containernet_host import ContainernetHostAdapter
 from interfaces.network import INetwork
 from interfaces.routing import IRoutingStrategy
-from .config import NodeConfig
+from .config import (NodeConfig)
 
 
 def subnets(base_ip, parent_ip):
@@ -73,6 +73,22 @@ class ContainerizedNetwork (INetwork):
 
     def get_routing_strategy(self):
         return self.routing_strategy
+
+    def get_topology_description(self):
+        if self.topology_type == 'linear':
+            loss_rate = self.net_loss_mat[0][1]
+            latency = self.net_latency_mat[0][1]
+            jitter = self.net_jitter_mat[0][1]
+            bandwidth = self.net_bw_mat[0][1]
+            description = f"Linear {self.num_of_hosts} hops \n"
+            description += f"loss {loss_rate}%,"
+            description += f"latency {latency}ms,"
+            description += f"jitter {jitter}ms,"
+            description += f"bandwidth {bandwidth}Mbps."
+            return description
+        logging.warning(
+            "The topology type %s is not supported.", self.topology_type)
+        return ""
 
     def start(self):
         logging.info("Oasis starts the ContainerizedNetwork.")
