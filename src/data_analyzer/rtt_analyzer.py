@@ -58,11 +58,12 @@ class RTTAnalyzer(IDataAnalyzer):
                     if per_packet_rtt is not None:
                         data_rtt_all[log_base_name].append(per_packet_rtt)
                 if len(data_rtt_agv10[log_base_name]) == 0:
-                    logging.warning(f"no avg10 data in %s", log_base_name)
+                    logging.warning(
+                        f"no avg10 data in %s, lines %s", log_base_name, len(lines))
                     continue
                 if len(data_rtt_all[log_base_name]) == 0:
                     logging.warning(
-                        f"no per packet rtt data in %s", log_base_name)
+                        f"no per packet rtt data in %s, lines %s", log_base_name, len(lines))
                     continue
                 if max_lines == 0:
                     max_lines = len(data_rtt_agv10[log_base_name])

@@ -32,8 +32,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         hosts_ip_range = network.get_host_ip_range()
         generate_cfg_files(host_num, hosts_ip_range,
                            self.virtual_ip_prefix, self.source_path)
-        if self._verify_license() is False:
-            return False
+        # generate some error log if the license file is not correct
+        self._verify_license()
         for i in range(host_num):
             hosts[i].cmd(f'iptables -F -t nat')
             self._init_tun(hosts[i])
@@ -81,17 +81,17 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
     def _verify_license(self) -> bool:
         if not self.license_path:
             logging.error(
-                "############### No license file specified ###############")
+                "############### License file path is not set ###############")
             return False
         if not os.path.exists(self.license_path):
             logging.error(
-                "############### License file does not exist ###############")
+                "############### License file not found ###############")
             return False
         with open(self.license_path, 'r', encoding='utf-8') as f:
             content = f.read()
             if content.find('Hardware_info') == -1 or content.find('Licence_id') == -1:
                 logging.error(
-                    "############### License file is not correct ###############")
+                    "############### Missing License id in file ###############")
                 return False
         return True
 

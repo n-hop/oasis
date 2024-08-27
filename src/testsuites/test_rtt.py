@@ -18,8 +18,9 @@ class RTTTest(ITestSuite):
         self.run_times = 0
         self.first_rtt_repeats = 15
         self.binary_path = "bin/tcp_message/tcp_endpoint"
-        if os.path.isfile(f"/root/{self.binary_path}"):
-            logging.error("test tool binary %s is not found.", self.binary_path)
+        if not os.path.isfile(f"/root/{self.binary_path}"):
+            logging.error("test tool binary %s is not found.",
+                          self.binary_path)
 
     def post_process(self):
         return True
