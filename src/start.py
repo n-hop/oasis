@@ -56,7 +56,7 @@ def build_nested_env(config_file, containernet_name, yaml_base_path_input, oasis
         return None
     nested_config = load_nested_config(
         absolute_path_of_config_file, containernet_name)
-    if nested_config is None:
+    if nested_config.image == "":
         logging.info(
             f"Error: %s is not in the nested config file.", containernet_name)
         sys.exit(1)

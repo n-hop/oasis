@@ -46,9 +46,8 @@ class INetwork(ABC):
     def reload(self, top: ITopology):
         pass
 
-    @abstractmethod
     def get_topology_description(self):
-        pass
+        return ""
 
     def add_protocol_suite(self, proto_suite: IProtoSuite):
         self.proto_suites.append(proto_suite)
@@ -71,6 +70,9 @@ class INetwork(ABC):
             # start the protocol
             proto.start(self)
             for test in self.test_suites:
+                valid_config = self._check_test_config(proto, test)
+                if not valid_config:
+                    continue
                 # run `test` on `network`(self) specified by `proto`
                 result = test.run(self, proto)
                 if test.type() not in test_results:
@@ -131,3 +133,24 @@ class INetwork(ABC):
     def reset(self):
         self.proto_suites = []
         self.test_suites = []
+
+    def _check_test_config(self, proto: IProtoSuite, test: ITestSuite):
+        if not proto.is_distributed():
+            proto_conf = proto.get_config()
+            if proto_conf is None:
+                logging.error("Protocol config is not set")
+                return False
+            hosts = proto_conf.hosts
+            if hosts is None or len(hosts) != 2:
+                logging.error(
+                    "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
+                return False
+            if hosts[0] != test.config.client_host or \
+                    hosts[1] != test.config.server_host:
+                logging.error(
+                    "Test non-distributed protocols, protocol client/server runs on %s/%s, "
+                    "but test tools client/server hosts are %s/%s.",
+                    hosts[0], hosts[1],
+                    test.config.client_host, test.config.server_host)
+                return False
+        return True

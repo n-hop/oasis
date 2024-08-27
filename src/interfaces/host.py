@@ -14,13 +14,19 @@ class IHost(ABC):
         """Execute a command on the host and print the output.
         """
 
+    def popen(self, command: str):
+        """Execute a command on the host using popen.
+        """
+
     def name(self) -> str:
         """Get the name of the host.
         """
+        return ""
 
     def IP(self) -> str:
         """Get the IP address of the host.
         """
+        return ""
 
     def deleteIntfs(self):
         """Delete all interfaces.

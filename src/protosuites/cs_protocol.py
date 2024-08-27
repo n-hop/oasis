@@ -9,9 +9,10 @@ class CSProtocol(IProtoSuite, IProtoInfo):
         super().__init__(config)
         self.client = client
         self.server = server
-        if len(self.config.hosts) != 2:
+        if self.config.hosts is None or len(self.config.hosts) != 2:
             logging.error(
                 "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
+            return
         self.client.get_config().hosts = [self.config.hosts[0]]
         self.server.get_config().hosts = [self.config.hosts[1]]
         # rewrite the protocol_args of client and server

@@ -17,7 +17,6 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         self.forward_port = self.config.port
         self.default_version_dict = {}
 
-
     def post_run(self, network: INetwork):
         return True
 
@@ -29,11 +28,14 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         if self.process_name is None:
             # means no need to run the protocol
             return True
-        if self.config.type == 'none_distributed' and len(self.config.hosts) != 1:
-            logging.error(
-                "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
-            return False
+        if self.config.type == 'none_distributed':
+            if self.config.hosts is None or len(self.config.hosts) != 2:
+                logging.error(
+                    "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
+                return False
         hosts = network.get_hosts()
+        if hosts is None:
+            return False
         if self.config.hosts is None:
             # if not defined, then run on all hosts
             self.config.hosts = [0, len(hosts) - 1]
@@ -51,7 +53,10 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         if self.process_name is None:
             # means no need to stop the protocol
             return True
-        for host in network.get_hosts():
+        hosts = network.get_hosts()
+        if hosts is None:
+            return False
+        for host in hosts:
             host.cmd(f'pkill -f {self.process_name}')
             logging.info(
                 f"############### Oasis stop %s protocol on %s ###############",
@@ -59,16 +64,18 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         return True
 
     def get_forward_port(self) -> int:
-        return self.forward_port
+        if self.forward_port is not None:
+            return self.forward_port
+        return 0
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
-        pass
+        return ""
 
     def get_protocol_name(self) -> str:
         return self.config.name
 
     def get_protocol_version(self) -> str:
-        return self.config.version
+        return self.config.version or ""
 
     def get_protocol_args(self, hosts) -> str:
         if "%s" in self.protocol_args and 'kcp' in self.config.name:
@@ -94,7 +101,10 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         return True
 
     def __handle_tcp_version_restore(self, network: INetwork):
-        for host in network.get_hosts():
+        hosts = network.get_hosts()
+        if hosts is None:
+            return False
+        for host in hosts:  # type: ignore
             default_ver = self.default_version_dict[host.name()]
             if default_ver is None:
                 continue
@@ -111,7 +121,10 @@ class StdProtocol(IProtoSuite, IProtoInfo):
             logging.error(
                 "TCP version %s is not supported, please check the configuration.", version)
             return
-        for host in network.get_hosts():
+        hosts = network.get_hosts()
+        if hosts is None:
+            return
+        for host in hosts:  # type: ignore
             # read `tcp_congestion_control` before change
             res = host.popen(
                 f"sysctl net.ipv4.tcp_congestion_control").stdout.read().decode('utf-8')

@@ -8,7 +8,7 @@ class BRTPProxy(BATSProtocol):
     """
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
-        pass
+        return ""
 
     def get_protocol_name(self) -> str:
         return 'BRTP-PROXY'

@@ -10,7 +10,7 @@ from interfaces.network import INetwork
 from containernet.linear_topology import LinearTopology
 from containernet.containernet_network import ContainerizedNetwork
 from containernet.config import (
-    IConfig, NodeConfig, TopologyConfig)
+    IConfig, NodeConfig, TopologyConfig, TopologyType)
 from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
@@ -127,6 +127,9 @@ def load_target_protocols_config(test_case_yaml):
         And convert them into a list of `ProtoConfig`.
     """
     predefined = load_predefined_protocols()
+    if predefined is None:
+        logging.error("Error: no predefined protocols.")
+        return None
     target_protocols_yaml = test_case_yaml['target_protocols']
     logging.info("target_protocols_yaml: %s", target_protocols_yaml)
     if target_protocols_yaml is None:
@@ -174,6 +177,9 @@ def setup_test(test_case_yaml, network: INetwork):
     # read the strategy matrix
     test_case_name = test_case_yaml['name']
     target_protocols = load_target_protocols_config(test_case_yaml)
+    if target_protocols is None:
+        logging.error("Error: no target protocols.")
+        return
     for proto_config in target_protocols:
         proto_config.test_name = test_case_name
         logging.info("Added %s protocol, version %s.",
@@ -203,7 +209,11 @@ def setup_test(test_case_yaml, network: INetwork):
             client_conf.port = proto_config.port
             server_conf.port = proto_config.port
             # by default, client-server hosts are [0, -1]
-            proto_config.hosts = [0, len(network.get_hosts()) - 1]
+            hosts = network.get_hosts()
+            if hosts is not None:
+                proto_config.hosts = [0, len(hosts) - 1]
+            else:
+                proto_config.hosts = []
             proto_config.test_name = test_case_name
             client_conf.test_name = test_case_name
             server_conf.test_name = test_case_name
@@ -231,14 +241,14 @@ def load_node_config(file_path) -> NodeConfig:
             yaml_content = yaml.safe_load(stream)
             if yaml_content['containernet'] is None:
                 logging.error("Error: no containernet node config.")
-                return None
+                return NodeConfig(name="", img="")
             node_config_yaml = yaml_content['containernet']["node_config"]
         except yaml.YAMLError as exc:
             logging.error(exc)
-            return None
+            return NodeConfig(name="", img="")
     if node_config_yaml is None:
         logging.error("Error: no containernet node config.")
-        return None
+        return NodeConfig(name="", img="")
     return IConfig.load_yaml_config(
         node_config_yaml, 'node_config')
 
@@ -248,18 +258,18 @@ def load_top_config(test_case_yaml) -> TopologyConfig:
     """
     if 'topology' not in test_case_yaml:
         logging.error("Error: missing key topology in the test case yaml.")
-        return None
+        return TopologyConfig(name="", nodes=0, topology_type=TopologyType.linear)
     local_yaml = test_case_yaml['topology']
     logging.info(f"Test: local_yaml %s",
                  local_yaml)
     if local_yaml is None:
         logging.error("Error: content of topology is None.")
-        return None
+        return TopologyConfig(name="", nodes=0, topology_type=TopologyType.linear)
     loaded_conf = IConfig.load_yaml_config(
         local_yaml, 'topology')
     if loaded_conf is None:
         logging.error("Error: loaded_conf of topology is None.")
-        return None
+        return TopologyConfig(name="", nodes=0, topology_type=TopologyType.linear)
     return loaded_conf
 
 
@@ -273,7 +283,7 @@ def build_topology(top_config: TopologyConfig):
     return built_net_top
 
 
-def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: str = None):
+def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: str = "static_route"):
     """Build a container network from the yaml configuration file.
 
     Args:
@@ -283,8 +293,11 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: st
         ContainerizedNetwork: the container network object
     """
     net_top = build_topology(top_config)
-    route_strategy = None
-    if route is None or route == "static_route":
+    if net_top is None:
+        logging.error("Error: failed to build network topology.")
+        return None
+    route_strategy = StaticRouting()
+    if route == "static_route":
         route_strategy = StaticRouting()
     if route == "olsr_route":
         route_strategy = OLSRRouting()
@@ -299,12 +312,12 @@ if __name__ == '__main__':
         debug_log = sys.argv[4]
     if debug_log == 'True':
         setLogLevel('info')
-        logging.basicConfig(level=logging.INFO)
-        logging.info("Debug mode is enabled.")
-    else:
-        setLogLevel('warning')
         logging.basicConfig(level=logging.DEBUG)
         logging.info("Debug mode is disabled.")
+    else:
+        setLogLevel('warning')
+        logging.basicConfig(level=logging.INFO)
+        logging.info("Debug mode is enabled.")
     logging.info("Platform: %s", platform.platform())
     logging.info("Python version: %s", platform.python_version())
     # mapped to `/root/config/`
@@ -322,7 +335,7 @@ if __name__ == '__main__':
         sys.exit(1)
     linear_network = None
     cur_node_config = load_node_config(yaml_test_file_path)
-    if cur_node_config is None:
+    if cur_node_config.name == "":
         logging.error("Error: no containernet node config.")
         sys.exit(1)
     # mount the workspace
@@ -332,11 +345,19 @@ if __name__ == '__main__':
 
     # load all cases
     all_tests = load_test(yaml_test_file_path)
+    if all_tests is None:
+        logging.error("Error: no test case.")
+        sys.exit(1)
     for test in all_tests:
         cur_top_config = load_top_config(test)
+        if cur_top_config.name == "":
+            continue
         if linear_network is None:
             linear_network = build_network(
                 cur_node_config, cur_top_config, test['route'])
+            if linear_network is None:
+                logging.error("Error: failed to build network.")
+                continue
             linear_network.start()
         else:
             local_net_top = build_topology(cur_top_config)
@@ -351,4 +372,5 @@ if __name__ == '__main__':
         linear_network.perform_test()
         linear_network.reset()
 
-    linear_network.stop()
+    if linear_network:
+        linear_network.stop()

@@ -14,10 +14,15 @@ class IperfTest(ITestSuite):
         return True
 
     def _run_iperf(self, client, server, recv_port, recv_ip):
-        server.cmd(f'iperf3 -s -p {recv_port} -i {int(self.config.interval)} -V --forceflush'
+        if self.config is None:
+            logging.error("IperfTest config is None.")
+            return False
+        interval_num = self.config.interval_num or 10
+        interval = self.config.interval or 1
+        server.cmd(f'iperf3 -s -p {recv_port} -i {int(interval)} -V --forceflush'
                    f' --logfile {self.result.record} &')
-        iperf3_client_cmd = f'iperf3 -c {recv_ip} -p {recv_port} -i {int(self.config.interval)}' \
-                            f' -t {int(self.config.interval_num * self.config.interval)}'
+        iperf3_client_cmd = f'iperf3 -c {recv_ip} -p {recv_port} -i {int(interval)}' \
+                            f' -t {int(interval_num * interval)}'
         res = client.popen(
             f'{iperf3_client_cmd}').stdout.read().decode('utf-8')
         logging.info('iperf client output: %s', res)
@@ -29,7 +34,8 @@ class IperfTest(ITestSuite):
 
     def _run_test(self, network: INetwork, proto_info: IProtoInfo):
         hosts = network.get_hosts()
-
+        if hosts is None:
+            return False
         if self.config.client_host is None or self.config.server_host is None:
             self.config.client_host = 0
             self.config.server_host = len(hosts) - 1
@@ -40,17 +46,17 @@ class IperfTest(ITestSuite):
         if proto_info.get_protocol_name().upper() == "KCP":
             # kcp tun like a proxy, all traffic will be forwarded to the proxy server
             tun_ip = proto_info.get_tun_ip(network, self.config.client_host)
-            if tun_ip is None or tun_ip == "":
+            if tun_ip == "":
                 tun_ip = client.IP()
             receiver_ip = tun_ip
         else:
             tun_ip = proto_info.get_tun_ip(network, self.config.server_host)
-            if tun_ip is None or tun_ip == "":
+            if tun_ip == "":
                 tun_ip = server.IP()
             receiver_ip = tun_ip
         # only kcp has forward port `10100`
         receiver_port = proto_info.get_forward_port()
-        if receiver_port is None:
+        if receiver_port == 0:
             # if no forward port defined, use iperf3 default port 5201
             receiver_port = 5201
         logging.info(
