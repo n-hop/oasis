@@ -22,7 +22,7 @@ class IperfTest(ITestSuite):
         server.cmd(f'iperf3 -s -p {recv_port} -i {int(interval)} -V --forceflush'
                    f' --logfile {self.result.record} &')
         iperf3_client_cmd = f'iperf3 -c {recv_ip} -p {recv_port} -i {int(interval)}' \
-                            f' -t {int(interval_num * interval)}'
+                            f' -t {int(interval_num * interval)} --connect-timeout 5000'
         res = client.popen(
             f'{iperf3_client_cmd}').stdout.read().decode('utf-8')
         logging.info('iperf client output: %s', res)
