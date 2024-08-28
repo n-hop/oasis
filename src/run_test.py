@@ -15,6 +15,7 @@ from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from testsuites.test_rtt import RTTTest
+from testsuites.test_sshping import SSHPingTest
 from routing.static_routing import StaticRouting
 from routing.olsr_routing import OLSRRouting
 from routing.openr_routing import OpenrRouting
@@ -66,7 +67,8 @@ def load_test(test_yaml_file: str):
 def add_test_to_network(network, tool, test_name):
     test_conf = TestConfig(
         name=test_name,
-        interval=tool['interval'], interval_num=tool['interval_num'] if 'interval_num' in tool else 10,
+        interval=tool['interval'] if 'interval' in tool else 1.0,
+        interval_num=tool['interval_num'] if 'interval_num' in tool else 10,
         client_host=tool['client_host'], server_host=tool['server_host'])
     if tool['name'] == 'iperf':
         test_conf.test_type = TestType.throughput
@@ -82,6 +84,10 @@ def add_test_to_network(network, tool, test_name):
         test_conf.test_type = TestType.rtt
         network.add_test_suite(RTTTest(test_conf))
         logging.info("Added rtt test to %s.", test_name)
+    elif tool['name'] == 'sshping':
+        test_conf.test_type = TestType.rtt
+        network.add_test_suite(SSHPingTest(test_conf))
+        logging.info("Added sshping test to %s.", test_name)
     else:
         logging.error(
             f"Error: unsupported test tool %s", tool['name'])

@@ -2,3 +2,4 @@ bin/kcp/client_linux_amd64 filter=lfs diff=lfs merge=lfs -text
 bin/kcp/server_linux_amd64 filter=lfs diff=lfs merge=lfs -text
 bats/bats_protocol filter=lfs diff=lfs merge=lfs -text
 bin/tcp_message/tcp_endpoint filter=lfs diff=lfs merge=lfs -text
+bin/ssh/sshping filter=lfs diff=lfs merge=lfs -text

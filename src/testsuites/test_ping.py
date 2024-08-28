@@ -23,7 +23,7 @@ class PingTest(ITestSuite):
                     f"############### Oasis PingTest from "
                     "%s to %s ###############", hosts[i].name(), hosts[0].name())
                 res = hosts[i].cmd(f'ping -W 1 -c {self.config.interval_num} -i {self.config.interval} '
-                                   f'{hosts[0].IP()}'
+                                   f'{hosts[i].IP()}'
                                    f' > {self.result.record}')
                 logging.info('host %s', res)
                 if "100% packet loss" in res:

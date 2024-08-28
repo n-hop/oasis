@@ -5,6 +5,7 @@ from interfaces.host import IHost
 class ContainernetHostAdapter(IHost):
     def __init__(self, containernet_host):
         self.containernet_host = containernet_host
+        self.__setup_ssh()
 
     def cmd(self, command):
         return self.containernet_host.cmd(command)
@@ -57,3 +58,18 @@ class ContainernetHostAdapter(IHost):
 
     def popen(self, command):
         return self.containernet_host.popen(command)
+
+    def __setup_ssh(self):
+        self.containernet_host.cmd("rm -rf /root/.ssh/")
+        self.containernet_host.cmd("mkdir /root/.ssh/")
+        self.containernet_host.cmd(
+            "ssh-keygen -t rsa -P '' -f /root/.ssh/id_rsa")
+        self.containernet_host.cmd(
+            "cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys")
+        self.containernet_host.cmd(
+            "echo 'PermitRootLogin yes' | tee -a /etc/ssh/sshd_config")
+        self.containernet_host.cmd(
+            "echo 'PasswordAuthentication no' | tee -a /etc/ssh/sshd_config")
+        self.containernet_host.cmd(
+            "echo 'StrictModes no' | tee -a /etc/ssh/sshd_config")
+        self.containernet_host.cmd("service ssh start")
