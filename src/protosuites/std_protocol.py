@@ -83,11 +83,7 @@ class StdProtocol(IProtoSuite, IProtoInfo):
             if 'kcp' in self.config.name:
                 return self.protocol_args % receiver_ip
             if 'quic_' in self.config.name:
-                return self.protocol_args % (self.forward_port,
-                                             receiver_ip,
-                                             self.forward_port,
-                                             receiver_ip
-                                             )
+                return self.protocol_args % (receiver_ip, receiver_ip)
         return self.protocol_args
 
     def __set_protocol_version(self, network: INetwork, version: str):
