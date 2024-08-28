@@ -43,7 +43,16 @@ class LinearTopology(ITopology):
         if self.top_config.array_description is None:
             logging.warning("No array_description in the topology config")
             return value_mat
+        link_bandwidth_backward_dict = None
         for param in self.top_config.array_description:
+            if not isinstance(param, dict):
+                param = param.__dict__
+            if 'link_bandwidth_backward' in param:
+                link_bandwidth_backward_dict = param
+                break
+        for param in self.top_config.array_description:
+            if not isinstance(param, dict):
+                param = param.__dict__
             for attr_name in param:
                 if attr_name in LinkAttr.__members__ and \
                         MatType2LinkAttr[type] == LinkAttr[attr_name]:
@@ -57,6 +66,17 @@ class LinearTopology(ITopology):
                         value_mat = [
                             [init_value[i][0] if value != 0 else value for i,
                              value in enumerate(row)] for row in value_mat]
-                    # logging.info("value_matrix: %s", value_mat)
+                    if attr_name == "link_bandwidth_forward" and link_bandwidth_backward_dict is not None:
+                        logging.debug(
+                            "needs to add link_bandwidth_backward %s", link_bandwidth_backward_dict)
+                        reverse_value = link_bandwidth_backward_dict["init_value"]
+                        mat_size = len(value_mat)
+                        for i in range(mat_size):
+                            for j in range(mat_size):
+                                if i == j or i < j:
+                                    continue
+                                value_mat[i][j] = reverse_value[i] if i < len(
+                                    reverse_value) else reverse_value[0]
+                    logging.debug("value_matrix: %s", value_mat)
                     return value_mat
         return value_mat

@@ -61,7 +61,8 @@ class NestedConfig:
 
 @dataclass
 class Parameter:
-    array: List[int]
+    name: str
+    init_value: List[int]
 
 
 @dataclass
