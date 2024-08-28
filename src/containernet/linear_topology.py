@@ -74,12 +74,9 @@ class LinearTopology(ITopology):
                             "needs to add link_bandwidth_backward %s", link_bandwidth_backward_dict)
                         reverse_value = link_bandwidth_backward_dict["init_value"]
                         mat_size = len(value_mat)
-                        for i in range(mat_size):
-                            for j in range(mat_size):
-                                if i == j or i < j:
-                                    continue
-                                value_mat[i][j] = reverse_value[i] if i < len(
-                                    reverse_value) else reverse_value[0]
+                        for i in range(0, mat_size - 1):
+                            value_mat[i+1][i] = reverse_value[i] if i < len(
+                                reverse_value) else reverse_value[0]
                     if attr_name == 'link_latency':
                         self.limit_max_value(
                             value_mat, attr_name, max_link_latency)
