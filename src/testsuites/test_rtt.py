@@ -58,7 +58,7 @@ class RTTTest(ITestSuite):
         client = hosts[self.config.client_host]
         server = hosts[self.config.server_host]
         receiver_ip = None
-        if proto_info.get_protocol_name().upper() == "KCP":
+        if (proto_info.get_protocol_name().upper() == "KCP") or (proto_info.get_protocol_name().upper() == "QUIC"):
             # kcp tun like a proxy, all traffic will be forwarded to the proxy server
             tun_ip = proto_info.get_tun_ip(network, self.config.client_host)
             if tun_ip == "":

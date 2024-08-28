@@ -78,9 +78,12 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         return self.config.version or ""
 
     def get_protocol_args(self, hosts) -> str:
-        if "%s" in self.protocol_args and 'kcp' in self.config.name:
+        if "%s" in self.protocol_args:
             receiver_ip = hosts[-1].IP()  # ?fixme
-            return self.protocol_args % receiver_ip
+            if 'kcp' in self.config.name:
+                return self.protocol_args % receiver_ip
+            if 'quic_' in self.config.name:
+                return self.protocol_args % (receiver_ip, receiver_ip)
         return self.protocol_args
 
     def __set_protocol_version(self, network: INetwork, version: str):

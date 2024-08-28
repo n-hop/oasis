@@ -31,7 +31,7 @@ class ProtoConfig:
         default=None)  # type: ignore
 
 
-SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp']
+SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp', 'quic']
 SupportedBATSProto = ['btp', 'brtp', 'brtp_proxy']
 
 

@@ -15,8 +15,9 @@ RUN apt-get install --yes \
         iperf3 \
         iputils-ping \
         python3-pip \
-        iptables
-
+        iptables \
+        curl \
+        wget
 
 RUN pip3 install \
         PyYAML==6.0.1 \
@@ -28,6 +29,15 @@ RUN apt-get install --yes \
         linux-cloud-tools-6.2.0-1016-azure \
         linux-tools-azure \
         linux-cloud-tools-azure
+
+
+# Install go
+RUN curl -L https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | tar -C /usr/local -xz
+ENV GOPATH=/go
+ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
+
+# Install go-gost
+RUN go install github.com/go-gost/gost/cmd/gost@latest
 
 # Cleanup
 RUN rm -rf /var/lib/apt/lists/*
