@@ -80,15 +80,29 @@ class ContainerizedNetwork (INetwork):
             logging.warning("The network matrices are not initialized.")
             return ""
         if self.topology_type == 'linear':
+            description = f"Linear {self.num_of_hosts - 1} hops \n"
             loss_rate = self.net_loss_mat[0][1]
             latency = self.net_latency_mat[0][1]
             jitter = self.net_jitter_mat[0][1]
             bandwidth = self.net_bw_mat[0][1]
-            description = f"Linear {self.num_of_hosts - 1} hops \n"
             description += f"loss {loss_rate}%,"
             description += f"latency {latency}ms,"
             description += f"jitter {jitter}ms,"
-            description += f"bandwidth {bandwidth}Mbps."
+            if self.num_of_hosts > 2:
+                bandwidth2 = self.net_bw_mat[1][0]
+                if bandwidth2 == bandwidth:
+                    description += f"bandwidth {bandwidth}Mbps."
+                else:
+                    forward_bw = ""
+                    backward_bw = ""
+                    for i in range(0, self.num_of_hosts - 1):
+                        forward_bw += f"{self.net_bw_mat[i][i+1]}Mbps,"
+                        backward_bw += f"{self.net_bw_mat[i+1][i]}Mbps,"
+                    description += f"\nforward path: {forward_bw}"
+                    description += f"\rreverse path: {backward_bw}"
+                    logging.error("description %s", description)
+            else:
+                description += f"bandwidth {bandwidth}Mbps."
             return description
         logging.warning(
             "The topology type %s is not supported.", self.topology_type)
