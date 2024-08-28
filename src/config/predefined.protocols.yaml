@@ -34,13 +34,13 @@ protocols:
       - "-mode fast3"
       - "--datashard 10 --parityshard 3 -nocomp"
       - "-sockbuf 16777217 -dscp 46 --crypt=none"
-    port: 10100 # add it to bats proxy exclude list
+    port: 10100 # kcp protocol forward port
     protocols: # iterative
       - name: kcp_client
         path: bin/kcp/client_linux_amd64
         args:
-          - "-r %s:4000 -l :%s" # %s is the ip address of the server, %s is the protocol forward
+          - "-r %s:4000 -l :10100" # %s is the ip of kcp_server
       - name: kcp_server
         path: bin/kcp/server_linux_amd64
         args:
-          - "-l :4000 -t %s:%s"
+          - "-l :4000 -t 127.0.0.1:10100" # by default, it forwards the traffic to localhost:10100
