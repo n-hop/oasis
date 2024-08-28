@@ -34,7 +34,8 @@
     "noqueue",
     "priomap",
     "pkill",
-    "openr"
+    "openr",
+    "sshping"
   ],
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.autoImportCompletions": true

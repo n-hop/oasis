@@ -32,6 +32,9 @@ class RTTAnalyzer(IDataAnalyzer):
         x = None
         for input_log in self.config.input:
             logging.info(f"Visualize rtt log: %s", input_log)
+            if not os.path.exists(input_log):
+                logging.error("rtt log file %s not found", input_log)
+                continue
             log_base_name = os.path.basename(input_log)
             data_rtt_agv10[log_base_name] = []
             data_rtt_all[log_base_name] = []
@@ -84,6 +87,9 @@ class RTTAnalyzer(IDataAnalyzer):
                 plt.plot(x[:valid_point_num], data_rtt_agv10[log_base_name][:valid_point_num],
                          label=f"{log_label}")
                 plt.legend(loc='upper left', fontsize=8)
+        if x is None:
+            logging.warning("no data to plot")
+            return
         if not self.config.output:
             self.config.output = "rtt.svg"
         if '.svg' not in self.config.output:
