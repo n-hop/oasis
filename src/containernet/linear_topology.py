@@ -2,6 +2,9 @@ import logging
 import copy
 from .topology import (ITopology, MatrixType, MatType2LinkAttr, LinkAttr)
 
+max_link_bandwidth = 100
+max_link_latency = 30
+
 
 class LinearTopology(ITopology):
 
@@ -77,6 +80,24 @@ class LinearTopology(ITopology):
                                     continue
                                 value_mat[i][j] = reverse_value[i] if i < len(
                                     reverse_value) else reverse_value[0]
+                    if attr_name == 'link_latency':
+                        self.limit_max_value(
+                            value_mat, attr_name, max_link_latency)
+                    if 'link_bandwidth' in attr_name:
+                        self.limit_max_value(
+                            value_mat, attr_name, max_link_bandwidth)
                     logging.debug("value_matrix: %s", value_mat)
                     return value_mat
         return value_mat
+
+    def limit_max_value(self, value_mat, attr_name, max_value):
+        for i in range(len(value_mat)):
+            for j in range(len(value_mat)):
+                if i == j:
+                    continue
+                if value_mat[i][j] > max_value:
+                    logging.error(
+                        "The %s value is too large, "
+                        "it should be less than %s "
+                        "The current value is %d", attr_name, max_value, value_mat[i][j])
+                value_mat[i][j] = min(value_mat[i][j], max_value)
