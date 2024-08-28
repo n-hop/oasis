@@ -10,7 +10,7 @@ tests:
     topology:
       config_name: linear_network_1
       config_file: config/predefined.topology.yaml
-    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr]
+    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr, quic]
     route: static_route
     test_tools:
       iperf:

@@ -44,3 +44,17 @@ protocols:
         path: bin/kcp/server_linux_amd64
         args:
           - "-l :4000 -t 127.0.0.1:10100" # by default, it forwards the traffic to localhost:10100
+  - name: quic
+    type: none_distributed
+    args: {} # global args for kcp
+    port: 8006 # add it to bats proxy exclude list
+    protocols: # iterative
+      - name: quic_client
+        path: /go/bin/gost
+        args:
+          - "-L tcp://:%s/%s:%s"
+          - "-F http+quic://%s:8443"
+      - name: quic_server
+        path: /go/bin/gost
+        args:
+          - "-L http+quic://:8443"
