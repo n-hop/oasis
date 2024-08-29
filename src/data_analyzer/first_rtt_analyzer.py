@@ -37,9 +37,11 @@ class FirstRTTAnalyzer(IDataAnalyzer):
                     first_rtt = re.findall(
                         r'First response from the server, rtt = (\d+)', line)
                     if len(first_rtt) != 0:
-                        # convert to number
-                        first_rtt = int(first_rtt[0])
-                        first_rtt_list.append(first_rtt)
+                        first_rtt_list.append(int(first_rtt[0]))
+                if len(first_rtt_list) == 0:
+                    logging.warning(
+                        "No first rtt data found in the log file %s", input_log)
+                    continue
                 # first_rtt_agv
                 first_rtt_agv = sum(first_rtt_list) / len(first_rtt_list)
                 log_label = log_base_name.split("_")[0]
