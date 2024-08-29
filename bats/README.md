@@ -32,7 +32,9 @@ At the OSI network layer (L5), the BATS™ Protocol implements a rich set of IPC
 
 At the OSI transport layer (L4), the BATS™ Protocol implements two transmission modes: BTP and BRTP:
 
-  - **BTP (BATS Transmission Protocol)** is the unreliable transmission mode of the BATS™ Protocol. Here, "unreliable" is a relative term, meaning that data transmission does not guarantee 100% reliability. However, in practical tests, BTP achieves a reliability rate close to 99% in scenarios where the packet loss rate is less than or equal to 30%. BTP is typically suited for scenarios where a small amount of packet loss is acceptable but low latency is crucial, such as real-time video calls.
+  - **BTP (BATS Transmission Protocol)** is the unreliable transmission mode of the BATS™ Protocol.
+      
+    Here, "unreliable" is a relative term, meaning that data transmission does not guarantee 100% reliability. However, in practical tests, BTP achieves a reliability rate close to 99% in scenarios where the packet loss rate is less than or equal to 30%. BTP is typically suited for scenarios where a small amount of packet loss is acceptable but low latency is crucial, such as real-time video calls.
   
   - **BRTP (BATS Reliable Transmission Protocol)** is the reliable transmission mode of the BATS™ Protocol.
   
