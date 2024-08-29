@@ -39,7 +39,8 @@ class StdProtocol(IProtoSuite, IProtoInfo):
             self.config.hosts = [0, len(hosts) - 1]
         for host_id in self.config.hosts:
             cur_protocol_args = self.get_protocol_args(hosts)
-            hosts[host_id].cmd(f'{self.config.path} {cur_protocol_args} &')
+            hosts[host_id].cmd(
+                f'{self.config.path} {cur_protocol_args} > {self.log_dir}{self.config.name}_h{host_id}.log &')
             logging.info(
                 f"############### Oasis start %s protocol on %s ###############",
                 self.config.name, hosts[host_id].name())
