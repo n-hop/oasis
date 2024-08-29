@@ -10,10 +10,6 @@ class StdProtocol(IProtoSuite, IProtoInfo):
 
     def __init__(self, config: ProtoConfig):
         super().__init__(config)
-        if self.config.path is not None:
-            self.process_name = self.config.path.split('/')[-1]
-        else:
-            self.process_name = None
         self.forward_port = self.config.port
         self.default_version_dict = {}
 
@@ -27,6 +23,8 @@ class StdProtocol(IProtoSuite, IProtoInfo):
     def run(self, network: INetwork):
         if self.process_name is None:
             # means no need to run the protocol
+            logging.debug(
+                "No process name found, skip the protocol %s run.", self.config.name)
             return True
         if self.config.type == 'none_distributed':
             if self.config.hosts is None or len(self.config.hosts) != 2:

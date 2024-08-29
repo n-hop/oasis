@@ -50,11 +50,11 @@ protocols:
     port: 8006
     protocols: # iterative
       - name: quic_client
-        path: /go/bin/gost
+        path: gost
         args:
           - "-L tcp://:8006/%s:8006"
           - "-F http+quic://%s:8443"
       - name: quic_server
-        path: /go/bin/gost
+        path: gost
         args:
           - "-L http+quic://:8443"

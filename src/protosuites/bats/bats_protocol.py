@@ -15,7 +15,6 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         if self.config.path is None:
             logging.error("No protocol path specified.")
             return
-        self.process_name = self.config.path.split('/')[-1]
         self.source_path = '/'.join(self.config.path.split('/')[:-1])
         if self.source_path == '':
             self.source_path = '.'
