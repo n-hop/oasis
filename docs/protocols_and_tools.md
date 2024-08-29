@@ -12,7 +12,7 @@ Currently, Oasis supports the following protocols:
 
 ### 1.1 BATS Protocol
 
-The item `BTP`, `BRTP`,`BRTP_PROXY` are BATS protocol. You can find the details in [BATS](../bats/README.md).
+The items `BTP`, `BRTP`,`BRTP_PROXY` are BATS protocol. You can find the details in [BATS](../bats/README.md).
 
 ### 1.2 KCP
 

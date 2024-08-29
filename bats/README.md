@@ -111,10 +111,9 @@ Take `h0` as the sender and `h3` as the receiver.
 <img src="./imgs/test3/iperf3_throughput.svg" alt="Throughput measurement"></div>
 <div align="center">Fig 3.8 Multiple hops throughput test</div>
 
-
 ### 3.3 Repeat the tests with Oasis
 
-The above tests can be repeated with Oasis by running the following command:
+The above tests can be repeated by Oasis with running the following command:
 
 ```bash
 sudo python3 src/start.py -n nested-containernet-config.yaml \
@@ -122,4 +121,4 @@ sudo python3 src/start.py -n nested-containernet-config.yaml \
   -t protocol-performance-comparison.yaml
 ```
 
-For the usage of Oasis, please refer to the [Get Started](../docs/get-started.md).
+For usage instructions for Oasis, please refer to the [Get Started](../docs/get-started.md).
