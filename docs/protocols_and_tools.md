@@ -2,17 +2,17 @@
 
 Currently, Oasis supports the following protocols:
 
-| Protocol                                              | Description                                    |
-| ----------------------------------------------------- | ---------------------------------------------- |
-| BTP                                                   | BATS Protocol                                  |
-| BRTP                                                  | BATS Reliable Transport Protocol               |
-| BRTP_PROXY                                            | BATS Reliable Transport Protocol in Proxy mode |
-| KCP                                                   | KCP Protocol       (uses KCP-TUN)              |
-| [QUIC](https://datatracker.ietf.org/doc/html/rfc9000) | A UDP-Based Multiplexed and Secure Transport   |
+| Protocol                                              | Description                                     |
+| ----------------------------------------------------- | ----------------------------------------------- |
+| BTP                                                   | BATS™ Protocol                                  |
+| BRTP                                                  | BATS™ Reliable Transport Protocol               |
+| BRTP_PROXY                                            | BATS™ Reliable Transport Protocol in Proxy mode |
+| KCP                                                   | KCP Protocol       (uses KCP-TUN)               |
+| [QUIC](https://datatracker.ietf.org/doc/html/rfc9000) | A UDP-Based Multiplexed and Secure Transport    |
 
 ### 1.1 BATS Protocol
 
-The items `BTP`, `BRTP`,`BRTP_PROXY` are BATS protocol. You can find the details in [BATS](../bats/README.md).
+The items `BTP`, `BRTP`,`BRTP_PROXY` are BATS™ protocol. You can find the details in [BATS™](../bats/README.md).
 
 ### 1.2 KCP
 
@@ -33,3 +33,6 @@ The binary located in `bin/tcp_message/tcp_endpoint` is the tool for measuring t
 ### 2.2 Traffic control (tc)
 
 [`docs/tc-strategy.md`](tc-strategy.md) provides a detailed explanation of the traffic control strategy in Oasis.
+
+
+build/_deps/oasis-src/src/start.py

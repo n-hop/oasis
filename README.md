@@ -33,4 +33,4 @@ Find details in [Protocols and Tools](docs/protocols_and_tools.md).
 - **Link latency**: valid range is 0-30ms; 0ms means no additional latency is added. And the maximum latency of each link is 30ms.
   The link latency is simulated by the Linux `tc` module, which has requirements on the capacity of the queuing buffer. If the queuing buffer is not large enough, `tc` module will drop packets when the traffic is heavy and it affects the accuracy of simulating the link loss rate.
   
-- **Link bandwidth**: valid range is 1-100Mbps; we limit the maximum bandwidth of each link for reasons that the processing rate of BATS protocol binary in this repository is limited to 100Mbps; and for the rate higher than 100Mbps, it requires a software license from n-hop.
+- **Link bandwidth**: valid range is 1-100Mbps; we limit the maximum bandwidth of each link for reasons that the processing rate of BATS™ protocol binary in this repository is limited to 100Mbps; and for the rate higher than 100Mbps, it requires a software license from n-hop.
