@@ -57,8 +57,9 @@ class IProtoSuite(ABC):
                              self.config.path)
             else:
                 if not os.path.isfile(f"/root/{self.config.path}"):
-                    logging.error("protocol %s binary %s is not found.",
-                                  self.config.name, self.config.path)
+                    # it is in protocol docker image.
+                    logging.warning("protocol %s binary %s is not found.",
+                                    self.config.name, self.config.path)
 
     def get_config(self) -> ProtoConfig:
         return self.config

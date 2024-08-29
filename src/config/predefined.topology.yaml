@@ -35,7 +35,7 @@ topology:
     nodes: 4
     array_description:
       - link_loss:
-        init_value: [5]
+        init_value: [2]
       - link_latency:
         init_value: [10]
       - link_jitter:
@@ -43,7 +43,7 @@ topology:
       - link_bandwidth_forward:
         init_value: [100]
       - link_bandwidth_backward:
-        init_value: [50]
+        init_value: [100]
   - name: 4-hops-linear-network
     topology_type: linear
     nodes: 5

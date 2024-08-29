@@ -17,6 +17,7 @@ class FirstRTTAnalyzer(IDataAnalyzer):
         """
         plot first rtt graph
         """
+        plt.clf()
         plt.rcParams['font.family'] = 'serif'
         plt.xlabel('Time (ms)', fontsize=8,
                    fontweight='bold')

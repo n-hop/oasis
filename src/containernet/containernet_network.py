@@ -44,6 +44,7 @@ class ContainerizedNetwork (INetwork):
         self.node_ip_range = node_config.ip_range or ""
         self.node_route = node_config.route
         self.topology_type = net_topology.get_topology_type()
+        logging.info('ContainerizedNetwork uses node_img %s', self.node_img)
         # `node_ip_start` init from node_ip_range
         base, _ = netParse(self.node_ip_range)
         self.node_ip_prefix = 24
@@ -99,7 +100,7 @@ class ContainerizedNetwork (INetwork):
                         forward_bw += f"{self.net_bw_mat[i][i+1]}Mbps,"
                         backward_bw += f"{self.net_bw_mat[i+1][i]}Mbps,"
                     description += f"\nforward path: {forward_bw}"
-                    description += f"\rreverse path: {backward_bw}"
+                    description += f"\nreverse path: {backward_bw}"
                     logging.error("description %s", description)
             else:
                 description += f"bandwidth {bandwidth}Mbps."

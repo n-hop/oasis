@@ -1,0 +1,73 @@
+# test case yaml file is only visible to the `run_test.py`
+containernet:
+  node_config:
+    config_name: default
+    config_file: config/predefined.node_config.yaml
+
+tests:
+  test1:
+    description: "Test protocol throughput/rtt on single hop"
+    topology:
+      config_name: linear_network_1
+      config_file: config/predefined.topology.yaml
+    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr, quic]
+    route: static_route
+    test_tools:
+      iperf:
+        interval: 1
+        interval_num: 40
+        client_host: 0
+        server_host: 1
+      rtt:
+        interval: 0.01
+        packet_count: 2000
+        packet_size: 512
+        client_host: 0
+        server_host: 1
+  test2:
+    description: "Test protocol first-rtt on single hop"
+    topology:
+      config_name: linear_network_1
+      config_file: config/predefined.topology.yaml
+    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr, quic]
+    route: static_route
+    test_tools:
+      rtt:
+        interval: 0.01
+        packet_count: 1
+        packet_size: 20
+        client_host: 0
+        server_host: 1
+  test3:
+    description: "Test protocol throughput/rtt on multiple hops"
+    topology:
+      config_name: linear_network_3
+      config_file: config/predefined.topology.yaml
+    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr, quic]
+    route: static_route
+    test_tools:
+      iperf:
+        interval: 1
+        interval_num: 40
+        client_host: 0
+        server_host: 3
+      rtt:
+        interval: 0.01
+        packet_count: 2000
+        packet_size: 512
+        client_host: 0
+        server_host: 3
+  test4:
+    description: "Test protocol first-rtt on multiple hops"
+    topology:
+      config_name: linear_network_3
+      config_file: config/predefined.topology.yaml
+    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr, quic]
+    route: static_route
+    test_tools:
+      rtt:
+        interval: 0.01
+        packet_count: 1
+        packet_size: 20
+        client_host: 0
+        server_host: 3
