@@ -15,7 +15,7 @@ tests:
     test_tools:
       iperf:
         interval: 1
-        interval_num: 40
+        interval_num: 15
         client_host: 0
         server_host: 1
       rtt:

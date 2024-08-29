@@ -57,15 +57,11 @@ Features coming soon:
 
 The BATS Protocol has the competitive performance in terms of ultra-low latency; and the advantage is further amplified in multi-hop transmission networks.
 
-To evaluate the performance of the BATS Protocol, we have conducted the following two tests with the parameters listed below:
-
-- Link rate: 100Mbps
-- Link delay: 10ms
-- Link loss rate: 5%
-
 In the test, we used some protocols and tools which are listed in [Protocols and Tools](docs/protocols_and_tools.md).
 
-In RTT measurement, `KCP` represents the RTT for TCP messages transmitted over `KCP`; and `BTP`,`BRTP`,`BRTP_PROXY` have the same meaning. TCP messages are transmitted in a rate of 100 packets per second with fixed length of 1024 bytes.
+In RTT measurement, `KCP` represents the RTT for TCP messages transmitted over `KCP`; and `BTP`,`BRTP`,`BRTP_PROXY` have the same meaning. TCP messages are transmitted in a rate of 100 packets per second with fixed length of 512 bytes.
+
+In the first RTT measurement, we measured the RTT of the first TCP message transmitted over the protocol; the test results are averaged over 15 samples.
 
 ### 3.1 Single hop test
 
@@ -76,12 +72,20 @@ h0 -- h1
 Take `h0` as the sender and `h1` as the receiver.
 
 <div align="center" style="text-align:center"> 
-<img src="./imgs/rtt_cdf_1.svg" alt="RTT measurement"></div>
-<div align="center">Fig 3.1 Single hop RTT measurement</div>
+<img src="./imgs/test1/rtt_cdf.svg" alt="RTT measurement"></div>
+<div align="center">Fig 3.1 Single hop RTT CDF</div>
 
 <div align="center" style="text-align:center"> 
-<img src="./imgs/iperf3_throughput_1.svg" alt="Throughput measurement"></div>
-<div align="center">Fig 3.2 Single hop throughput</div>
+<img src="./imgs/test1/rtt.svg" alt="RTT measurement"></div>
+<div align="center">Fig 3.2 Single hop RTT over time</div>
+
+<div align="center" style="text-align:center"> 
+<img src="./imgs/test2/first_rtt.svg" alt="RTT measurement"></div>
+<div align="center">Fig 3.3 Single hop RTT of 1st TCP ping message</div>
+
+<div align="center" style="text-align:center"> 
+<img src="./imgs/test1/iperf3_throughput.svg" alt="Throughput measurement"></div>
+<div align="center">Fig 3.4 Single hop throughput test</div>
 
 ### 3.2 3-hop test
 
@@ -92,15 +96,30 @@ h0 -- h1 -- h2 -- h3
 Take `h0` as the sender and `h3` as the receiver.
 
 <div align="center" style="text-align:center"> 
-<img src="./imgs/rtt_cdf_3.svg" alt="RTT measurement"></div>
-<div align="center">Fig 3.3 Multiple hops RTT measurement</div>
+<img src="./imgs/test3/rtt_cdf.svg" alt="RTT measurement"></div>
+<div align="center">Fig 3.5 Multiple hops RTT CDF</div>
 
 <div align="center" style="text-align:center"> 
-<img src="./imgs/iperf3_throughput_3.svg" alt="Throughput measurement"></div>
-<div align="center">Fig 3.4 Multiple hops throughput</div>
+<img src="./imgs/test3/rtt.svg" alt="RTT measurement"></div>
+<div align="center">Fig 3.6 Multiple hops RTT over time</div>
+
+<div align="center" style="text-align:center"> 
+<img src="./imgs/test4/first_rtt.svg" alt="RTT measurement"></div>
+<div align="center">Fig 3.7 Multiple hops RTT of 1st TCP ping message</div>
+
+<div align="center" style="text-align:center"> 
+<img src="./imgs/test3/iperf3_throughput.svg" alt="Throughput measurement"></div>
+<div align="center">Fig 3.8 Multiple hops throughput test</div>
+
 
 ### 3.3 Repeat the tests with Oasis
 
-The test YAML file of single hop is `src/config/protocol-single-hop-test.yaml`; and the test YAML file of 3-hop is `src/config/protocol-multi-hops-test.yaml`.
+The above tests can be repeated with Oasis by running the following command:
+
+```bash
+sudo python3 src/start.py -n nested-containernet-config.yaml \
+  --containernet=default -p /home/runner/workspace/oasis/src/config \
+  -t protocol-performance-comparison.yaml
+```
 
 For the usage of Oasis, please refer to the [Get Started](../docs/get-started.md).
