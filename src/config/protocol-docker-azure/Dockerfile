@@ -33,10 +33,10 @@ RUN apt-get install --yes \
 
 # Install go
 RUN curl -L https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | tar -C /usr/local -xz
-ENV GOPATH=$HOME/go
+ENV GOPATH=/go
 ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 
-# Install go-gost
+# Install go-gost to $GOPATH
 RUN go install github.com/go-gost/gost/cmd/gost@latest
 
 # Cleanup
