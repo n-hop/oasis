@@ -35,7 +35,8 @@
     "priomap",
     "pkill",
     "openr",
-    "sshping"
+    "sshping",
+    "quic"
   ],
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.autoImportCompletions": true
