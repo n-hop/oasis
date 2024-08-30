@@ -49,7 +49,7 @@ def load_test(test_yaml_file: str, test_name: str = ""):
     if test_name in ("all", "All", "ALL"):
         test_name = ""
     for name in test_names:
-        if test_name != "" and name != test_name:
+        if test_name not in ("", name):
             logging.debug("Oasis skips the test case %s", name)
             continue
         test_cases[name]['name'] = name
