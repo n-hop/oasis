@@ -22,7 +22,7 @@ def parse_args():
                         help='YAML configuration file for nested containernet',
                         dest='nested_config_file',
                         type=str,
-                        default="")
+                        default="nested-containernet-config.yaml")
     parser.add_argument('--containernet',
                         help='nested containernet name in the YAML file',
                         dest='containernet',
@@ -94,6 +94,14 @@ if __name__ == '__main__':
     # ############### workspace dir and process dir ################
     # python source files are always started from the `oasis_workspace`
     # none py source files are always started from the `yaml_base_path`
+    # ##############################################################
+    # format of `cur_test_yaml_file`: folder1/folder2/test.yaml:test1
+    temp_list = cur_test_yaml_file.split(":")
+    if len(temp_list) not in [1, 2]:
+        logging.info("Error: invalid test case file format.")
+        sys.exit(1)
+    if len(temp_list) == 2:
+        cur_test_yaml_file = temp_list[0]
     test_case_file = os.path.join(
         yaml_base_path, cur_test_yaml_file)
     if not os.path.exists(f'{test_case_file}'):
@@ -107,5 +115,5 @@ if __name__ == '__main__':
     nested_env.start()
     nested_env.execute(
         f"python3 src/run_test.py {yaml_base_path} {oasis_workspace} "
-        f"{cur_test_yaml_file} {debug_log}")
+        f"{ns.tests_config_file} {debug_log}")
     nested_env.stop()

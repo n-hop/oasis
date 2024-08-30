@@ -45,6 +45,9 @@ class TestConfig:
     interval_num: Optional[int] = field(default=10)
     packet_size: Optional[int] = field(default=1024)
     packet_count: Optional[int] = field(default=10)
+    packet_type: Optional[str] = field(default="tcp")  # udp or tcp
+    bitrate: Optional[int] = field(default=0)
+    # target bitrate in #[KMG][/sec (0 for unlimited)(default 1 Mbit/sec for UDP, unlimited for TCP)
     test_type: Optional[TestType] = field(default=TestType.throughput)
     client_host: Optional[int] = field(default=None)
     server_host: Optional[int] = field(default=None)
@@ -73,7 +76,8 @@ class ITestSuite(ABC):
             os.makedirs(f"{self.result_dir}")
         if self.config.test_type is not None:
             self.result = TestResult(
-                False, pattern=f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
+                False, pattern=f"{self.__class__.__name__}_{self.config.packet_type}"
+                f"_{test_type_str_mapping[self.config.test_type]}"
                 f"_h{self.config.client_host}_h{self.config.server_host}.log",
                 record="", result_dir=self.result_dir)
         else:

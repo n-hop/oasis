@@ -101,9 +101,15 @@ class INetwork(ABC):
                 result_files.append(res.record)
             # analyze those results files according to the test type
             if test_type == TestType.throughput:
+                output_svg = ""
+                if test_config.packet_type == 'tcp':
+                    output_svg = f"{test_result['results'][0].result_dir}iperf3_throughput.svg"
+                else:
+                    output_svg = f"{test_result['results'][0].result_dir}iperf3_udp_statistics.svg"
                 config = AnalyzerConfig(
                     input=result_files,
-                    output=f"{test_result['results'][0].result_dir}iperf3_throughput.svg",
+                    output=f"{output_svg}",
+                    data_type=f"{test_config.packet_type}",
                     subtitle=top_des)
                 analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
                 if analyzer.analyze() is False:
@@ -111,8 +117,6 @@ class INetwork(ABC):
                         "Test %s failed at throughput test", test_config.name)
                     return False
                 analyzer.visualize()
-                logging.info(
-                    "Analyzed and visualized the throughput test results")
             if test_type == TestType.rtt:
                 if test_config.packet_count > 1:
                     config = AnalyzerConfig(
@@ -125,8 +129,6 @@ class INetwork(ABC):
                             "Test %s failed at rtt test", test_config.name)
                         return False
                     analyzer.visualize()
-                    logging.info(
-                        "Analyzed and visualized the RTT test results")
                 if test_config.packet_count == 1:
                     config = AnalyzerConfig(
                         input=result_files,
@@ -139,8 +141,6 @@ class INetwork(ABC):
                             "Test %s failed at first_rtt test", test_config.name)
                         return False
                     analyzer.visualize()
-                    logging.info(
-                        "Analyzed and visualized the first RTT test results")
         return True
 
     def reset(self):

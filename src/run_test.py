@@ -27,7 +27,7 @@ from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
 
 
-def load_test(test_yaml_file: str):
+def load_test(test_yaml_file: str, test_name: str = ""):
     """
         Load the test case configuration from a yaml file.
     """
@@ -46,7 +46,12 @@ def load_test(test_yaml_file: str):
     # ------------------------------------------------
     test_names = test_cases.keys()
     test_list = []
+    if test_name in ("all", "All", "ALL"):
+        test_name = ""
     for name in test_names:
+        if test_name != "" and name != test_name:
+            logging.debug("Oasis skips the test case %s", name)
+            continue
         test_cases[name]['name'] = name
         test_list.append(test_cases[name])
     for case in test_list.copy():
@@ -69,6 +74,8 @@ def add_test_to_network(network, tool, test_name):
         name=test_name,
         interval=tool['interval'] if 'interval' in tool else 1.0,
         interval_num=tool['interval_num'] if 'interval_num' in tool else 10,
+        packet_type=tool['packet_type'] if 'packet_type' in tool else 'tcp',
+        bitrate=tool['bitrate'] if 'bitrate' in tool else 0,
         client_host=tool['client_host'], server_host=tool['server_host'])
     if tool['name'] == 'iperf':
         test_conf.test_type = TestType.throughput
@@ -185,11 +192,18 @@ def setup_test(test_case_yaml, network: INetwork):
     target_protocols = load_target_protocols_config(test_case_yaml)
     if target_protocols is None:
         logging.error("Error: no target protocols.")
-        return
+        return False
+    test_tools = test_case_yaml['test_tools']
     for proto_config in target_protocols:
         proto_config.test_name = test_case_name
         logging.info("Added %s protocol, version %s.",
                      proto_config.name, proto_config.version)
+        if proto_config.name not in ('brtp', 'btp'):
+            if any(tool['packet_type'] == 'udp' for tool in test_tools.values()):
+                logging.error(
+                    "Error: iperf udp only works with protocol btp, brtp. but target protocol is %s",
+                    proto_config.name)
+                return False
         if proto_config.type == 'distributed':
             # distributed protocol
             if proto_config.name == 'btp':
@@ -231,11 +245,10 @@ def setup_test(test_case_yaml, network: INetwork):
             continue
         logging.error("Error: unsupported protocol type %s.%s",
                       proto_config.type, proto_config.name)
-    # convert test_tools to test suites
-    test_tools = test_case_yaml['test_tools']
     for name in test_tools.keys():
         test_tools[name]['name'] = name
         add_test_to_network(network, test_tools[name], test_case_name)
+    return True
 
 
 def load_node_config(file_path) -> NodeConfig:
@@ -335,6 +348,14 @@ if __name__ == '__main__':
     logging.info(
         f"run_test.py: Base path of the oasis project: %s", oasis_workspace)
     cur_test_file = sys.argv[3]
+    cur_selected_test = ""
+    temp_list = cur_test_file.split(":")
+    if len(temp_list) not in [1, 2]:
+        logging.info("Error: invalid test case file format.")
+        sys.exit(1)
+    if len(temp_list) == 2:
+        cur_test_file = temp_list[0]
+        cur_selected_test = temp_list[1]
     yaml_test_file_path = f'{config_mapped_prefix}/{cur_test_file}'
     if not os.path.exists(yaml_test_file_path):
         logging.info(f"Error: %s does not exist.", yaml_test_file_path)
@@ -350,9 +371,9 @@ if __name__ == '__main__':
         f'{yaml_config_base_path}:{config_mapped_prefix}')
 
     # load all cases
-    all_tests = load_test(yaml_test_file_path)
+    all_tests = load_test(yaml_test_file_path, cur_selected_test)
     if all_tests is None:
-        logging.error("Error: no test case.")
+        logging.error("Error: no test case found.")
         sys.exit(1)
     for test in all_tests:
         cur_top_config = load_top_config(test)
@@ -372,7 +393,10 @@ if __name__ == '__main__':
             linear_network.reload(local_net_top)
 
         # setup the test
-        setup_test(test, linear_network)
+        if setup_test(test, linear_network) is False:
+            logging.error("Error: failed to setup the test.")
+            linear_network.stop()
+            sys.exit(1)
 
         # perform the test
         is_success = linear_network.perform_test()

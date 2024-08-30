@@ -26,10 +26,23 @@ Oasis integrates the QUIC protocol using [gost](https://gost.run/en/tutorials/pr
 
 ## 2. Tools
 
+Oasis currently supports the following test tools:
+
+| Tools                | Description                                  | Name in YAML |
+| -------------------- | -------------------------------------------- | ------------ |
+| ping                 | tool of sending ICMP messages                | ping         |
+| Iperf3               | tool of perform throughput test with UDP/TCP | iperf        |
+| tcp_message_endpoint | tool of sending/echoing TCP messages         | rtt          |
+| sshping              | tool of sending ping messages over SSH       | sshping      |
+
 ### 2.1 TCP messaging endpoint
 
 The binary located in `bin/tcp_message/tcp_endpoint` is a tool for measuring the RTT of TCP messages over other protocols. Its source code is in [bats-documentation](https://github.com/n-hop/bats-documentation).
 
-### 2.2 Traffic control (tc)
+### 2.3 sshping
+
+`sshping` is a tool for sending ping messages over SSH. The source code is in [sshping](https://github.com/spook/sshping).
+
+### 2.4 Traffic control (tc)
 
 [`docs/tc-strategy.md`](tc-strategy.md) provides a detailed explanation of the traffic control strategy in Oasis.

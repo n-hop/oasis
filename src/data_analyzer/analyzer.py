@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -8,6 +8,7 @@ class AnalyzerConfig:
     input: List[str]   # A series of input files
     output:  str  # The output visualization diagram file
     subtitle: str  # The subtitle of the diagram
+    data_type: Optional[str] = None  # tcp. udp, etc.
 
 
 class IDataAnalyzer(ABC):

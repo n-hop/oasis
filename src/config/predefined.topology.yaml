@@ -48,3 +48,17 @@ topology:
     topology_type: linear
     nodes: 5
     json_description: config/4-hops-linear-network.json
+  - name: linear_network_1_20
+    topology_type: linear
+    nodes: 2
+    array_description:
+      - link_loss:
+        init_value: [20]
+      - link_latency:
+        init_value: [10]
+      - link_jitter:
+        init_value: [0]
+      - link_bandwidth_forward:
+        init_value: [100]
+      - link_bandwidth_backward:
+        init_value: [100]
