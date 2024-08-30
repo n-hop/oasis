@@ -2,10 +2,19 @@ import logging
 import time
 from interfaces.network import INetwork
 from protosuites.proto_info import IProtoInfo
-from .test import (ITestSuite)
+from .test import (ITestSuite, TestConfig)
 
 
 class IperfTest(ITestSuite):
+    def __init__(self, config: TestConfig) -> None:
+        super().__init__(config)
+        self.is_udp_mode = False
+        if self.config.packet_type == "udp":
+            self.is_udp_mode = True
+            if self.config.bitrate == 0:
+                self.config.bitrate = 1
+            logging.info("IperfTest is in UDP mode, bitrate: %d Mbps",
+                         self.config.bitrate)
 
     def post_process(self):
         return True
@@ -22,7 +31,13 @@ class IperfTest(ITestSuite):
         server.cmd(f'iperf3 -s -p {recv_port} -i {int(interval)} -V --forceflush'
                    f' --logfile {self.result.record} &')
         iperf3_client_cmd = f'iperf3 -c {recv_ip} -p {recv_port} -i {int(interval)}' \
-                            f' -t {int(interval_num * interval)} --connect-timeout 5000'
+            f' -t {int(interval_num * interval)}'
+        if self.is_udp_mode:
+            iperf3_client_cmd += f' -u -b {self.config.bitrate}M'
+        else:
+            iperf3_client_cmd += f' --connect-timeout 5000'
+            if self.config.bitrate != 0:
+                iperf3_client_cmd += f' -b {self.config.bitrate}M'
         res = client.popen(
             f'{iperf3_client_cmd}').stdout.read().decode('utf-8')
         logging.info('iperf client output: %s', res)

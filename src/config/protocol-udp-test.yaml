@@ -5,18 +5,18 @@ containernet:
     config_file: config/predefined.node_config.yaml
 
 tests:
-  test1:
-    description: "Test protocol throughput/rtt on single hop"
+  test100:
+    description: "UDP test over BATS protocol"
     topology:
-      config_name: linear_network_1
+      config_name: linear_network_1_20
       config_file: config/predefined.topology.yaml
-    target_protocols: [btp, tcp-bbr, kcp]
+    target_protocols: [btp]
     route: static_route
     test_tools:
       iperf: # iperf udp test
         interval: 1
-        interval_num: 15
+        interval_num: 50
         packet_type: udp
-        bitrate: 10 # 10M
+        bitrate: 20 # 10M
         client_host: 0
         server_host: 1

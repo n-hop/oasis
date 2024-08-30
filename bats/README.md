@@ -34,7 +34,7 @@ At the OSI transport layer (L4), the BATS™ Protocol implements two transmissio
 
   - **BTP (BATS Transmission Protocol)** is the unreliable transmission mode of the BATS™ Protocol.
       
-    Here, "unreliable" is a relative term, meaning that data transmission does not guarantee 100% reliability. However, in practical tests, BTP achieves a reliability rate close to 99% in scenarios where the packet loss rate is less than or equal to 30%. BTP is typically suited for scenarios where a small amount of packet loss is acceptable but low latency is crucial, such as real-time video calls.
+    Here, "unreliable" is a relative term, meaning that data transmission does not guarantee 100% reliability. However, in practical tests, BTP achieves a reliability rate close to 99% in scenarios where the packet loss rate is less than or equal to 30%(see evidence in [UDP test](#31-single-hop-test)). BTP is typically suited for scenarios where a small amount of packet loss is acceptable but low latency is crucial, such as real-time video calls.
   
   - **BRTP (BATS Reliable Transmission Protocol)** is the reliable transmission mode of the BATS™ Protocol.
   
@@ -79,6 +79,8 @@ h0 -- h1
 
 Take `h0` as the sender and `h1` as the receiver.
 
+- TCP Throughput and RTT measurement
+
 <div align="center" style="text-align:center"> 
 <img src="./imgs/test1/rtt_cdf.svg" alt="RTT measurement"></div>
 <div align="center">Fig 3.1 Single hop RTT CDF</div>
@@ -94,6 +96,12 @@ Take `h0` as the sender and `h1` as the receiver.
 <div align="center" style="text-align:center"> 
 <img src="./imgs/test1/iperf3_throughput.svg" alt="Throughput measurement"></div>
 <div align="center">Fig 3.4 Single hop throughput test</div>
+
+- UDP test:
+
+<div align="center" style="text-align:center"> 
+<img src="./imgs/iperf3_udp_statistics.svg" alt="UDP measurement"></div>
+<div align="center">Fig 3.4.1 Single hop UDP test result</div>
 
 ### 3.2 Three hops test
 
