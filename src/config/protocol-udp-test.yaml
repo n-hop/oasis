@@ -15,8 +15,8 @@ tests:
     test_tools:
       iperf: # iperf udp test
         interval: 1
-        interval_num: 25
+        interval_num: 50
         packet_type: udp
-        bitrate: 50 # 10M
+        bitrate: 20 # 10M
         client_host: 0
         server_host: 1
