@@ -192,11 +192,18 @@ def setup_test(test_case_yaml, network: INetwork):
     target_protocols = load_target_protocols_config(test_case_yaml)
     if target_protocols is None:
         logging.error("Error: no target protocols.")
-        return
+        return False
+    test_tools = test_case_yaml['test_tools']
     for proto_config in target_protocols:
         proto_config.test_name = test_case_name
         logging.info("Added %s protocol, version %s.",
                      proto_config.name, proto_config.version)
+        if proto_config.name not in ('tcp', 'btp'):
+            if any(tool['packet_type'] == 'udp' for tool in test_tools.values()):
+                logging.error(
+                    "Error: iperf udp only works with protocol btp, brtp. but target protocol is %s",
+                    proto_config.name)
+                return False
         if proto_config.type == 'distributed':
             # distributed protocol
             if proto_config.name == 'btp':
@@ -238,11 +245,10 @@ def setup_test(test_case_yaml, network: INetwork):
             continue
         logging.error("Error: unsupported protocol type %s.%s",
                       proto_config.type, proto_config.name)
-    # convert test_tools to test suites
-    test_tools = test_case_yaml['test_tools']
     for name in test_tools.keys():
         test_tools[name]['name'] = name
         add_test_to_network(network, test_tools[name], test_case_name)
+    return True
 
 
 def load_node_config(file_path) -> NodeConfig:
@@ -387,7 +393,10 @@ if __name__ == '__main__':
             linear_network.reload(local_net_top)
 
         # setup the test
-        setup_test(test, linear_network)
+        if setup_test(test, linear_network) is False:
+            logging.error("Error: failed to setup the test.")
+            linear_network.stop()
+            sys.exit(1)
 
         # perform the test
         is_success = linear_network.perform_test()

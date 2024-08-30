@@ -76,7 +76,8 @@ class ITestSuite(ABC):
             os.makedirs(f"{self.result_dir}")
         if self.config.test_type is not None:
             self.result = TestResult(
-                False, pattern=f"{self.__class__.__name__}_{test_type_str_mapping[self.config.test_type]}"
+                False, pattern=f"{self.__class__.__name__}_{self.config.packet_type}"
+                f"_{test_type_str_mapping[self.config.test_type]}"
                 f"_h{self.config.client_host}_h{self.config.server_host}.log",
                 record="", result_dir=self.result_dir)
         else:

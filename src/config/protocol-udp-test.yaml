@@ -1,0 +1,22 @@
+# test case yaml file is only visible to the `run_test.py`
+containernet:
+  node_config:
+    config_name: default
+    config_file: config/predefined.node_config.yaml
+
+tests:
+  test100:
+    description: "UDP test over BATS protocol"
+    topology:
+      config_name: linear_network_1_20
+      config_file: config/predefined.topology.yaml
+    target_protocols: [btp]
+    route: static_route
+    test_tools:
+      iperf: # iperf udp test
+        interval: 1
+        interval_num: 25
+        packet_type: udp
+        bitrate: 50 # 10M
+        client_host: 0
+        server_host: 1
