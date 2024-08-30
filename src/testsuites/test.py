@@ -45,6 +45,9 @@ class TestConfig:
     interval_num: Optional[int] = field(default=10)
     packet_size: Optional[int] = field(default=1024)
     packet_count: Optional[int] = field(default=10)
+    packet_type: Optional[str] = field(default="tcp")  # udp or tcp
+    bitrate: Optional[int] = field(default=0)
+    # target bitrate in #[KMG][/sec (0 for unlimited)(default 1 Mbit/sec for UDP, unlimited for TCP)
     test_type: Optional[TestType] = field(default=TestType.throughput)
     client_host: Optional[int] = field(default=None)
     server_host: Optional[int] = field(default=None)

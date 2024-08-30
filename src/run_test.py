@@ -74,6 +74,8 @@ def add_test_to_network(network, tool, test_name):
         name=test_name,
         interval=tool['interval'] if 'interval' in tool else 1.0,
         interval_num=tool['interval_num'] if 'interval_num' in tool else 10,
+        packet_type=tool['packet_type'] if 'packet_type' in tool else 'tcp',
+        bitrate=tool['bitrate'] if 'bitrate' in tool else 0,
         client_host=tool['client_host'], server_host=tool['server_host'])
     if tool['name'] == 'iperf':
         test_conf.test_type = TestType.throughput
