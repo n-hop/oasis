@@ -132,8 +132,8 @@ Take `h0` as the sender and `h3` as the receiver.
 The above tests can be repeated by Oasis with running the following command:
 
 ```bash
-sudo python3 src/start.py -n nested-containernet-config.yaml \
-  --containernet=default -p /home/runner/workspace/oasis/src/config \
+sudo python3 src/start.py -p /home/runner/workspace/oasis/src/config \
+   --containernet=default 
   -t protocol-performance-comparison.yaml
 ```
 
