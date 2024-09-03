@@ -81,7 +81,7 @@ class Iperf3Analyzer(IDataAnalyzer):
                 max_data_value = max(max_data_value, cur_max_data_value)
                 x = np.arange(1, len(data_array))
                 plt.plot(x, data_array[0: len(x)],
-                         'o-', markersize=3, linewidth=1.5, label=f"{log_label}{key}")
+                         'o-', markersize=3, linewidth=1.5, label=f"{log_label}")
                 plt.ylim(0, max_data_value + 10)
             plt.legend(loc="lower right", fontsize=8)
         if not self.config.output:
