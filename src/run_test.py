@@ -199,7 +199,7 @@ def setup_test(test_case_yaml, network: INetwork):
         logging.info("Added %s protocol, version %s.",
                      proto_config.name, proto_config.version)
         if proto_config.name not in ('brtp', 'btp'):
-            if any(tool['packet_type'] == 'udp' for tool in test_tools.values()):
+            if any(tool.get('packet_type') == 'udp' for tool in test_tools.values()):
                 logging.error(
                     "Error: iperf udp only works with protocol btp, brtp. but target protocol is %s",
                     proto_config.name)
