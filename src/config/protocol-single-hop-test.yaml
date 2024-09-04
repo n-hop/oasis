@@ -13,10 +13,9 @@ tests:
     target_protocols: [btp, tcp-bbr, kcp]
     route: static_route
     test_tools:
-      iperf: # iperf udp test
+      iperf:
         interval: 1
-        interval_num: 15
-        packet_type: udp
-        bitrate: 10 # 10M
+        interval_num: 10
+        packet_type: tcp
         client_host: 0
         server_host: 1
