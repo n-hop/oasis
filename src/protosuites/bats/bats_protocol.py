@@ -135,3 +135,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
 
     def get_protocol_version(self) -> str:
         return str(self.config.version)
+
+    def get_protocol_name(self) -> str:
+        # name can be 'btp' or 'btp_xxx_feature'
+        return self.config.name.replace('_', '-').upper()
