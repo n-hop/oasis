@@ -15,6 +15,3 @@ class BTP(BATSProtocol):
             host = network.get_hosts()[host_id]
             return self._get_ip_from_host(host, 'olsr_tun_BTP')
         return ""
-
-    def get_protocol_name(self) -> str:
-        return 'BTP'
