@@ -206,18 +206,20 @@ def setup_test(test_case_yaml, network: INetwork):
                 return False
         if proto_config.type == 'distributed':
             # distributed protocol
-            if proto_config.name == 'btp':
+            if 'btp' in proto_config.name:
                 network.add_protocol_suite(BTP(proto_config))
                 continue
-            if proto_config.name == 'brtp':
+            if 'brtp' in proto_config.name:
                 network.add_protocol_suite(BRTP(proto_config))
                 continue
-            if proto_config.name == 'brtp_proxy':
+            if 'brtp_proxy' in proto_config.name:
                 network.add_protocol_suite(BRTPProxy(proto_config))
                 continue
             if 'tcp' in proto_config.name:
                 network.add_protocol_suite(StdProtocol(proto_config))
                 continue
+            logging.warning("Error: unsupported distributed protocol %s",
+                            proto_config.name)
         if proto_config.type == 'none_distributed':
             # none distributed protocol
             if len(proto_config.protocols) != 2:
