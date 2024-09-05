@@ -206,14 +206,14 @@ def setup_test(test_case_yaml, network: INetwork):
                 return False
         if proto_config.type == 'distributed':
             # distributed protocol
-            if 'btp' in proto_config.name:
-                network.add_protocol_suite(BTP(proto_config))
+            if 'brtp_proxy' in proto_config.name:
+                network.add_protocol_suite(BRTPProxy(proto_config))
                 continue
             if 'brtp' in proto_config.name:
                 network.add_protocol_suite(BRTP(proto_config))
                 continue
-            if 'brtp_proxy' in proto_config.name:
-                network.add_protocol_suite(BRTPProxy(proto_config))
+            if 'btp' in proto_config.name:
+                network.add_protocol_suite(BTP(proto_config))
                 continue
             if 'tcp' in proto_config.name:
                 network.add_protocol_suite(StdProtocol(proto_config))
