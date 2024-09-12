@@ -115,6 +115,7 @@ class ContainerizedNetwork (INetwork):
         self.containernet.start()
 
     def stop(self):
+        self.routing_strategy.teardown_routes(self)
         self.containernet.stop()
 
     def reload(self, top: ITopology):
@@ -382,6 +383,7 @@ class ContainerizedNetwork (INetwork):
 
     def _reset_network(self, num, diff):
         logging.info("Oasis reset the network.")
+        self.routing_strategy.teardown_routes(self)
         for host in self.hosts:
             host.cmd('ip route flush table main')
             host.cleanup()

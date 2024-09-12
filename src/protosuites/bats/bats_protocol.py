@@ -53,10 +53,13 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         hosts = network.get_hosts()
         if hosts is None:
             return False
+        routing_type_name = network.get_routing_strategy().routing_type()
+        if routing_type_name == 'OLSRRouting':
+            self.protocol_args += " --olsr_adaption_enabled=true"
         host_num = len(hosts)
         for i in range(host_num):
             hosts[i].cmd(
-                f'{self.config.path} {self.protocol_args} '
+                f'nohup {self.config.path} {self.protocol_args} '
                 f' > {self.log_dir}bats_protocol_h{i}.log &')
             logging.info(
                 f"############### Oasis run bats protocol on "

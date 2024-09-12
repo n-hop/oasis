@@ -8,4 +8,9 @@ class BRTPProxy(BATSProtocol):
     """
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
+        routing_type_name = network.get_routing_strategy().routing_type()
+        if routing_type_name == 'OLSRRouting':
+            host = network.get_hosts()[host_id]
+            return self._get_ip_from_host(host, 'lo label lo:olsr')
+
         return ""

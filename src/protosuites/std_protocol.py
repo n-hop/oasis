@@ -1,4 +1,5 @@
 import logging
+import re
 from protosuites.proto import (ProtoConfig, IProtoSuite)
 from interfaces.network import INetwork
 from .proto_info import IProtoInfo
@@ -38,7 +39,7 @@ class StdProtocol(IProtoSuite, IProtoInfo):
             # if not defined, then run on all hosts
             self.config.hosts = [0, len(hosts) - 1]
         for host_id in self.config.hosts:
-            cur_protocol_args = self.get_protocol_args(hosts)
+            cur_protocol_args = self.get_protocol_args(network)
             hosts[host_id].cmd(
                 f'{self.config.path} {cur_protocol_args} > {self.log_dir}{self.config.name}_h{host_id}.log &')
             logging.info(
@@ -68,6 +69,17 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         return 0
 
     def get_tun_ip(self, network: 'INetwork', host_id: int) -> str:
+        routing_type_name = network.get_routing_strategy().routing_type()
+        if routing_type_name == 'OLSRRouting':
+            host = network.get_hosts()[host_id]
+            pf = host.popen(f"ip addr show lo label lo:olsr")
+            if pf is None:
+                return ""
+            ip = pf.stdout.read().decode('utf-8')
+            match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', ip)
+            if match:
+                return match.group(1)
+            return ""
         return ""
 
     def get_protocol_name(self) -> str:
@@ -76,9 +88,12 @@ class StdProtocol(IProtoSuite, IProtoInfo):
     def get_protocol_version(self) -> str:
         return self.config.version or ""
 
-    def get_protocol_args(self, hosts) -> str:
+    def get_protocol_args(self, network: INetwork) -> str:
+        hosts = network.get_hosts()
         if "%s" in self.protocol_args:
-            receiver_ip = hosts[-1].IP()  # ?fixme
+            receiver_ip = self.get_tun_ip(network, len(hosts) - 1)
+            if receiver_ip == "":
+                receiver_ip = hosts[-1].IP()
             if 'kcp' in self.config.name:
                 return self.protocol_args % receiver_ip
             if 'quic_' in self.config.name:
