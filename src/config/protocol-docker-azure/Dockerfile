@@ -17,7 +17,9 @@ RUN apt-get install --yes \
         python3-pip \
         iptables \
         curl \
-        wget
+        wget \
+        libnl-genl-3-dev \
+        ncat
 
 RUN pip3 install \
         PyYAML==6.0.1 \

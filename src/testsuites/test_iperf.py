@@ -38,6 +38,7 @@ class IperfTest(ITestSuite):
             iperf3_client_cmd += f' --connect-timeout 5000'
             if self.config.bitrate != 0:
                 iperf3_client_cmd += f' -b {self.config.bitrate}M'
+        logging.info('iperf client cmd: %s', iperf3_client_cmd)
         res = client.popen(
             f'{iperf3_client_cmd}').stdout.read().decode('utf-8')
         logging.info('iperf client output: %s', res)
