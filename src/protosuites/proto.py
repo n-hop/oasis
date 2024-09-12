@@ -22,6 +22,7 @@ class ProtoConfig:
     name: str = field(default="")
     path: Optional[str] = field(default=None)
     args: Optional[List[str]] = field(default=None)
+    config_file: Optional[str] = field(default=None)
     version: Optional[str] = field(default="")
     hosts: Optional[List[int]] = field(default=None)
     port: Optional[int] = field(default=0)

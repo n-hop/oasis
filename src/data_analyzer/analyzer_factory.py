@@ -1,6 +1,7 @@
 from .iperf3_analyzer import Iperf3Analyzer
 from .rtt_analyzer import RTTAnalyzer
 from .first_rtt_analyzer import FirstRTTAnalyzer
+from .sshping_analyzer import SSHPingAnalyzer
 from .analyzer import AnalyzerConfig
 
 
@@ -13,4 +14,6 @@ class AnalyzerFactory:
             return RTTAnalyzer(config)
         if log_type == "first_rtt":
             return FirstRTTAnalyzer(config)
+        if log_type == "sshping":
+            return SSHPingAnalyzer(config)
         raise ValueError(f"Unknown log type: {log_type}")

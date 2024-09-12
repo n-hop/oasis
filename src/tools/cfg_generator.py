@@ -4,36 +4,40 @@ from mininet.util import ipStr, netParse
 
 
 class ConfigGenerator:
-    def __init__(self, node_ip_range="10.0.0.0/8", path="/tmp"):
+    def __init__(self, node_ip_range="10.0.0.0/8", path="/tmp", config_file_template=None):
         self.node_ip_range = node_ip_range
         self.path = path
         self.template = ""
-        self.template += "[protocol]\n"
-        self.template += "core.link_seq_set_num_bit = 5\n"
-        self.template += "core.link_gap_threshold_set_num = 32\n"
-        self.template += "core.link_unfreeze_gap_threshold_set_num = 16\n"
-        self.template += "core.reliable_task_window_max_size = 64\n"
-        self.template += "core.link_status_memory_period = 100\n"
-        self.template += "core.link_max_delay_penalty_us = 300\n"
-        self.template += "core.relay_flow_expire_seconds = 300\n"
-        self.template += "core.object_pool_capacity = 50000\n"
-        self.template += "\n"
-        self.template += "[network]\n"
-        self.template += "link.cnt = {link_cnt}\n"
-        self.template += "{links}\n"
-        self.template += "\n"
-        self.template += "routes.cnt = {route_cnt}\n"
-        self.template += "{routes}\n"
-        self.template += "\n"
-        self.template += "proxies.tcp.proxy.cnt = {tcp_proxy_cnt}\n"
-        self.template += "proxies.tcp.exclude_ports = 10100\n"
-        self.template += "{tcp_proxies}\n"
-        self.template += "\n"
-        self.template += "tun.name = tun_session\n"
-        self.template += "tun.ip = {tun_ip}\n"
-        self.template += "tun.max_flow_per_session = 1\n"
-        self.template += "tun.mapping.cnt = {tun_mapping_cnt}\n"
-        self.template += "{tun_mappings}\n"
+        if config_file_template is not None:
+            with open(config_file_template, "r") as f:
+                self.template = f.read()
+        else:
+            self.template += "[protocol]\n"
+            self.template += "core.link_seq_set_num_bit = 5\n"
+            self.template += "core.link_gap_threshold_set_num = 32\n"
+            self.template += "core.link_unfreeze_gap_threshold_set_num = 16\n"
+            self.template += "core.reliable_task_window_max_size = 64\n"
+            self.template += "core.link_status_memory_period = 100\n"
+            self.template += "core.link_max_delay_penalty_us = 300\n"
+            self.template += "core.relay_flow_expire_seconds = 300\n"
+            self.template += "core.object_pool_capacity = 50000\n"
+            self.template += "\n"
+            self.template += "[network]\n"
+            self.template += "link.cnt = {link_cnt}\n"
+            self.template += "{links}\n"
+            self.template += "\n"
+            self.template += "routes.cnt = {route_cnt}\n"
+            self.template += "{routes}\n"
+            self.template += "\n"
+            self.template += "proxies.tcp.proxy.cnt = {tcp_proxy_cnt}\n"
+            self.template += "proxies.tcp.exclude_ports = 10100\n"
+            self.template += "{tcp_proxies}\n"
+            self.template += "\n"
+            self.template += "tun.name = tun_session\n"
+            self.template += "tun.ip = {tun_ip}\n"
+            self.template += "tun.max_flow_per_session = 1\n"
+            self.template += "tun.mapping.cnt = {tun_mapping_cnt}\n"
+            self.template += "{tun_mappings}\n"
 
     def _subnets(self, base_ip, parent_ip):
         """Find all sibling subnets of `base_ip` in `parent_ip`."""
@@ -163,8 +167,9 @@ class ConfigGenerator:
                 logging.info("Generated %s/h%d.ini", self.path, i)
 
 
-def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8", virtual_ip_prefix="1.0.0.", output_dir="/tmp"):
-    generator = ConfigGenerator(node_ip_range, output_dir)
+def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8", virtual_ip_prefix="1.0.0.", output_dir="/tmp", config_file_template=None):
+    generator = ConfigGenerator(
+        node_ip_range, output_dir, config_file_template)
     generator.generate_cfg(num_nodes, virtual_ip_prefix)
 
 

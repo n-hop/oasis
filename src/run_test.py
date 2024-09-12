@@ -92,7 +92,7 @@ def add_test_to_network(network, tool, test_name):
         network.add_test_suite(RTTTest(test_conf))
         logging.info("Added rtt test to %s.", test_name)
     elif tool['name'] == 'sshping':
-        test_conf.test_type = TestType.rtt
+        test_conf.test_type = TestType.sshping
         network.add_test_suite(SSHPingTest(test_conf))
         logging.info("Added sshping test to %s.", test_name)
     else:

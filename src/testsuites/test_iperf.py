@@ -44,8 +44,8 @@ class IperfTest(ITestSuite):
         logging.info('iperf client output: %s', res)
         logging.info('iperf test result save to %s', self.result.record)
         time.sleep(1)
-        client.cmd('pkill -f iperf3')
-        server.cmd('pkill -f iperf3')
+        client.cmd('pkill -9 -f iperf3')
+        server.cmd('pkill -9 -f iperf3')
         return True
 
     def _run_test(self, network: INetwork, proto_info: IProtoInfo):
