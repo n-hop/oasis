@@ -29,16 +29,22 @@ class SSHPingTest(ITestSuite):
             logging.error("No host found in the network")
             return False
         hosts_num = len(hosts)
+        receiver_ip = None
         if self.config.client_host is None or self.config.server_host is None:
             for i in range(hosts_num):
                 if i == 0:
                     continue
+                tun_ip = proto_info.get_tun_ip(
+                    network, 0)
+                if tun_ip == "":
+                    tun_ip = hosts[0].IP()
+                receiver_ip = tun_ip
                 logging.info(
                     f"############### Oasis SSHPingTest from "
                     "%s to %s ###############", hosts[i].name(), hosts[0].name())
                 hosts[i].cmd(
                     f'{self.binary_path} -i / root/.ssh/id_rsa'
-                    f' --connect-time 5 -t 8 root@{hosts[0].IP()} > {self.result.record}')
+                    f' -H root@{receiver_ip} > {self.result.record}')
             return True
         # Run ping test from client to server
         logging.info(
@@ -46,7 +52,12 @@ class SSHPingTest(ITestSuite):
             "%s to %s ###############",
             hosts[self.config.client_host].name(),
             hosts[self.config.server_host].name())
+        tun_ip = proto_info.get_tun_ip(
+            network, self.config.server_host)
+        if tun_ip == "":
+            tun_ip = hosts[self.config.server_host].IP()
+        receiver_ip = tun_ip
         hosts[self.config.client_host].cmd(
             f'{self.binary_path} -i /root/.ssh/id_rsa'
-            f' --connect-time 5 -t 8 root@{hosts[self.config.server_host].IP()} > {self.result.record}')
+            f' -H root@{receiver_ip} > {self.result.record}')
         return True

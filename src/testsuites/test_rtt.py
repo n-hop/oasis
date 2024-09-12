@@ -42,10 +42,10 @@ class RTTTest(ITestSuite):
             tcp_client_cmd += f' > {self.result.record}'
         for _ in range(loop_cnt):
             client.cmd(f'{tcp_client_cmd}')
-            client.cmd('pkill -f tcp_endpoint')
+            client.cmd('pkill -9 -f tcp_endpoint')
         logging.info('rtt test result save to %s', self.result.record)
         time.sleep(1)
-        server.cmd('pkill -f tcp_endpoint')
+        server.cmd('pkill -9 -f tcp_endpoint')
         return True
 
     def _run_test(self, network: INetwork, proto_info: IProtoInfo):

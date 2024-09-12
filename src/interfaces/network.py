@@ -141,6 +141,17 @@ class INetwork(ABC):
                             "Test %s failed at first_rtt test", test_config.name)
                         return False
                     analyzer.visualize()
+            if test_type == TestType.sshping:
+                config = AnalyzerConfig(
+                    input=result_files,
+                    output=f"{test_result['results'][0].result_dir}",
+                    subtitle=top_des)
+                analyzer = AnalyzerFactory.get_analyzer("sshping", config)
+                if analyzer.analyze() is False:
+                    logging.error(
+                        "Test %s failed at sshping test", test_config.name)
+                    return False
+                analyzer.visualize()
         return True
 
     def reset(self):

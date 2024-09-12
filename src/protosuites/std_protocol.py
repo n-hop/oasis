@@ -57,7 +57,7 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         if hosts is None:
             return False
         for host in hosts:
-            host.cmd(f'pkill -f {self.process_name}')
+            host.cmd(f'pkill -9 -f {self.process_name}')
             logging.info(
                 f"############### Oasis stop %s protocol on %s ###############",
                 self.config.name, host.name())

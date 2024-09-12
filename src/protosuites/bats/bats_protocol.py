@@ -36,7 +36,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
             logging.error("Hosts ip range is not set.")
             return False
         generate_cfg_files(host_num, hosts_ip_range,
-                           self.virtual_ip_prefix, self.source_path)
+                           self.virtual_ip_prefix, self.source_path, self.config.config_file)
         # generate some error log if the license file is not correct
         self._verify_license()
         for i in range(host_num):
@@ -79,7 +79,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
                 "%s ###############",
                 hosts[i].name())
             hosts[i].cmd(
-                f'pkill -f {self.process_name}')
+                f'pkill -9 -f {self.process_name}')
             hosts[i].cmd(f'ip tuntap del mode tap tap')
             hosts[i].cmd(f'iptables -F -t nat')
         return True
