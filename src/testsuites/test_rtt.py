@@ -72,9 +72,9 @@ class RTTTest(ITestSuite):
         # KCP defines the forward port `10100`
         receiver_port = proto_info.get_forward_port()
         if receiver_port == 0:
-            # if no forward port defined, use random port start from 10011
+            # if no forward port defined, use random port start from 30011
             # for port conflict, use different port for each test
-            receiver_port = 10011 + self.run_times
+            receiver_port = 30011 + self.run_times
             self.run_times += 1
         logging.info(
             "############### Oasis RTTTest from %s to %s with forward port %s ###############",

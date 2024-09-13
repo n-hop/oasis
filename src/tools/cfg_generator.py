@@ -32,6 +32,7 @@ class ConfigGenerator:
             self.template += "proxies.tcp.proxy.cnt = {tcp_proxy_cnt}\n"
             self.template += "proxies.tcp.exclude_ports = 10100\n"
             self.template += "{tcp_proxies}\n"
+            self.template += "{port_forward}\n"
             self.template += "\n"
             self.template += "tun.name = tun_session\n"
             self.template += "tun.ip = {tun_ip}\n"
@@ -92,6 +93,14 @@ class ConfigGenerator:
                         cnt, node_ips[i][-1], node_ips[i][-1])
                     cnt += 1
         return cnt, cfg
+
+    def _generate_port_forward_item(self, to_ip):
+        item = f"proxies.port_forward.cnt = 1\n"
+        item += f"proxies.port_forward.item0.listen_port = 5201\n"
+        item += f"proxies.port_forward.item0.svr_addr_port = {to_ip}:5201\n"
+        item += f"proxies.port_forward.item0.bats_svr_addr = {to_ip}\n"
+        item += f"proxies.port_forward.item0.forward_protocol = tcp,udp\n"
+        return item
 
     def _generate_route_item(self, index, src, dst, gw, mask="255.255.255.255", metric=1):
         item = f"routes.item{index}.src = {src}\n"
@@ -158,10 +167,15 @@ class ConfigGenerator:
             route_cnt, routes = self._generate_route_cfg(node_ips, i)
             tcp_proxy_cnt, tcp_proxies = self._generate_tcp_proxy_cfg(
                 node_ips, i)
+            port_forward = ""
+            if i == 0:
+                port_forward = self._generate_port_forward_item(
+                    node_ips[-1][0])
             with open(f"{self.path}/h{i}.ini", "w", encoding="utf-8") as f:
                 f.write(self.template.format(link_cnt=link_cnt, links=links,
                                              route_cnt=route_cnt, routes=routes,
                                              tcp_proxy_cnt=tcp_proxy_cnt, tcp_proxies=tcp_proxies,
+                                             port_forward=port_forward,
                                              tun_ip=f"{virtual_ip_prefix}{i+1}", tun_mapping_cnt=len(node_ips),
                                              tun_mappings=tun_mappings))
                 logging.info("Generated %s/h%d.ini", self.path, i)
