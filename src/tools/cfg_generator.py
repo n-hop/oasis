@@ -9,7 +9,7 @@ class ConfigGenerator:
         self.path = path
         self.template = ""
         if config_file_template is not None:
-            with open(config_file_template, "r") as f:
+            with open(config_file_template, "r", encoding="utf-8") as f:
                 self.template = f.read()
         else:
             self.template += "[protocol]\n"
@@ -167,7 +167,10 @@ class ConfigGenerator:
                 logging.info("Generated %s/h%d.ini", self.path, i)
 
 
-def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8", virtual_ip_prefix="1.0.0.", output_dir="/tmp", config_file_template=None):
+def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8",
+                       virtual_ip_prefix="1.0.0.",
+                       output_dir="/tmp",
+                       config_file_template=None):
     generator = ConfigGenerator(
         node_ip_range, output_dir, config_file_template)
     generator.generate_cfg(num_nodes, virtual_ip_prefix)
