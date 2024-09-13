@@ -33,7 +33,7 @@ class IperfTest(ITestSuite):
         iperf3_client_cmd = f'iperf3 -c {recv_ip} -p {recv_port} -i {int(interval)}' \
             f' -t {int(interval_num * interval)}'
         if self.is_udp_mode:
-            iperf3_client_cmd += f' -u -b {self.config.bitrate}M'
+            iperf3_client_cmd += f' -l 2048 -u -b {self.config.bitrate}M'
         else:
             iperf3_client_cmd += f' --connect-timeout 5000'
             if self.config.bitrate != 0:
@@ -59,22 +59,28 @@ class IperfTest(ITestSuite):
         client = hosts[self.config.client_host]
         server = hosts[self.config.server_host]
         receiver_ip = None
-        if (proto_info.get_protocol_name().upper() == "KCP") or (proto_info.get_protocol_name().upper() == "QUIC"):
+        upper_proto_name = proto_info.get_protocol_name().upper()
+        if (upper_proto_name == "KCP") or (upper_proto_name == "QUIC"):
             # kcp tun like a proxy, all traffic will be forwarded to the proxy server
             tun_ip = proto_info.get_tun_ip(network, self.config.client_host)
             if tun_ip == "":
                 tun_ip = client.IP()
             receiver_ip = tun_ip
         else:
-            tun_ip = proto_info.get_tun_ip(network, self.config.server_host)
-            if tun_ip == "":
-                tun_ip = server.IP()
-            receiver_ip = tun_ip
+            if (upper_proto_name == "BTP" or upper_proto_name == "BRTP") and self.is_udp_mode:
+                receiver_ip = client.IP()
+            else:
+                tun_ip = proto_info.get_tun_ip(
+                    network, self.config.server_host)
+                if tun_ip == "":
+                    tun_ip = server.IP()
+                receiver_ip = tun_ip
         # only kcp has forward port `10100`
         receiver_port = proto_info.get_forward_port()
         if receiver_port == 0:
             # if no forward port defined, use iperf3 default port 5201
             receiver_port = 5201
+
         logging.info(
             "############### Oasis IperfTest from %s to %s ###############", client.name(), server.name())
         return self._run_iperf(client, server, receiver_port, receiver_ip)
