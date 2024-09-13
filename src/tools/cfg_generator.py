@@ -95,11 +95,11 @@ class ConfigGenerator:
         return cnt, cfg
 
     def _generate_port_forward_item(self, to_ip):
-        item = f"proxies.port_forward.cnt = 1\n"
-        item += f"proxies.port_forward.item0.listen_port = 5201\n"
-        item += f"proxies.port_forward.item0.svr_addr_port = {to_ip}:5201\n"
-        item += f"proxies.port_forward.item0.bats_svr_addr = {to_ip}\n"
-        item += f"proxies.port_forward.item0.forward_protocol = tcp,udp\n"
+        item = f"proxies.port_forward.proxy.cnt = 1\n"
+        item += f"proxies.port_forward.proxy.item0.listen_port = 5201\n"
+        item += f"proxies.port_forward.proxy.item0.svr_addr_port = {to_ip}:5201\n"
+        item += f"proxies.port_forward.proxy.item0.bats_svr_addr = {to_ip}\n"
+        item += f"proxies.port_forward.proxy.item0.forward_protocol = tcp,udp\n"
         return item
 
     def _generate_route_item(self, index, src, dst, gw, mask="255.255.255.255", metric=1):
