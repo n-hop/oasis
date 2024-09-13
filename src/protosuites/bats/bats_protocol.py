@@ -56,6 +56,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         routing_type_name = network.get_routing_strategy().routing_type()
         if routing_type_name == 'OLSRRouting':
             self.protocol_args += " --olsr_adaption_enabled=true"
+            self.protocol_args += " --use_netlink_routing_table=true"
+            self.protocol_args += " --use_system_link_config=true"
         host_num = len(hosts)
         for i in range(host_num):
             hosts[i].cmd(

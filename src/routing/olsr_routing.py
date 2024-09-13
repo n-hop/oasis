@@ -1,5 +1,4 @@
 import logging
-from math import log
 import time
 from interfaces.routing import IRoutingStrategy
 
@@ -9,33 +8,35 @@ class OLSRRouting(IRoutingStrategy):
     Configure routing for the network with OLSR.
     """
 
-    def setup_routes(self, network: 'INetwork'):
+    def __init__(self):
         self.binary_path = "/root/bin/olsr/olsrd2_static"
         self.cfg_path = "/etc/olsr/olsr.config"
+
+    def setup_routes(self, network: 'INetwork'):
         self.start(network)
 
     def teardown_routes(self, network: 'INetwork'):
         self.stop(network)
 
     def _generate_cfg(self, network: 'INetwork'):
-        self.template = ""
-        self.template += "[olsrv2]\n"
-        self.template += "    originator  -127.0.0.1/8\n"
-        self.template += "    originator  -::/0\n"
-        self.template += "    originator  default_accept\n"
-        self.template += "\n"
-        self.template += "[interface]\n"
-        self.template += "    hello_interval  1\n"
-        self.template += "    hello_validity  20\n"
-        self.template += "    bindto  -127.0.0.1/8\n"
-        self.template += "    bindto  -::/0\n"
-        self.template += "    bindto  default_accept\n"
-        self.template += "\n"
-        self.template += "[interface=lo]\n"
-        self.template += "{interface}\n"
-        # self.template += "[log]\n"
-        # self.template += "         info          all\n"
-        self.template += "\n"
+        template = ""
+        template += "[olsrv2]\n"
+        template += "    originator  -127.0.0.1/8\n"
+        template += "    originator  -::/0\n"
+        template += "    originator  default_accept\n"
+        template += "\n"
+        template += "[interface]\n"
+        template += "    hello_interval  1\n"
+        template += "    hello_validity  20\n"
+        template += "    bindto  -127.0.0.1/8\n"
+        template += "    bindto  -::/0\n"
+        template += "    bindto  default_accept\n"
+        template += "\n"
+        template += "[interface=lo]\n"
+        template += "{interface}\n"
+        # template += "[log]\n"
+        # template += "         info          all\n"
+        template += "\n"
 
         hosts = network.get_hosts()
         host_num = network.get_num_of_host()
@@ -52,7 +53,7 @@ class OLSRRouting(IRoutingStrategy):
                 interface += f"[interface=h{i}-eth1]\n\n"
             hosts[i].cmd(f'mkdir /etc/olsr')
             hosts[i].cmd(
-                f'echo "{self.template.format(interface=interface)}" > {self.cfg_path}')
+                f'echo "{template.format(interface=interface)}" > {self.cfg_path}')
             hosts[i].cmd(
                 f'ip addr add 172.23.1.{i + 1}/32 dev lo label \"lo:olsr\"')
 
@@ -77,7 +78,8 @@ class OLSRRouting(IRoutingStrategy):
         if wait_sec >= max_wait_sec:
             logging.error("OLSR routing is not setup correctly.")
             return False
-        logging.info(f"OLSR routing is setup correctly at {wait_sec} seconds.")
+        logging.info(
+            "OLSR routing is setup correctly at %u seconds.", wait_sec)
         return True
 
     def stop(self, network: 'INetwork'):
