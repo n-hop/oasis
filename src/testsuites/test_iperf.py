@@ -60,14 +60,14 @@ class IperfTest(ITestSuite):
         server = hosts[self.config.server_host]
         receiver_ip = None
         upper_proto_name = proto_info.get_protocol_name().upper()
-        if (upper_proto_name == "KCP") or (upper_proto_name == "QUIC"):
+        if upper_proto_name in ["KCP", "QUIC"]:
             # kcp tun like a proxy, all traffic will be forwarded to the proxy server
             tun_ip = proto_info.get_tun_ip(network, self.config.client_host)
             if tun_ip == "":
                 tun_ip = client.IP()
             receiver_ip = tun_ip
         else:
-            if (upper_proto_name == "BTP" or upper_proto_name == "BRTP") and self.is_udp_mode:
+            if upper_proto_name in ["BTP", "BRTP"] and self.is_udp_mode:
                 receiver_ip = client.IP()
             else:
                 tun_ip = proto_info.get_tun_ip(
