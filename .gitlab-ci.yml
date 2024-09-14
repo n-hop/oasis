@@ -1,0 +1,52 @@
+# This file is a template, and might need editing before it works on your project.
+# You can copy and paste this template into a new `.gitlab-ci.yml` file.
+# You should not add this template to an existing `.gitlab-ci.yml` file by using the `include:` keyword.
+#
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/C++.gitlab-ci.yml
+image: gitlab.app.n-hop.com:5005/n-hop/bats-protocol-framework/ubuntu-cisa:dev
+
+workflow:
+  auto_cancel:
+    on_job_failure: all
+  name: "$PIPELINE_NAME"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      variables:
+        PIPELINE_NAME: "Merge request pipeline"
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      variables:
+        PIPELINE_NAME: "Other scheduled pipeline"
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      variables:
+        PIPELINE_NAME: "Default branch pipeline"
+    - if: $CI_COMMIT_TAG =~ /^v/
+      variables:
+        PIPELINE_NAME: "Release pipeline"
+
+# define stages
+stages:
+  - style_check
+
+.prepare_env_template: &prepare_env_definition
+  - configure-ssh-key.sh "$CISA_SSH_KEY"
+
+.prepare_pylint_template: &prepare_pylint_definition
+  - . /etc/profile
+  - pip install --upgrade pip
+  - pip install pylint==3.1.0
+
+pylint:
+  stage: style_check
+  allow_failure: false
+  interruptible: true
+  tags:
+    - performance
+  before_script:
+    - *prepare_env_definition
+    - *prepare_pylint_definition
+  script:
+    - |
+      pylint $(git ls-files '*.py') --rcfile=${CI_PROJECT_DIR}/.pylintrc
