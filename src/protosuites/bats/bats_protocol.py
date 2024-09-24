@@ -42,7 +42,6 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
                 self.config.config_base_path, self.config.config_file)
         else:
             logging.error("Config base path or config file is not set.")
-            return False
         generate_cfg_files(host_num, hosts_ip_range,
                            self.virtual_ip_prefix, self.source_path, cfg_template_path)
         # generate some error log if the license file is not correct
