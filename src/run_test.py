@@ -100,12 +100,12 @@ def add_test_to_network(network, tool, test_name):
             f"Error: unsupported test tool %s", tool['name'])
 
 
-def load_predefined_protocols():
+def load_predefined_protocols(config_base_path):
     """
     Load predefined protocols from the yaml file.
     """
     predefined_protocols = None
-    with open('config/predefined.protocols.yaml', 'r', encoding='utf-8') as stream:
+    with open(f'{config_base_path}/predefined.protocols.yaml', 'r', encoding='utf-8') as stream:
         try:
             yaml_content = yaml.safe_load(stream)
             predefined_protocols = yaml_content['protocols']
@@ -134,12 +134,12 @@ def load_predefined_protocols():
     return predefined_proto_conf_dict
 
 
-def load_target_protocols_config(test_case_yaml):
+def load_target_protocols_config(config_base_path, test_case_yaml):
     """
         read target protocols from the test case yaml,
         And convert them into a list of `ProtoConfig`.
     """
-    predefined = load_predefined_protocols()
+    predefined = load_predefined_protocols(config_base_path)
     if predefined is None:
         logging.error("Error: no predefined protocols.")
         return None
@@ -184,12 +184,13 @@ def load_target_protocols_config(test_case_yaml):
     return None
 
 
-def setup_test(test_case_yaml, network: INetwork):
+def setup_test(config_base_path, test_case_yaml, network: INetwork):
     """setup the test case configuration.
     """
     # read the strategy matrix
     test_case_name = test_case_yaml['name']
-    target_protocols = load_target_protocols_config(test_case_yaml)
+    target_protocols = load_target_protocols_config(
+        config_base_path, test_case_yaml)
     if target_protocols is None:
         logging.error("Error: no target protocols.")
         return False
@@ -253,7 +254,7 @@ def setup_test(test_case_yaml, network: INetwork):
     return True
 
 
-def load_node_config(file_path) -> NodeConfig:
+def load_node_config(config_base_path, file_path) -> NodeConfig:
     """Load node related configuration from the yaml file.
     """
     node_config_yaml = None
@@ -270,11 +271,11 @@ def load_node_config(file_path) -> NodeConfig:
     if node_config_yaml is None:
         logging.error("Error: no containernet node config.")
         return NodeConfig(name="", img="")
-    return IConfig.load_yaml_config(
-        node_config_yaml, 'node_config')
+    return IConfig.load_yaml_config(config_base_path,
+                                    node_config_yaml, 'node_config')
 
 
-def load_top_config(test_case_yaml) -> TopologyConfig:
+def load_top_config(config_base_path, test_case_yaml) -> TopologyConfig:
     """Load network related configuration from the yaml file.
     """
     if 'topology' not in test_case_yaml:
@@ -286,8 +287,9 @@ def load_top_config(test_case_yaml) -> TopologyConfig:
     if local_yaml is None:
         logging.error("Error: content of topology is None.")
         return TopologyConfig(name="", nodes=0, topology_type=TopologyType.linear)
-    loaded_conf = IConfig.load_yaml_config(
-        local_yaml, 'topology')
+    loaded_conf = IConfig.load_yaml_config(config_base_path,
+                                           local_yaml,
+                                           'topology')
     if loaded_conf is None:
         logging.error("Error: loaded_conf of topology is None.")
         return TopologyConfig(name="", nodes=0, topology_type=TopologyType.linear)
@@ -341,11 +343,18 @@ if __name__ == '__main__':
         logging.info("Debug mode is enabled.")
     logging.info("Platform: %s", platform.platform())
     logging.info("Python version: %s", platform.python_version())
-    # mapped to `/root/config/`
     yaml_config_base_path = sys.argv[1]
-    config_mapped_prefix = '/root/config/'
-    # mapped to `/root/`
     oasis_workspace = sys.argv[2]
+    # config_mapped_prefix can be `/root/config/` or `/root/src/config/`
+    if yaml_config_base_path != f"{oasis_workspace}/src/config":
+        # oasis yaml config files mapped to `/root/config/`
+        logging.info("Oasis yaml config files mapped to `/root/config/`.")
+        config_mapped_prefix = '/root/config/'
+    else:
+        # no mapping is needed
+        logging.info("No config path mapping is needed.")
+        config_mapped_prefix = '/root/src/config/'
+    # oasis workspace mapped to `/root/`
     oasis_mapped_prefix = '/root/'
     logging.info(
         f"run_test.py: Base path of the oasis project: %s", oasis_workspace)
@@ -363,14 +372,16 @@ if __name__ == '__main__':
         logging.info(f"Error: %s does not exist.", yaml_test_file_path)
         sys.exit(1)
     linear_network = None
-    cur_node_config = load_node_config(yaml_test_file_path)
+    cur_node_config = load_node_config(
+        config_mapped_prefix, yaml_test_file_path)
     if cur_node_config.name == "":
         logging.error("Error: no containernet node config.")
         sys.exit(1)
     # mount the workspace
     cur_node_config.vols.append(f'{oasis_workspace}:{oasis_mapped_prefix}')
-    cur_node_config.vols.append(
-        f'{yaml_config_base_path}:{config_mapped_prefix}')
+    if config_mapped_prefix == '/root/config/':
+        cur_node_config.vols.append(
+            f'{yaml_config_base_path}:{config_mapped_prefix}')
 
     # load all cases
     all_tests = load_test(yaml_test_file_path, cur_selected_test)
@@ -378,7 +389,7 @@ if __name__ == '__main__':
         logging.error("Error: no test case found.")
         sys.exit(1)
     for test in all_tests:
-        cur_top_config = load_top_config(test)
+        cur_top_config = load_top_config(config_mapped_prefix, test)
         if cur_top_config.name == "":
             continue
         if linear_network is None:
@@ -395,7 +406,7 @@ if __name__ == '__main__':
             linear_network.reload(local_net_top)
 
         # setup the test
-        if setup_test(test, linear_network) is False:
+        if setup_test(config_mapped_prefix, test, linear_network) is False:
             logging.error("Error: failed to setup the test.")
             linear_network.stop()
             sys.exit(1)
