@@ -58,11 +58,11 @@ class NestedContainernet():
     def tearDown(self) -> None:
         logging.info(
             "NestedContainernet tearDown the Containernet.")
-        mount_config = os.path.join(self.oasis_workspace, "config")
+        # mount_config = os.path.join(self.oasis_workspace, "config")
         # unmount the mounted directories
-        if os.path.exists(mount_config):
-            os.system(f"umount {mount_config}")
-            os.system(f"rm -rf {mount_config}")
+        # if os.path.exists(mount_config):
+        #    os.system(f"umount {mount_config}")
+        #    os.system(f"rm -rf {mount_config}")
         os.system(
             "docker stop $(docker ps -a -q "
             f"-fname={self.test_container_name}) || true")
@@ -145,10 +145,17 @@ class NestedContainernet():
         self.formatted_mounts = f" --mount "\
             f"type=bind,source={self.oasis_workspace},"\
             f"target=/root,bind-propagation=shared "
-        # 2. mount yaml_base_path directory to /root/config/
-        self.formatted_mounts += f" --mount "\
-            f"type=bind,source={self.yaml_base_path},"\
-            f"target=/root/config/,bind-propagation=shared "
+        # don't mount if {yaml_base_path} == {oasis_workspace}/src/config
+        if self.yaml_base_path != f"{self.oasis_workspace}/src/config":
+            # 2. mount yaml_base_path directory to /root/config/
+            self.formatted_mounts += f" --mount "\
+                f"type=bind,source={self.yaml_base_path},"\
+                f"target=/root/config/,bind-propagation=shared "
+            logging.info(
+                "NestedContainernet:: Oasis yaml config files mapped to `/root/config/`.")
+        else:
+            logging.info(
+                "NestedContainernet:: No config path mapping is needed.")
 
         for mount in self.config.mounts:
             source, target, *readonly = mount.split(":")

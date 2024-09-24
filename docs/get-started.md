@@ -34,7 +34,7 @@ In `protocol-performance-comparison.yaml`, the network topology of the case `tes
    test100:
     topology:
       config_name: linear_network_1
-      config_file: config/predefined.topology.yaml
+      config_file: predefined.topology.yaml
 ```
 
 The case `test100` will use the `linear_network_1` topology defined in `config/predefined.topology.yaml`. And `linear_network_1` is defined as follows:

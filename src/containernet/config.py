@@ -87,20 +87,22 @@ class IConfig(ABC):
         return config_key in supported_config_keys
 
     @staticmethod
-    def load_config_reference(yaml_config_file: str,
+    def load_config_reference(config_base_path: str, yaml_config_file: str,
                               config_name: str, config_key: str):
         if not IConfig.is_supported_config_key(config_key):
             logging.error(
                 f"load_config_reference: key %s is not supported.",
                 config_key)
             return None
-        if not os.path.exists(yaml_config_file):
+        full_yaml_config_file = os.path.join(
+            config_base_path, yaml_config_file)
+        if not os.path.exists(full_yaml_config_file):
             logging.error(
                 f"load_config_reference: file %s does not exist.",
-                yaml_config_file)
+                full_yaml_config_file)
             return None
         loaded_yaml_config = []
-        with open(yaml_config_file, 'r', encoding='utf-8') as stream:
+        with open(full_yaml_config_file, 'r', encoding='utf-8') as stream:
             try:
                 loaded_yaml_config = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
@@ -110,7 +112,7 @@ class IConfig(ABC):
         if loaded_yaml_config is None or config_key not in loaded_yaml_config:
             logging.error(
                 f"load_config_reference: %s is not defined in %s",
-                config_key, yaml_config_file)
+                config_key, full_yaml_config_file)
             return None
         loaded_config = None
         # Find it by 'name' in `node_config`, for example "linear_network"
@@ -122,7 +124,7 @@ class IConfig(ABC):
         if loaded_config is None:
             logging.error(
                 f"load_config_reference: %s is not defined in %s",
-                config_name, yaml_config_file)
+                config_name, full_yaml_config_file)
             return None
         if config_key == "node_config":
             return NodeConfig(**loaded_config)
@@ -131,7 +133,7 @@ class IConfig(ABC):
         return None
 
     @staticmethod
-    def load_yaml_config(yaml_description: str, config_key: str):
+    def load_yaml_config(config_base_path: str, yaml_description: str, config_key: str):
         # load it directly from the yaml_description or
         # load it from another yaml file.
         if not IConfig.is_supported_config_key(config_key):
@@ -144,8 +146,10 @@ class IConfig(ABC):
         if all(key in yaml_description for key in is_load_from_file):
             # load from the yaml file `config_file`
             config_data = IConfig.load_config_reference(
+                config_base_path,  # type: ignore
                 yaml_description['config_file'],  # type: ignore
-                yaml_description['config_name'], config_key)  # type: ignore
+                yaml_description['config_name'],  # type: ignore
+                config_key)
         else:
             # load directly from the yaml_description
             logging.info('load_yaml_config: %s', yaml_description)

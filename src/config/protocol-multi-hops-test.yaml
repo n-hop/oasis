@@ -2,14 +2,14 @@
 containernet:
   node_config:
     config_name: default
-    config_file: config/predefined.node_config.yaml
+    config_file: predefined.node_config.yaml
 
 tests:
   test2:
     description: "Test protocol throughput/rtt on multiple hops"
     topology:
       config_name: linear_network_3
-      config_file: config/predefined.topology.yaml
+      config_file: predefined.topology.yaml
     target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr]
     route: static_route
     test_tools:
