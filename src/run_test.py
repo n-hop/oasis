@@ -345,8 +345,10 @@ if __name__ == '__main__':
     logging.info("Python version: %s", platform.python_version())
     yaml_config_base_path = sys.argv[1]
     oasis_workspace = sys.argv[2]
+    logging.info("Yaml config path: %s", yaml_config_base_path)
+    logging.info("Oasis workspace: %s", oasis_workspace)
     # config_mapped_prefix can be `/root/config/` or `/root/src/config/`
-    if yaml_config_base_path != f"{oasis_workspace}/src/config":
+    if yaml_config_base_path != f"{oasis_workspace}/src/config/":
         # oasis yaml config files mapped to `/root/config/`
         logging.info("Oasis yaml config files mapped to `/root/config/`.")
         config_mapped_prefix = '/root/config/'
