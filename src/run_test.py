@@ -117,12 +117,16 @@ def load_predefined_protocols(config_base_path):
         if 'protocols' not in protocol:
             predefined_proto_conf_dict[protocol['name']] = ProtoConfig(
                 **protocol)
+            predefined_proto_conf_dict[protocol['name']
+                                       ].config_base_path = config_base_path
             logging.info("load predefined protocol: %s",
                          predefined_proto_conf_dict[protocol['name']])
             continue
         # iterate over the protocols
         predefined_proto_conf_dict[protocol['name']] = ProtoConfig(
             **protocol)
+        predefined_proto_conf_dict[protocol['name']
+                                   ].config_base_path = config_base_path
         predefined_proto_conf_dict[protocol['name']].protocols = []
         logging.info("load predefined protocol: %s",
                      predefined_proto_conf_dict[protocol['name']])
@@ -150,6 +154,7 @@ def load_target_protocols_config(config_base_path, test_case_yaml):
         return None
     target_protocols = []
     if all(isinstance(protocol, str) for protocol in target_protocols_yaml):
+        # ['btp', 'brtp', 'tcp']
         logging.debug("target_protocols is a list of strings.")
         target_protocols = [predefined[protocol]
                             for protocol in target_protocols_yaml if protocol in predefined]

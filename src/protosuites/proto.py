@@ -30,6 +30,7 @@ class ProtoConfig:
     test_name: str = field(default="")
     protocols: Optional[List['ProtoConfig']] = field(
         default=None)  # type: ignore
+    config_base_path: Optional[str] = field(default=None)
 
 
 SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp', 'quic']

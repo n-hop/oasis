@@ -35,8 +35,16 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         if hosts_ip_range == "":
             logging.error("Hosts ip range is not set.")
             return False
+        # /root/src/config/cfg-template/ or /root/config/cfg-template/
+        cfg_template_path = self.config.config_file
+        if self.config.config_base_path and self.config.config_file:
+            cfg_template_path = os.path.join(
+                self.config.config_base_path, self.config.config_file)
+        else:
+            logging.error("Config base path or config file is not set.")
+            return False
         generate_cfg_files(host_num, hosts_ip_range,
-                           self.virtual_ip_prefix, self.source_path, self.config.config_file)
+                           self.virtual_ip_prefix, self.source_path, cfg_template_path)
         # generate some error log if the license file is not correct
         self._verify_license()
         for i in range(host_num):
