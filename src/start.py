@@ -102,6 +102,9 @@ if __name__ == '__main__':
         sys.exit(1)
     if len(temp_list) == 2:
         cur_test_yaml_file = temp_list[0]
+    # check whether yaml_base_path is an absolute path
+    if not os.path.isabs(yaml_base_path):
+        yaml_base_path = os.path.join(current_process_dir, yaml_base_path)
     test_case_file = os.path.join(
         yaml_base_path, cur_test_yaml_file)
     if not os.path.exists(f'{test_case_file}'):
