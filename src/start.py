@@ -67,7 +67,6 @@ def build_nested_env(config_file, containernet_name, yaml_base_path_input, oasis
 
 
 if __name__ == '__main__':
-
     local_parser = parse_args()
     ns, args = local_parser.parse_known_args()
     cur_test_yaml_file = ns.tests_config_file
