@@ -25,6 +25,7 @@ from protosuites.cs_protocol import CSProtocol
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
+from tools.util import is_same_path
 
 
 def load_test(test_yaml_file: str, test_name: str = ""):
@@ -353,15 +354,15 @@ if __name__ == '__main__':
     logging.info("Yaml config path: %s", yaml_config_base_path)
     logging.info("Oasis workspace: %s", oasis_workspace)
     # config_mapped_prefix can be `/root/config/` or `/root/src/config/`
-    if yaml_config_base_path != f"{oasis_workspace}/src/config/":
+    if is_same_path(yaml_config_base_path, f"{oasis_workspace}/src/config/"):
+        # no mapping is needed
+        # oasis workspace mapped to `/root/`
+        logging.info("No config path mapping is needed.")
+        config_mapped_prefix = '/root/src/config/'
+    else:
         # oasis yaml config files mapped to `/root/config/`
         logging.info("Oasis yaml config files mapped to `/root/config/`.")
         config_mapped_prefix = '/root/config/'
-    else:
-        # no mapping is needed
-        logging.info("No config path mapping is needed.")
-        config_mapped_prefix = '/root/src/config/'
-    # oasis workspace mapped to `/root/`
     oasis_mapped_prefix = '/root/'
     logging.info(
         f"run_test.py: Base path of the oasis project: %s", oasis_workspace)

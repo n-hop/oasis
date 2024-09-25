@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import yaml
+from tools.util import is_same_path
 from .config import (NestedConfig)
 
 
@@ -146,7 +147,12 @@ class NestedContainernet():
             f"type=bind,source={self.oasis_workspace},"\
             f"target=/root,bind-propagation=shared "
         # don't mount if {yaml_base_path} == {oasis_workspace}/src/config/
-        if self.yaml_base_path != f"{self.oasis_workspace}/src/config/":
+        logging.info("Yaml config path: %s", self.yaml_base_path)
+        logging.info("Oasis workspace: %s", self.oasis_workspace)
+        if is_same_path(self.yaml_base_path, f"{self.oasis_workspace}/src/config"):
+            logging.info(
+                "NestedContainernet:: No config path mapping is needed.")
+        else:
             # 2. mount yaml_base_path directory to /root/config/
             self.formatted_mounts += f" --mount "\
                 f"type=bind,source={self.yaml_base_path},"\
@@ -156,10 +162,6 @@ class NestedContainernet():
             logging.info(
                 "NestedContainernet:: yaml_base_path %s,"
                 "oasis_workspace%s", self.yaml_base_path, self.oasis_workspace)
-        else:
-            logging.info(
-                "NestedContainernet:: No config path mapping is needed.")
-
         for mount in self.config.mounts:
             source, target, *readonly = mount.split(":")
             if len(readonly) == 0:
