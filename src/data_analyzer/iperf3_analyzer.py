@@ -34,7 +34,10 @@ class Iperf3Analyzer(IDataAnalyzer):
             with open(input_log, "r", encoding="utf-8") as f:
                 zero_bit_line_cnt = 0
                 lines = f.readlines()
+                is_test_finished = False
                 for line in lines:
+                    if 'receiver' in line:
+                        is_test_finished = True
                     zero_bit_line = r'0.00 Bytes  0.00 bits/sec'
                     if zero_bit_line in line:
                         zero_bit_line_cnt += 1
@@ -44,6 +47,10 @@ class Iperf3Analyzer(IDataAnalyzer):
                         logging.info(
                             "The iperf3 %s has too many zero bit", input_log)
                         return False
+                if not is_test_finished:
+                    logging.info(
+                        "The iperf3 %s is not finished", input_log)
+                    return False
         return True
 
     def visualize(self):
