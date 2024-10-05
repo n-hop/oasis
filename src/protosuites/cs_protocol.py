@@ -39,7 +39,7 @@ class CSProtocol(IProtoSuite, IProtoInfo):
             and self.server.run(network)
 
     def stop(self, network: INetwork):
-        return self.client.stop(network) and self.server.stop
+        return self.client.stop(network) and self.server.stop(network)
 
     def get_forward_port(self) -> int:
         return self.client.get_forward_port()
