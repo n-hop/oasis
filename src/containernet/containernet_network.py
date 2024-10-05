@@ -113,10 +113,12 @@ class ContainerizedNetwork (INetwork):
         logging.info("Oasis starts the ContainerizedNetwork.")
         self.containernet.build()
         self.containernet.start()
+        self.is_started_flag = True
 
     def stop(self):
         self.routing_strategy.teardown_routes(self)
         self.containernet.stop()
+        self.is_started_flag = False
 
     def reload(self, top: ITopology):
         """

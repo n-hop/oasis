@@ -2,6 +2,8 @@ import os
 import sys
 import logging
 import platform
+import multiprocessing
+from multiprocessing import Manager
 import yaml
 
 # from mininet.cli import CLI
@@ -25,10 +27,91 @@ from protosuites.cs_protocol import CSProtocol
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
+from data_analyzer.analyzer import AnalyzerConfig
+from data_analyzer.analyzer_factory import AnalyzerFactory
 from tools.util import is_same_path
 
+supported_execution_mode = ["serial", "parallel"]
+# alphabet table
+alphabet = ['h', 'i', 'j', 'k', 'l', 'm',
+            'n', 'o', 'p', 'q', 'r', 's', 't']
 
-def load_test(test_yaml_file: str, test_name: str = ""):
+
+def is_parallel_execution(execution_mode: str):
+    return execution_mode == "parallel"
+
+
+def diagnostic_test_results(test_results, top_des):
+    if len(test_results) == 0:
+        logging.error("Error: no test results. %s", top_des)
+        return False
+    for test_type, test_result in test_results.items():
+        logging.debug(
+            "########################## Oasis Analyzing Test Results %s %s"
+            "##########################", test_type, test_result)
+        test_config = test_result['config']
+        result_files = []
+        logging.debug("test_result['results'] len %s", len(
+            test_result['results']))
+        for res in test_result['results']:
+            result_files.append(res.record)
+        # analyze those results files according to the test type
+        if test_type == TestType.throughput:
+            output_svg = ""
+            if test_config.packet_type == 'tcp':
+                output_svg = f"{test_result['results'][0].result_dir}iperf3_throughput.svg"
+            else:
+                output_svg = f"{test_result['results'][0].result_dir}iperf3_udp_statistics.svg"
+            config = AnalyzerConfig(
+                input=result_files,
+                output=f"{output_svg}",
+                data_type=f"{test_config.packet_type}",
+                subtitle=top_des)
+            analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
+            if analyzer.analyze() is False:
+                logging.error(
+                    "Test %s failed at throughput test", test_config.name)
+                return False
+            analyzer.visualize()
+        if test_type == TestType.rtt:
+            if test_config.packet_count > 1:
+                config = AnalyzerConfig(
+                    input=result_files,
+                    output=f"{test_result['results'][0].result_dir}",
+                    subtitle=top_des)
+                analyzer = AnalyzerFactory.get_analyzer("rtt", config)
+                if analyzer.analyze() is False:
+                    logging.error(
+                        "Test %s failed at rtt test", test_config.name)
+                    return False
+                analyzer.visualize()
+            if test_config.packet_count == 1:
+                config = AnalyzerConfig(
+                    input=result_files,
+                    output=f"{test_result['results'][0].result_dir}first_rtt.svg",
+                    subtitle=top_des)
+                analyzer = AnalyzerFactory.get_analyzer(
+                    "first_rtt", config)
+                if analyzer.analyze() is False:
+                    logging.error(
+                        "Test %s failed at first_rtt test", test_config.name)
+                    return False
+                analyzer.visualize()
+        if test_type == TestType.sshping:
+            config = AnalyzerConfig(
+                input=result_files,
+                output=f"{test_result['results'][0].result_dir}",
+                subtitle=top_des)
+            analyzer = AnalyzerFactory.get_analyzer("sshping", config)
+            if analyzer.analyze() is False:
+                logging.error(
+                    "Test %s failed at sshping test", test_config.name)
+                return False
+            analyzer.visualize()
+    return True
+
+
+def load_test(test_yaml_file: str, test_name: str = "all"):
     """
         Load the test case configuration from a yaml file.
     """
@@ -46,7 +129,7 @@ def load_test(test_yaml_file: str, test_name: str = ""):
             return None
     # ------------------------------------------------
     test_names = test_cases.keys()
-    test_list = []
+    active_test_list = []
     if test_name in ("all", "All", "ALL"):
         test_name = ""
     for name in test_names:
@@ -54,20 +137,20 @@ def load_test(test_yaml_file: str, test_name: str = ""):
             logging.debug("Oasis skips the test case %s", name)
             continue
         test_cases[name]['name'] = name
-        test_list.append(test_cases[name])
-    for case in test_list.copy():
+        active_test_list.append(test_cases[name])
+    for case in active_test_list.copy():
         # ignore the inactive case by "if: False"
         if "if" in case and not case["if"]:
             logging.info(
                 f"case %s is disabled!", case['name'])
-            test_list.remove(case)
+            active_test_list.remove(case)
         else:
             logging.info(
                 f"case %s is enabled!", case['name'])
-    if len(test_list) == 0:
+    if len(active_test_list) == 0:
         logging.info(f"No active test case in %s", test_yaml_file)
         return None
-    return test_list
+    return active_test_list
 
 
 def add_test_to_network(network, tool, test_name):
@@ -153,17 +236,17 @@ def load_target_protocols_config(config_base_path, test_case_yaml):
     if target_protocols_yaml is None:
         logging.error("Error: target_protocols is None.")
         return None
-    target_protocols = []
+    loaded_target_protocols = []
     if all(isinstance(protocol, str) for protocol in target_protocols_yaml):
         # ['btp', 'brtp', 'tcp']
         logging.debug("target_protocols is a list of strings.")
-        target_protocols = [predefined[protocol]
-                            for protocol in target_protocols_yaml if protocol in predefined]
+        loaded_target_protocols = [predefined[protocol]
+                                   for protocol in target_protocols_yaml if protocol in predefined]
         if 'tcp' in target_protocols_yaml:
-            target_protocols.append(ProtoConfig(
+            loaded_target_protocols.append(ProtoConfig(
                 name='tcp', type='distributed',))
-        logging.debug("loaded protocol config: %s", target_protocols)
-        return target_protocols
+        logging.debug("loaded protocol config: %s", loaded_target_protocols)
+        return loaded_target_protocols
     if all(isinstance(protocol, dict) for protocol in target_protocols_yaml):
         logging.info("target_protocols is a list of dictionaries.")
         for protocol in target_protocols_yaml:
@@ -172,7 +255,7 @@ def load_target_protocols_config(config_base_path, test_case_yaml):
                     f"Error: unsupported protocol %s", protocol['name'])
                 continue
             if 'protocols' not in protocol:
-                target_protocols.append(ProtoConfig(**protocol))
+                loaded_target_protocols.append(ProtoConfig(**protocol))
             else:
                 # iterate over the protocols
                 local_proto_conf = ProtoConfig(
@@ -183,25 +266,20 @@ def load_target_protocols_config(config_base_path, test_case_yaml):
                         ProtoConfig(**sub_proto))
                     logging.info("load sub-protocol: %s",
                                  sub_proto)
-                target_protocols.append(local_proto_conf)
-        logging.debug("loaded protocol config: %s", target_protocols)
-        return target_protocols
+                loaded_target_protocols.append(local_proto_conf)
+        logging.debug("loaded protocol config: %s", loaded_target_protocols)
+        return loaded_target_protocols
     logging.error("Error: unsupported target_protocols format.")
     return None
 
 
-def setup_test(config_base_path, test_case_yaml, network: INetwork):
+def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
     """setup the test case configuration.
     """
     # read the strategy matrix
     test_case_name = test_case_yaml['name']
-    target_protocols = load_target_protocols_config(
-        config_base_path, test_case_yaml)
-    if target_protocols is None:
-        logging.error("Error: no target protocols.")
-        return False
     test_tools = test_case_yaml['test_tools']
-    for proto_config in target_protocols:
+    for proto_config in internal_target_protocols:
         proto_config.test_name = test_case_name
         logging.info("Added %s protocol, version %s.",
                      proto_config.name, proto_config.version)
@@ -335,6 +413,37 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: st
     return ContainerizedNetwork(node_config, net_top, route_strategy)
 
 
+def handle_test_failure(test_name):
+    logging.error("Test %s failed.", test_name)
+    # create a regular file to indicate the test failure
+    with open(f"/root/test.failed", 'w', encoding='utf-8') as f_failed:
+        f_failed.write(f"{test_name}")
+
+
+def perform_test_in_process(network, test_name, index, result_dict):
+    logging.info(
+        "########## Oasis process %d Performing the test for %s", index, test_name)
+    is_success = network.perform_test()
+    if is_success is False:
+        handle_test_failure(test_name)
+    result_dict[index] = network.get_test_results()
+    logging.debug(
+        "########## Oasis process %d finished the test for %s, results %s",
+        index, test_name, result_dict[index])
+
+
+def stop_networks(start, end, nets):
+    for index in range(start, end):
+        nets[index].stop()
+        logging.info("########## Oasis stop the network %s.", index)
+
+
+def reset_networks(proto_num, nets):
+    for index in range(proto_num):
+        nets[index].reset()
+        logging.info("########## Oasis reset the network %s.", index)
+
+
 if __name__ == '__main__':
     debug_log = 'False'
     if len(sys.argv) == 5:
@@ -342,11 +451,11 @@ if __name__ == '__main__':
     if debug_log == 'True':
         setLogLevel('info')
         logging.basicConfig(level=logging.DEBUG)
-        logging.info("Debug mode is disabled.")
+        logging.info("Debug mode is enabled.")
     else:
         setLogLevel('warning')
         logging.basicConfig(level=logging.INFO)
-        logging.info("Debug mode is enabled.")
+        logging.info("Debug mode is disabled.")
     logging.info("Platform: %s", platform.platform())
     logging.info("Python version: %s", platform.python_version())
     yaml_config_base_path = sys.argv[1]
@@ -355,7 +464,6 @@ if __name__ == '__main__':
     logging.info("Oasis workspace: %s", oasis_workspace)
     # config_mapped_prefix can be `/root/config/` or `/root/src/config/`
     if is_same_path(yaml_config_base_path, f"{oasis_workspace}/src/config/"):
-        # no mapping is needed
         # oasis workspace mapped to `/root/`
         logging.info("No config path mapping is needed.")
         config_mapped_prefix = '/root/src/config/'
@@ -390,44 +498,154 @@ if __name__ == '__main__':
     if config_mapped_prefix == '/root/config/':
         cur_node_config.vols.append(
             f'{yaml_config_base_path}:{config_mapped_prefix}')
-
+    target_proto_num = 0
     # load all cases
+    networks = []
     all_tests = load_test(yaml_test_file_path, cur_selected_test)
     if all_tests is None:
         logging.error("Error: no test case found.")
         sys.exit(1)
     for test in all_tests:
+        cur_test_name = test['name']
         cur_top_config = load_top_config(config_mapped_prefix, test)
         if cur_top_config.name == "":
+            logging.warning("Error: no network topology config.")
             continue
-        if linear_network is None:
-            linear_network = build_network(
-                cur_node_config, cur_top_config, test['route'])
-            if linear_network is None:
-                logging.error("Error: failed to build network.")
-                continue
-            linear_network.start()
-        else:
-            local_net_top = build_topology(cur_top_config)
-            if local_net_top is None:
-                continue
-            linear_network.reload(local_net_top)
-
-        # setup the test
-        if setup_test(config_mapped_prefix, test, linear_network) is False:
-            logging.error("Error: failed to setup the test.")
-            linear_network.stop()
+        # execution mode default is serial
+        cur_execution_mode = test.get('execution_mode', 'serial')
+        if cur_execution_mode not in supported_execution_mode:
+            logging.warning("Error: unsupported execution mode.")
+            continue
+        org_name_prefix = cur_node_config.name_prefix
+        # 1. load target protocols
+        target_protocols = load_target_protocols_config(
+            config_mapped_prefix, test)
+        if target_protocols is None:
+            logging.error("Error: no target protocols.")
+            sys.exit(1)
+        target_proto_num = len(
+            target_protocols) if target_protocols is not None else 0
+        if target_proto_num == 0:
+            logging.error("Error: no target protocols.")
+            sys.exit(1)
+        if target_proto_num > len(alphabet):
+            logging.error("Error: too many target protocols.")
             sys.exit(1)
 
-        # perform the test
-        is_success = linear_network.perform_test()
-        if is_success is False:
-            logging.error("Test %s failed.", test['name'])
-            # create a regular file to indicate the test failure
-            with open(f"/root/test.failed", 'w', encoding='utf-8') as f:
-                f.write(f"{test['name']}")
-            break
-        linear_network.reset()
+        # 2. build the network for each target protocol
+        if not is_parallel_execution(cur_execution_mode):
+            # serial execution only needs one network
+            target_proto_num = 1
+            logging.info("########## Oasis execute the test %s in serial mode.",
+                         cur_test_name)
+        cur_net_num = len(networks)
+        if cur_net_num != target_proto_num:
+            # targets changed.
+            if cur_net_num < target_proto_num:
+                for i in range(cur_net_num, target_proto_num):
+                    if is_parallel_execution(cur_execution_mode):
+                        logging.info(
+                            "####################################################")
+                        logging.info(
+                            "########## Oasis Parallel Execution Mode. ##########")
+                        logging.info(
+                            "########## network instance %s             ##########", i)
+                        logging.info(
+                            "####################################################")
+                        cur_node_config.name_prefix = f"{org_name_prefix}{alphabet[i]}"
+                        cur_node_config.bind_port = False
+                    linear_network = build_network(
+                        cur_node_config, cur_top_config, test['route'])
+                    if linear_network is None:
+                        logging.error("Error: failed to build network.")
+                        continue
+                    networks.append(linear_network)
+            elif cur_net_num > target_proto_num:
+                # stop the extra networks
+                stop_networks(target_proto_num, cur_net_num, networks)
+                networks = networks[:target_proto_num]
+        # 2.1 or reload networks if networks is already built
+        local_net_top = build_topology(cur_top_config)
+        if local_net_top is None:
+            logging.error("Error: failed to load network top config.")
+        for i in range(target_proto_num):
+            if not networks[i].is_started():
+                networks[i].start()
+            else:
+                networks[i].reload(local_net_top)
+            logging.info("########## Oasis reload the network %s.", i)
 
-    if linear_network:
-        linear_network.stop()
+        cur_top_description = networks[0].get_topology_description()
+
+        # 3. setup the test for each target protocol
+        for i in range(target_proto_num):
+            selected_protocols = []
+            if is_parallel_execution(cur_execution_mode):
+                selected_protocols = [target_protocols[i]]
+            else:
+                selected_protocols = target_protocols
+            if setup_test(test, selected_protocols, networks[i]) is False:
+                logging.error("Error: failed to setup the test.")
+                stop_networks(0, target_proto_num, networks)
+                sys.exit(1)
+
+        # 4. perform the test for each target protocol in parallel with different processes
+        processes = []
+        manager = Manager()
+        process_shared_dict = manager.dict()
+        for i in range(target_proto_num):
+            p = multiprocessing.Process(target=perform_test_in_process,
+                                        args=(networks[i],
+                                              cur_test_name,
+                                              i, process_shared_dict))
+            processes.append(p)
+            p.start()
+
+        # 4.1 Wait for all processes to complete
+        for i, p in enumerate(processes):
+            p.join(timeout=600)
+            if p.is_alive():
+                logging.error(f"Process %s for test %s is stuck.",
+                              i, cur_test_name)
+                p.terminate()
+                p.join()
+                logging.info(f"Process %s for test %s is terminated.",
+                             i, cur_test_name)
+            else:
+                logging.info(f"Process %s for test %s is completed successfully.",
+                             i, cur_test_name)
+
+        # 5. merge multiple test results into one dictionary
+        merged_results = {}
+        for i in range(target_proto_num):
+            if i not in process_shared_dict:
+                logging.error(f"No results found for process %s.", i)
+                handle_test_failure(cur_test_name)
+                stop_networks(0, target_proto_num, networks)
+                sys.exit(1)
+            for shared_test_type, shared_test_result in process_shared_dict[i].items():
+                if shared_test_type not in merged_results:
+                    merged_results[shared_test_type] = {
+                        'results': [],
+                        'config': shared_test_result['config']
+                    }
+                merged_results[shared_test_type]['results'].extend(
+                    shared_test_result['results'])
+        logging.info(
+            "########## Oasis merge parallel test results. %s", merged_results)
+
+        # 5.1 diagnostic the test results
+        if diagnostic_test_results(merged_results,
+                                   cur_top_description) is False:
+            logging.error("Test %s results analysis not passed.",
+                          cur_test_name)
+            handle_test_failure(cur_test_name)
+            stop_networks(0, target_proto_num, networks)
+            sys.exit(1)
+
+        # 6. reset the network then go to the next test case
+        reset_networks(target_proto_num, networks)
+        manager.shutdown()
+
+    stop_networks(0, target_proto_num, networks)
+    sys.exit(0)

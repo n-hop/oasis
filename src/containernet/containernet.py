@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+import time
 import yaml
 from tools.util import is_same_path
 from .config import (NestedConfig)
@@ -48,6 +49,7 @@ class NestedContainernet():
         self.oasis_workspace = oasis_workspace
         self.test_name = test_name
         self.test_container_name = ""
+        self.start_time = time.time()
         self.setUp()
 
     def setUp(self) -> None:
@@ -68,9 +70,12 @@ class NestedContainernet():
             "docker stop $(docker ps -a -q "
             f"-fname={self.test_container_name}) || true")
         os.system("docker container prune --force || true")
+        # calculate the time
+        end_time = time.time()
+        cost_time = (int)(end_time - self.start_time)
         logging.info(
             "########################## Oasis teardown"
-            "NestedContainernet##########################")
+            "NestedContainernet(%s)##########################",cost_time)
 
     def stop(self):
         self.tearDown()

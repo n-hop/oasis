@@ -2,17 +2,17 @@ import logging
 import copy
 from abc import ABC, abstractmethod
 from containernet.topology import (ITopology)
-from testsuites.test import (ITestSuite, TestType)
 from protosuites.proto import IProtoSuite
 from interfaces.routing import IRoutingStrategy
-from data_analyzer.analyzer import AnalyzerConfig
-from data_analyzer.analyzer_factory import AnalyzerFactory
+from testsuites.test import (ITestSuite)
 
 
 class INetwork(ABC):
     def __init__(self):
         self.test_suites = []
         self.proto_suites = []
+        self.test_results = {}
+        self.is_started_flag = False
 
     @abstractmethod
     def start(self):
@@ -46,6 +46,9 @@ class INetwork(ABC):
     def reload(self, top: ITopology):
         pass
 
+    def is_started(self):
+        return self.is_started_flag
+
     def get_topology_description(self):
         return ""
 
@@ -65,7 +68,6 @@ class INetwork(ABC):
             logging.error("No test suite set")
             return False
         # Combination of protocol and test
-        test_results = {}
         for proto in self.proto_suites:
             # start the protocol
             proto.start(self)
@@ -80,83 +82,25 @@ class INetwork(ABC):
                         "Test %s failed, please check the log file %s",
                         test.config.name, result.record)
                     return False
-                if test.type() not in test_results:
-                    test_results[test.type()] = {}
-                    test_results[test.type()]['results'] = []
-                test_results[test.type()]['config'] = copy.deepcopy(
+                if test.type() not in self.test_results:
+                    self.test_results[test.type()] = {}
+                    self.test_results[test.type()]['results'] = []
+                self.test_results[test.type()]['config'] = copy.deepcopy(
                     test.get_config())
-                test_results[test.type()]['results'].append(
+                self.test_results[test.type()]['results'].append(
                     copy.deepcopy(result))
                 logging.debug("Added Test result for %s", result.record)
             # stop the protocol
             proto.stop(self)
-        top_des = self.get_topology_description()
-        # Analyze the test results
-        for test_type, test_result in test_results.items():
-            test_config = test_result['config']
-            result_files = []
-            logging.debug("test_result['results'] len %s", len(
-                test_result['results']))
-            for res in test_result['results']:
-                result_files.append(res.record)
-            # analyze those results files according to the test type
-            if test_type == TestType.throughput:
-                output_svg = ""
-                if test_config.packet_type == 'tcp':
-                    output_svg = f"{test_result['results'][0].result_dir}iperf3_throughput.svg"
-                else:
-                    output_svg = f"{test_result['results'][0].result_dir}iperf3_udp_statistics.svg"
-                config = AnalyzerConfig(
-                    input=result_files,
-                    output=f"{output_svg}",
-                    data_type=f"{test_config.packet_type}",
-                    subtitle=top_des)
-                analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
-                if analyzer.analyze() is False:
-                    logging.error(
-                        "Test %s failed at throughput test", test_config.name)
-                    return False
-                analyzer.visualize()
-            if test_type == TestType.rtt:
-                if test_config.packet_count > 1:
-                    config = AnalyzerConfig(
-                        input=result_files,
-                        output=f"{test_result['results'][0].result_dir}",
-                        subtitle=top_des)
-                    analyzer = AnalyzerFactory.get_analyzer("rtt", config)
-                    if analyzer.analyze() is False:
-                        logging.error(
-                            "Test %s failed at rtt test", test_config.name)
-                        return False
-                    analyzer.visualize()
-                if test_config.packet_count == 1:
-                    config = AnalyzerConfig(
-                        input=result_files,
-                        output=f"{test_result['results'][0].result_dir}first_rtt.svg",
-                        subtitle=top_des)
-                    analyzer = AnalyzerFactory.get_analyzer(
-                        "first_rtt", config)
-                    if analyzer.analyze() is False:
-                        logging.error(
-                            "Test %s failed at first_rtt test", test_config.name)
-                        return False
-                    analyzer.visualize()
-            if test_type == TestType.sshping:
-                config = AnalyzerConfig(
-                    input=result_files,
-                    output=f"{test_result['results'][0].result_dir}",
-                    subtitle=top_des)
-                analyzer = AnalyzerFactory.get_analyzer("sshping", config)
-                if analyzer.analyze() is False:
-                    logging.error(
-                        "Test %s failed at sshping test", test_config.name)
-                    return False
-                analyzer.visualize()
         return True
+
+    def get_test_results(self):
+        return self.test_results
 
     def reset(self):
         self.proto_suites = []
         self.test_suites = []
+        self.test_results = {}
 
     def _check_test_config(self, proto: IProtoSuite, test: ITestSuite):
         if not proto.is_distributed():

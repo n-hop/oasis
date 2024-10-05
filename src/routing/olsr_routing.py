@@ -43,14 +43,14 @@ class OLSRRouting(IRoutingStrategy):
         for i in range(host_num):
             interface = ""
             if i == 0:
-                interface += f"[interface=h{i}-eth0]\n\n"
+                interface += f"[interface={hosts[i].name()}-eth0]\n\n"
                 interface += "[lan_import=lan]\n"
                 interface += "interface  eth0\n\n"
             elif i == host_num - 1:
-                interface += f"[interface=h{i}-eth0]\n\n"
+                interface += f"[interface={hosts[i].name()}-eth0]\n\n"
             else:
-                interface += f"[interface=h{i}-eth0]\n"
-                interface += f"[interface=h{i}-eth1]\n\n"
+                interface += f"[interface={hosts[i].name()}-eth0]\n"
+                interface += f"[interface={hosts[i].name()}-eth1]\n\n"
             hosts[i].cmd(f'mkdir /etc/olsr')
             hosts[i].cmd(
                 f'echo "{template.format(interface=interface)}" > {self.cfg_path}')
