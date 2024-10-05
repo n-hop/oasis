@@ -126,7 +126,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         host.cmd(
             f'mkdir -p /etc/bats-protocol')
         host.cmd(
-            f'mv {self.source_path}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
+            f'cp {self.source_path}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
         return True
 
     def _get_ip_from_host(self, host: IHost, dev: str) -> str:
