@@ -9,6 +9,7 @@ This guide provides simple steps to getting started with Oasis.
     - [1.3 Change the evaluation targets(protocol)](#13-change-the-evaluation-targetsprotocol)
   - [2. Test results](#2-test-results)
 - [Build docker image](#build-docker-image)
+- [WSL kernel recompile](#wsl-kernel-recompile)
 
 ### 1. Run test
 
@@ -145,4 +146,34 @@ The test results will be saved to `{oasis_workspace}/test_results/{test_case_nam
 ```bash
 cd src/config/containernet-docker-official && docker build -t containernet:latest .
 cd src/config/protocol-docker-azure && docker build -t ubuntu:22.04 .
+```
+
+## WSL kernel recompile
+
+When using WSL in windows, tc is not defaultly compiled to WSL kernel, so WSL kernel recompilation with tc support is needed, script is provided in {project_dir}/bin/wsl_kernel_support/kernel_tc.sh
+
+First open Windows PowerShell
+
+```
+wsl --unregister Ubuntu-22.04   # unregister any installed wsl
+wsl --install Ubuntu-22.04      # reinstall wsl Ubuntu-22.04
+```
+
+After setup username and password, copy kernel_tc.sh to home directory (~)
+
+```
+sudo CUR_USER=$USER ./kernel_tc.sh
+```
+
+After kernel recompiled, open Windows Powershell
+
+```
+wsl --shutdown      # reset wsl
+```
+
+Open new wsl terminal and check if wsl support tc
+
+```
+sudo tc q                                       # check existing tc rules
+sudo tc qdisc add dev eth0 root netem loss 10%  # add 10% packet drop rate to eth0 interface
 ```
