@@ -70,7 +70,10 @@ class INetwork(ABC):
         # Combination of protocol and test
         for proto in self.proto_suites:
             # start the protocol
-            proto.start(self)
+            if proto.start(self) is False:
+                logging.error("Protocol %s failed to start",
+                              proto.get_config().name)
+                return False
             for test in self.test_suites:
                 valid_config = self._check_test_config(proto, test)
                 if not valid_config:

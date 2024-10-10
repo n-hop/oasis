@@ -78,19 +78,20 @@ class IProtoSuite(ABC):
     def run(self, network: 'INetwork'):  # type: ignore
         pass
 
-    def start(self, network: 'INetwork'):  # type: ignore
+    def start(self, network: 'INetwork') -> bool:
         self.is_success = self.pre_run(network)
         if not self.is_success:
             logging.debug("pre_run failed")
-            return
+            return False
         self.is_success = self.run(network)
         if not self.is_success:
             logging.debug("run failed")
-            return
+            return False
         self.is_success = self.post_run(network)
         if not self.is_success:
             logging.debug("post_run failed")
-            return
+            return False
+        return True
 
     @abstractmethod
     def stop(self, network: 'INetwork'):  # type: ignore
