@@ -420,12 +420,21 @@ def handle_test_failure(test_name):
         f_failed.write(f"{test_name}")
 
 
+def handle_test_success():
+    # create a regular file to indicate the test success
+    with open(f"/root/test.success", 'w', encoding='utf-8') as f:
+        f.write(f"test.success")
+
+
 def perform_test_in_process(network, test_name, index, result_dict):
     logging.info(
         "########## Oasis process %d Performing the test for %s", index, test_name)
     is_success = network.perform_test()
     if is_success is False:
         handle_test_failure(test_name)
+        logging.error(
+            "########## Oasis process %d failed the test for %s", index, test_name)
+        return
     result_dict[index] = network.get_test_results()
     logging.debug(
         "########## Oasis process %d finished the test for %s, results %s",
@@ -647,5 +656,6 @@ if __name__ == '__main__':
         reset_networks(target_proto_num, networks)
         manager.shutdown()
 
+    handle_test_success()
     stop_networks(0, target_proto_num, networks)
     sys.exit(0)

@@ -70,11 +70,31 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
             hosts[i].cmd(
                 f'nohup {self.config.path} {self.protocol_args} '
                 f' > {self.log_dir}bats_protocol_h{i}.log &')
-            logging.info(
-                f"############### Oasis run bats protocol on "
-                "%s ###############",
-                hosts[i].name())
-        time.sleep(2)
+
+        # check the protocol is running
+        max_sleep_time = host_num
+        running_flag = "bats_uds_socket_bind_point."
+        host_range = list(range(host_num))
+        while max_sleep_time > 0 and len(host_range) > 0:
+            max_sleep_time -= 1
+            time.sleep(1)
+            unready_idx = []
+            for host_idx in host_range:
+                # /tmp/bats_uds_socket_bind_point.xxx
+                res = hosts[host_idx].cmd(f'ls /tmp | grep "{running_flag}"')
+                if res.find(running_flag) == -1:
+                    unready_idx.append(host_idx)
+            host_range = unready_idx
+
+        if len(host_range) > 0:
+            failed_hosts = ""
+            for idx in host_range:
+                failed_hosts += f"{hosts[idx].name()} "
+            logging.error(
+                f"############### Oasis run bats protocol failed on "
+                "%s ###############", failed_hosts)
+            return False
+
         return True
 
     def stop(self, network: INetwork):

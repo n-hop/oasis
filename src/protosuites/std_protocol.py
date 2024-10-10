@@ -1,4 +1,5 @@
 import logging
+import time
 import re
 from protosuites.proto import (ProtoConfig, IProtoSuite)
 from interfaces.network import INetwork
@@ -42,6 +43,13 @@ class StdProtocol(IProtoSuite, IProtoInfo):
             cur_protocol_args = self.get_protocol_args(network)
             hosts[host_id].cmd(
                 f'{self.config.path} {cur_protocol_args} > {self.log_dir}{self.config.name}_h{host_id}.log &')
+        time.sleep(2)
+        for host_id in self.config.hosts:
+            res = hosts[host_id].cmd(f"ps aux | grep {self.process_name}")
+            if res.find(self.process_name) == -1:
+                logging.error(
+                    "Failed to start the protocol %s on %s", self.config.name, hosts[host_id].name())
+                return False
             logging.info(
                 f"############### Oasis start %s protocol on %s ###############",
                 self.config.name, hosts[host_id].name())
