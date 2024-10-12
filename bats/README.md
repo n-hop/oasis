@@ -111,6 +111,8 @@ Purpose: To evaluate the BATS protocol performance under different link latency 
 <img src="./imgs/bats-brtp.png" alt="BATS Protocol" style="zoom:60%;"></div>
 <div align="center">Fig 3.4.2 BATS Protocol performance</div>
 
+<div align="center">
+
 | Loss Rate/Latency | 10ms | 30ms | 50ms | 70ms | 90ms | 110ms |
 | ----------------- | ---- | ---- | ---- | ---- | ---- | ----- |
 | 0.00%             | 91.7 | 90.5 | 86.1 | 87.1 | 84   | 79    |
@@ -119,6 +121,8 @@ Purpose: To evaluate the BATS protocol performance under different link latency 
 | 6.00%             | 75.9 | 75.2 | 69.6 | 56.6 | 51.5 | 39    |
 | 8.00%             | 73.3 | 72.4 | 68.5 | 65.9 | 48   | 42    |
 | 10.00%            | 70.1 | 68.8 | 66.3 | 62.8 | 49.4 | 28.6  |
+
+</div>
 <div align="center">Table 3.4.2 BATS Protocol performance</div>
 
 This test can be repeated by Oasis with running the following command:
