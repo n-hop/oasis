@@ -333,7 +333,7 @@ class ContainerizedNetwork (INetwork):
         self.hosts[id2].cmd(f"tc filter add dev {attached_inf} parent ffff: protocol ip u32 "
                             f"match u32 0 0 action mirred egress redirect dev {ifb_interface}")
         self.hosts[id2].cmd(
-            f"tc qdisc add dev {ifb_interface} root netem{shaping_parameters} limit 20000000")
+            f"tc qdisc add dev {ifb_interface} root netem{shaping_parameters} limit 30000000")
 
         return True
 

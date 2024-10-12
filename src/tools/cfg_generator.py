@@ -16,7 +16,7 @@ class ConfigGenerator:
             self.template += "core.link_seq_set_num_bit = 5\n"
             self.template += "core.link_gap_threshold_set_num = 32\n"
             self.template += "core.link_unfreeze_gap_threshold_set_num = 16\n"
-            self.template += "core.reliable_task_window_max_size = 64\n"
+            self.template += "core.reliable_task_window_max_size = 128\n"
             self.template += "core.link_status_memory_period = 100\n"
             self.template += "core.link_max_delay_penalty_us = 300\n"
             self.template += "core.relay_flow_expire_seconds = 300\n"
