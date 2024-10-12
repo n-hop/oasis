@@ -388,11 +388,7 @@ def load_topology(config_base_path, test_case_yaml) -> ITopology:
     if loaded_conf is None:
         logging.error("Error: loaded_conf of topology is None.")
         return None  # type: ignore
-
-    topology_ins = build_topology(loaded_conf)
-    if topology_ins is None:
-        logging.error("Error: failed to load network top config.")
-    return topology_ins  # type: ignore
+    return build_topology(loaded_conf)  # type: ignore
 
 
 def build_network(node_config: NodeConfig, top: ITopology, route: str = "static_route"):
@@ -518,9 +514,9 @@ if __name__ == '__main__':
     for test in all_tests:
         cur_test_name = test['name']
         cur_topology = load_topology(config_mapped_prefix, test)
-        # if cur_top_config.name == "":
-        #    logging.warning("Error: no network topology config.")
-        #    continue
+        if cur_topology is None:
+            logging.warning("Error: failed to load cur_topology.")
+            continue
         # execution mode default is serial
         cur_execution_mode = test.get('execution_mode', 'serial')
         if cur_execution_mode not in supported_execution_mode:
