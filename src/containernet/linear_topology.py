@@ -1,5 +1,6 @@
 import logging
 import copy
+
 from .topology import (ITopology, MatrixType, MatType2LinkAttr, LinkAttr)
 
 max_link_bandwidth = 100
@@ -31,15 +32,36 @@ class LinearTopology(ITopology):
             else:
                 adj_matrix[i][i-1] = 1
                 adj_matrix[i][i+1] = 1
-        logging.info("adj_matrix: %s", adj_matrix)
+        logging.debug("adj_matrix: %s", adj_matrix)
         return adj_matrix
 
     def generate_other_matrices(self, adj_matrix):
+        temp_all_mats = {}
         for type in MatrixType:
             if type == MatrixType.ADJACENCY_MATRIX:
                 continue
-            self.all_mats[type] = self.generate_value_matrix(
+            temp_all_mats[type] = self.generate_value_matrix(
                 adj_matrix, type)
+        # combination of all types of matrices
+        for loss_mat in temp_all_mats[MatrixType.LOSS_MATRIX]:
+            for latency_mat in temp_all_mats[MatrixType.LATENCY_MATRIX]:
+                for jitter_mat in temp_all_mats[MatrixType.JITTER_MATRIX]:
+                    for bandw_mat in temp_all_mats[MatrixType.BANDW_MATRIX]:
+                        new_topology = LinearTopology(
+                            self.top_config, False)  # don't init all mats
+                        new_topology.all_mats[MatrixType.ADJACENCY_MATRIX] = copy.deepcopy(
+                            self.adj_matrix)
+                        new_topology.all_mats[MatrixType.LOSS_MATRIX] = copy.deepcopy(
+                            loss_mat)
+                        new_topology.all_mats[MatrixType.LATENCY_MATRIX] = copy.deepcopy(
+                            latency_mat)
+                        new_topology.all_mats[MatrixType.JITTER_MATRIX] = copy.deepcopy(
+                            jitter_mat)
+                        new_topology.all_mats[MatrixType.BANDW_MATRIX] = copy.deepcopy(
+                            bandw_mat)
+                        logging.debug(
+                            "Added new_topology %s", new_topology.all_mats)
+                        self.topologies.append(new_topology)
 
     def generate_value_matrix(self, adj_matrix, type: MatrixType):
         value_mat = copy.deepcopy(adj_matrix)
@@ -60,11 +82,13 @@ class LinearTopology(ITopology):
                 if attr_name in LinkAttr.__members__ and \
                         MatType2LinkAttr[type] == LinkAttr[attr_name]:
                     init_value = param["init_value"]
+                    can_be_stepped = False
                     if len(init_value) != self.top_config.nodes:
                         value_mat = [[
                             init_value[0]
                             if value != 0 else value for value in row
                         ] for row in value_mat]
+                        can_be_stepped = True
                     elif len(init_value) == self.top_config.nodes:
                         value_mat = [
                             [init_value[i][0] if value != 0 else value for i,
@@ -83,9 +107,41 @@ class LinearTopology(ITopology):
                     if 'link_bandwidth' in attr_name:
                         self.limit_max_value(
                             value_mat, attr_name, max_link_bandwidth)
-                    logging.debug("value_matrix: %s", value_mat)
-                    return value_mat
-        return value_mat
+                    step_len = 0
+                    step_num = 0
+                    if can_be_stepped:
+                        # can be stepped only when the init_value is a single value
+                        step_len = param.get("step_len", 0)
+                        step_num = param.get("step_num", 0)
+                    logging.info(
+                        "############## value_matrix: %s, step_len %s, step_num %s", value_mat, step_len, step_num)
+                    if step_len > 0 and step_num > 0:
+                        self.compound_top = True
+                        return self.step_value_matrix(
+                            value_mat, step_len, step_num)
+                    # else
+                    return [value_mat]
+        return [value_mat]
+
+    def step_value_matrix(self, value_mat, step_len, step_num):
+        if self.adj_matrix is None:
+            logging.error("The adjacency matrix is None")
+            return None
+        new_value_mat = []
+        new_value_mat.append(copy.deepcopy(value_mat))
+        for step in range(1, step_num + 1):
+            stepped_matrix = []
+            for i in range(len(value_mat)):
+                row = []
+                for j in range(len(value_mat[i])):
+                    if self.adj_matrix[i][j] == 1:
+                        row.append(value_mat[i][j] + step * step_len)
+                    else:
+                        row.append(value_mat[i][j])
+                stepped_matrix.append(row)
+            new_value_mat.append(stepped_matrix)
+
+        return new_value_mat
 
     def limit_max_value(self, value_mat, attr_name, max_value):
         for i in range(len(value_mat)):

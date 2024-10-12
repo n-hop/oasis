@@ -1,9 +1,11 @@
+from math import log
 import os
 import sys
 import logging
 import platform
 import multiprocessing
 from multiprocessing import Manager
+from matplotlib.pylab import f
 import yaml
 
 # from mininet.cli import CLI
@@ -513,10 +515,6 @@ if __name__ == '__main__':
         sys.exit(1)
     for test in all_tests:
         cur_test_name = test['name']
-        cur_topology = load_topology(config_mapped_prefix, test)
-        if cur_topology is None:
-            logging.warning("Error: failed to load cur_topology.")
-            continue
         # execution mode default is serial
         cur_execution_mode = test.get('execution_mode', 'serial')
         if cur_execution_mode not in supported_execution_mode:
@@ -538,119 +536,148 @@ if __name__ == '__main__':
             logging.error("Error: too many target protocols.")
             sys.exit(1)
 
-        # 2. build the network for each target protocol
-        if not is_parallel_execution(cur_execution_mode):
-            # serial execution only needs one network
-            target_proto_num = 1
-            logging.info("########## Oasis execute the test %s in serial mode.",
-                         cur_test_name)
-        cur_net_num = len(networks)
-        if cur_net_num != target_proto_num:
-            # targets changed.
-            if cur_net_num < target_proto_num:
-                for i in range(cur_net_num, target_proto_num):
-                    if is_parallel_execution(cur_execution_mode):
-                        logging.info(
-                            "####################################################")
-                        logging.info(
-                            "########## Oasis Parallel Execution Mode. ##########")
-                        logging.info(
-                            "########## network instance %s             ##########", i)
-                        logging.info(
-                            "####################################################")
-                        cur_node_config.name_prefix = f"{org_name_prefix}{alphabet[i]}"
-                        cur_node_config.bind_port = False
-                    network_ins = build_network(
-                        cur_node_config, cur_topology, test['route'])
-                    if network_ins is None:
-                        logging.error("Error: failed to build network.")
-                        continue
-                    networks.append(network_ins)
-            elif cur_net_num > target_proto_num:
-                # stop the extra networks
-                stop_networks(target_proto_num, cur_net_num, networks)
-                networks = networks[:target_proto_num]
-        # 2.1 or reload networks if networks is already built
-        for i in range(target_proto_num):
-            if not networks[i].is_started():
-                networks[i].start()
-            else:
-                # reload the already started network
-                networks[i].reload(cur_topology)
-            logging.info("########## Oasis reload the network %s.", i)
+        cur_topology = load_topology(config_mapped_prefix, test)
+        for cur_top_index, cur_top_ins in enumerate(cur_topology):
+            # 2. build the network for each target protocol
+            if not is_parallel_execution(cur_execution_mode):
+                # serial execution only needs one network
+                target_proto_num = 1
+                logging.info("########## Oasis execute the test %s in serial mode.",
+                             cur_test_name)
+            cur_net_num = len(networks)
+            if cur_net_num != target_proto_num:
+                # targets changed.
+                if cur_net_num < target_proto_num:
+                    for i in range(cur_net_num, target_proto_num):
+                        if is_parallel_execution(cur_execution_mode):
+                            logging.info(
+                                "####################################################")
+                            logging.info(
+                                "########## Oasis Parallel Execution Mode. ##########")
+                            logging.info(
+                                "########## network instance %s             ##########", i)
+                            logging.info(
+                                "####################################################")
+                            cur_node_config.name_prefix = f"{org_name_prefix}{alphabet[i]}"
+                            cur_node_config.bind_port = False
+                        network_ins = build_network(
+                            cur_node_config, cur_top_ins, test['route'])
+                        if network_ins is None:
+                            logging.error("Error: failed to build network.")
+                            continue
+                        networks.append(network_ins)
+                elif cur_net_num > target_proto_num:
+                    # stop the extra networks
+                    stop_networks(target_proto_num, cur_net_num, networks)
+                    networks = networks[:target_proto_num]
+            # 2.1 or reload networks if networks is already built
+            for i in range(target_proto_num):
+                if not networks[i].is_started():
+                    networks[i].start()
+                else:
+                    # reload the already started network
+                    networks[i].reload(cur_top_ins)
+                logging.info("########## Oasis reload the network %s.", i)
+            cur_top_description = networks[0].get_topology_description()
+            logging.info(
+                "######################################################")
+            logging.info("########## Oasis traverse the topologies: [%d] \n %s.",
+                         cur_top_index,
+                         cur_top_description)
+            logging.info(
+                "######################################################")
+            # 3. setup the test for each target protocol
+            for i in range(target_proto_num):
+                selected_protocols = []
+                if is_parallel_execution(cur_execution_mode):
+                    selected_protocols = [target_protocols[i]]
+                else:
+                    selected_protocols = target_protocols
+                if setup_test(test, selected_protocols, networks[i]) is False:
+                    logging.error("Error: failed to setup the test.")
+                    stop_networks(0, target_proto_num, networks)
+                    sys.exit(1)
 
-        cur_top_description = networks[0].get_topology_description()
+            # 4. perform the test for each target protocol in parallel with different processes
+            processes = []
+            manager = Manager()
+            process_shared_dict = manager.dict()
+            for i in range(target_proto_num):
+                p = multiprocessing.Process(target=perform_test_in_process,
+                                            args=(networks[i],
+                                                  cur_test_name,
+                                                  i, process_shared_dict))
+                processes.append(p)
+                p.start()
 
-        # 3. setup the test for each target protocol
-        for i in range(target_proto_num):
-            selected_protocols = []
-            if is_parallel_execution(cur_execution_mode):
-                selected_protocols = [target_protocols[i]]
-            else:
-                selected_protocols = target_protocols
-            if setup_test(test, selected_protocols, networks[i]) is False:
-                logging.error("Error: failed to setup the test.")
-                stop_networks(0, target_proto_num, networks)
-                sys.exit(1)
+            # 4.1 Wait for all processes to complete
+            for i, p in enumerate(processes):
+                p.join(timeout=600)
+                if p.is_alive():
+                    logging.error(f"Process %s for test %s is stuck.",
+                                  i, cur_test_name)
+                    p.terminate()
+                    p.join()
+                    logging.info(f"Process %s for test %s is terminated.",
+                                 i, cur_test_name)
+                else:
+                    logging.info(f"Process %s for test %s is completed successfully.",
+                                 i, cur_test_name)
 
-        # 4. perform the test for each target protocol in parallel with different processes
-        processes = []
-        manager = Manager()
-        process_shared_dict = manager.dict()
-        for i in range(target_proto_num):
-            p = multiprocessing.Process(target=perform_test_in_process,
-                                        args=(networks[i],
-                                              cur_test_name,
-                                              i, process_shared_dict))
-            processes.append(p)
-            p.start()
-
-        # 4.1 Wait for all processes to complete
-        for i, p in enumerate(processes):
-            p.join(timeout=600)
-            if p.is_alive():
-                logging.error(f"Process %s for test %s is stuck.",
-                              i, cur_test_name)
-                p.terminate()
-                p.join()
-                logging.info(f"Process %s for test %s is terminated.",
-                             i, cur_test_name)
-            else:
-                logging.info(f"Process %s for test %s is completed successfully.",
-                             i, cur_test_name)
-
-        # 5. merge multiple test results into one dictionary
-        merged_results = {}
-        for i in range(target_proto_num):
-            if i not in process_shared_dict:
-                logging.error(f"No results found for process %s.", i)
+            # 5. merge multiple test results into one dictionary
+            merged_results = {}
+            for i in range(target_proto_num):
+                if i not in process_shared_dict:
+                    logging.error(f"No results found for process %s.", i)
+                    handle_test_failure(cur_test_name)
+                    stop_networks(0, target_proto_num, networks)
+                    sys.exit(1)
+                for shared_test_type, shared_test_result in process_shared_dict[i].items():
+                    if shared_test_type not in merged_results:
+                        merged_results[shared_test_type] = {
+                            'results': [],
+                            'config': shared_test_result['config']
+                        }
+                    merged_results[shared_test_type]['results'].extend(
+                        shared_test_result['results'])
+            logging.info(
+                "########## Oasis merge parallel test results. %s", merged_results)
+            # 5.1 diagnostic the test results
+            if diagnostic_test_results(merged_results,
+                                       cur_top_description) is False:
+                logging.error("Test %s results analysis not passed.",
+                              cur_test_name)
                 handle_test_failure(cur_test_name)
                 stop_networks(0, target_proto_num, networks)
                 sys.exit(1)
-            for shared_test_type, shared_test_result in process_shared_dict[i].items():
-                if shared_test_type not in merged_results:
-                    merged_results[shared_test_type] = {
-                        'results': [],
-                        'config': shared_test_result['config']
-                    }
-                merged_results[shared_test_type]['results'].extend(
-                    shared_test_result['results'])
-        logging.info(
-            "########## Oasis merge parallel test results. %s", merged_results)
 
-        # 5.1 diagnostic the test results
-        if diagnostic_test_results(merged_results,
-                                   cur_top_description) is False:
-            logging.error("Test %s results analysis not passed.",
-                          cur_test_name)
-            handle_test_failure(cur_test_name)
-            stop_networks(0, target_proto_num, networks)
-            sys.exit(1)
+            # 5.2 move results(logs, diagrams) to "{cur_results_path}/{cur_top_index}"
+            cur_results_path = merged_results[0]['results'][0].result_dir
+            logging.info("cur_results_path %s",
+                         cur_results_path)
+            archive_dir = f"{cur_results_path}topology-{cur_top_index}"
+            if not os.path.exists(archive_dir):
+                os.makedirs(archive_dir)
+            # move all files and folders to the archive directory except folder which start with "topology-*"
+            for root, dirs, files in os.walk(cur_results_path):
+                if root != cur_results_path:
+                    # no iteration
+                    continue
+                for dir_name in dirs:
+                    if dir_name.startswith("topology-"):
+                        continue
+                    os.system(f"mv {root}/{dir_name} {archive_dir}")
+                for file_name in files:
+                    os.system(f"mv {root}/{file_name} {archive_dir}")
+            # 5.3 save cur_top_description
+            with open(f"{archive_dir}/topology_description.txt", 'w', encoding='utf-8') as f:
+                f.write(f"{cur_top_description}")
 
-        # 6. reset the network then go to the next test case
-        reset_networks(target_proto_num, networks)
-        manager.shutdown()
-
+            # 6. reset the network then go to the next test case
+            reset_networks(target_proto_num, networks)
+            manager.shutdown()
+        # > for cur_top_ins in cur_topology:
+    # > for test in all_tests
     handle_test_success()
     stop_networks(0, target_proto_num, networks)
     sys.exit(0)

@@ -24,11 +24,34 @@ MatType2LinkAttr = {
 
 
 class ITopology(ABC):
-    def __init__(self, top: TopologyConfig) -> None:
+    def __init__(self, top: TopologyConfig, init_all_mat: bool = True):
         self.all_mats = {}
         self.adj_matrix = None
         self.top_config = top
-        self.init_all_mats()
+        self.compound_top = False
+        self._current_top_index = 0  # keep track of the current topology
+        # when compound_top is True, the topologies is a list of ITopology;
+        # otherwise, it is empty.
+        self.topologies = []
+        if init_all_mat is True:
+            self.init_all_mats()
+
+    def __iter__(self):
+        return iter(self.topologies)
+
+    def get_next_top(self):
+        if not self.is_compound():
+            return None
+        if self._current_top_index >= len(self.topologies):
+            return None
+        top = self.topologies[self._current_top_index]
+        logging.info("########## Use Oasis compound topology %s.",
+                     self._current_top_index)
+        self._current_top_index += 1
+        return top
+
+    def is_compound(self):
+        return self.compound_top
 
     @abstractmethod
     def generate_adj_matrix(self, num_of_nodes: int):
@@ -42,6 +65,9 @@ class ITopology(ABC):
         return self.top_config.topology_type
 
     def get_matrix(self, mat_type: MatrixType):
+        # when invoked, compound_top is expected to be False
+        if self.is_compound():
+            logging.error("Incorrect usage of compound topology get_matrix()")
         if mat_type not in self.all_mats:
             return None
         return self.all_mats[mat_type]

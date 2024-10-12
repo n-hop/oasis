@@ -78,7 +78,8 @@ class ContainerizedNetwork (INetwork):
     def get_topology_description(self):
         if self.net_loss_mat is None or self.net_bw_mat is None or \
                 self.net_latency_mat is None or self.net_jitter_mat is None:
-            logging.warning("The network matrices are not initialized.")
+            logging.warning(
+                "The network matrices are not initialized; and traffic shaping will not be applied.")
             return ""
         if self.topology_type == 'linear':
             description = f"Linear {self.num_of_hosts - 1} hops \n"
@@ -322,7 +323,7 @@ class ContainerizedNetwork (INetwork):
                     jitter = self.net_jitter_mat[id1][id2]
                     if jitter > 0:
                         shaping_parameters += f" {self.net_jitter_mat[id1][id2]}ms distribution normal"
-        logging.info("shaping_parameters %s", shaping_parameters)
+        logging.info("shaping_parameters\"%s\"", shaping_parameters)
         port = attached_inf[-1]
         ifb_interface = f"ifb{port}"
         self.hosts[id2].cmd(

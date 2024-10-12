@@ -3,20 +3,8 @@ import re
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from tools.util import str_to_mbps
 from .analyzer import IDataAnalyzer
-
-
-def str_to_mbps(x, unit):
-    ret = 0.00
-    if unit == "K":
-        ret = float(x) / 1000
-    elif unit == "M":
-        ret = float(x)
-    elif unit == "G":
-        ret = float(x) * 1000
-    elif unit == "":
-        ret = float(x) / 1000000
-    return round(ret, 2)
 
 
 class Iperf3Analyzer(IDataAnalyzer):
