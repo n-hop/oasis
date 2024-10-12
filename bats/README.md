@@ -103,6 +103,37 @@ Take `h0` as the sender and `h1` as the receiver.
 <img src="./imgs/iperf3_udp_statistics.svg" alt="UDP measurement"></div>
 <div align="center">Fig 3.4.1 Single hop UDP test result</div>
 
+- TCP Throughput under different link latency and loss rate:
+
+Purpose: To evaluate the BATS protocol performance under different link latency and loss rate.
+
+<div align="center" style="text-align:center"> 
+<img src="./imgs/bats-brtp.png" alt="BATS Protocol" style="zoom:60%;"></div>
+<div align="center">Fig 3.4.2 BATS Protocol performance</div>
+
+| Loss Rate/Latency | 10ms | 30ms | 50ms | 70ms | 90ms | 110ms |
+| ----------------- | ---- | ---- | ---- | ---- | ---- | ----- |
+| 0.00%             | 91.7 | 90.5 | 86.1 | 87.1 | 84   | 79    |
+| 2.00%             | 81.9 | 80.6 | 77.6 | 72.1 | 59.7 | 54.3  |
+| 4.00%             | 77.5 | 76.8 | 72.9 | 70.8 | 58.8 | 52.3  |
+| 6.00%             | 75.9 | 75.2 | 69.6 | 56.6 | 51.5 | 39    |
+| 8.00%             | 73.3 | 72.4 | 68.5 | 65.9 | 48   | 42    |
+| 10.00%            | 70.1 | 68.8 | 66.3 | 62.8 | 49.4 | 28.6  |
+<div align="center">Table 3.4.2 BATS Protocol performance</div>
+
+This test can be repeated by Oasis with running the following command:
+Run with:
+
+```bash
+sudo python3 src/start.py --containernet=default -p src/config -t bats-protocol-rtt-loss-test.yaml
+```
+
+Outputs of the above command:
+
+- test_results/test1000/throughput_latency_loss.csv (Throughput data table in csv format)
+- test_results/test1000/throughput_latency_loss.svg (3D bar plot)
+- the original test records and logs for each selected latency and loss rate, such as `test_results/test1000/topology-10`
+
 ### 3.2 Three hops test
 
 ```
@@ -132,7 +163,7 @@ Take `h0` as the sender and `h3` as the receiver.
 The above tests can be repeated by Oasis with running the following command:
 
 ```bash
-sudo python3 src/start.py -p /home/runner/workspace/oasis/src/config \
+sudo python3 src/start.py -p src/config \
    --containernet=default 
   -t protocol-performance-comparison.yaml
 ```
