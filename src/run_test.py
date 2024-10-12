@@ -9,10 +9,11 @@ import yaml
 # from mininet.cli import CLI
 from mininet.log import setLogLevel
 from interfaces.network import INetwork
+from containernet.topology import ITopology
 from containernet.linear_topology import LinearTopology
 from containernet.containernet_network import ContainerizedNetwork
 from containernet.config import (
-    IConfig, NodeConfig, TopologyConfig, TopologyType)
+    IConfig, NodeConfig, TopologyConfig)
 from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
@@ -359,27 +360,6 @@ def load_node_config(config_base_path, file_path) -> NodeConfig:
                                     node_config_yaml, 'node_config')
 
 
-def load_top_config(config_base_path, test_case_yaml) -> TopologyConfig:
-    """Load network related configuration from the yaml file.
-    """
-    if 'topology' not in test_case_yaml:
-        logging.error("Error: missing key topology in the test case yaml.")
-        return TopologyConfig(name="", nodes=0, topology_type=TopologyType.linear)
-    local_yaml = test_case_yaml['topology']
-    logging.info(f"Test: local_yaml %s",
-                 local_yaml)
-    if local_yaml is None:
-        logging.error("Error: content of topology is None.")
-        return TopologyConfig(name="", nodes=0, topology_type=TopologyType.linear)
-    loaded_conf = IConfig.load_yaml_config(config_base_path,
-                                           local_yaml,
-                                           'topology')
-    if loaded_conf is None:
-        logging.error("Error: loaded_conf of topology is None.")
-        return TopologyConfig(name="", nodes=0, topology_type=TopologyType.linear)
-    return loaded_conf
-
-
 def build_topology(top_config: TopologyConfig):
     built_net_top = None
     if top_config.topology_type == "linear":
@@ -390,7 +370,32 @@ def build_topology(top_config: TopologyConfig):
     return built_net_top
 
 
-def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: str = "static_route"):
+def load_topology(config_base_path, test_case_yaml) -> ITopology:
+    """Load network related configuration from the yaml file.
+    """
+    if 'topology' not in test_case_yaml:
+        logging.error("Error: missing key topology in the test case yaml.")
+        return None  # type: ignore
+    local_yaml = test_case_yaml['topology']
+    logging.info(f"Test: local_yaml %s",
+                 local_yaml)
+    if local_yaml is None:
+        logging.error("Error: content of topology is None.")
+        return None  # type: ignore
+    loaded_conf = IConfig.load_yaml_config(config_base_path,
+                                           local_yaml,
+                                           'topology')
+    if loaded_conf is None:
+        logging.error("Error: loaded_conf of topology is None.")
+        return None  # type: ignore
+
+    topology_ins = build_topology(loaded_conf)
+    if topology_ins is None:
+        logging.error("Error: failed to load network top config.")
+    return topology_ins  # type: ignore
+
+
+def build_network(node_config: NodeConfig, top: ITopology, route: str = "static_route"):
     """Build a container network from the yaml configuration file.
 
     Args:
@@ -399,10 +404,6 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: st
     Returns:
         ContainerizedNetwork: the container network object
     """
-    net_top = build_topology(top_config)
-    if net_top is None:
-        logging.error("Error: failed to build network topology.")
-        return None
     route_strategy = StaticRouting()
     if route == "static_route":
         route_strategy = StaticRouting()
@@ -410,7 +411,7 @@ def build_network(node_config: NodeConfig, top_config: TopologyConfig, route: st
         route_strategy = OLSRRouting()
     elif route == "openr_route":
         route_strategy = OpenrRouting()
-    return ContainerizedNetwork(node_config, net_top, route_strategy)
+    return ContainerizedNetwork(node_config, top, route_strategy)
 
 
 def handle_test_failure(test_name):
@@ -454,7 +455,7 @@ def reset_networks(proto_num, nets):
 
 
 if __name__ == '__main__':
-    debug_log = 'False'
+    debug_log = 'True'
     if len(sys.argv) == 5:
         debug_log = sys.argv[4]
     if debug_log == 'True':
@@ -516,10 +517,10 @@ if __name__ == '__main__':
         sys.exit(1)
     for test in all_tests:
         cur_test_name = test['name']
-        cur_top_config = load_top_config(config_mapped_prefix, test)
-        if cur_top_config.name == "":
-            logging.warning("Error: no network topology config.")
-            continue
+        cur_topology = load_topology(config_mapped_prefix, test)
+        # if cur_top_config.name == "":
+        #    logging.warning("Error: no network topology config.")
+        #    continue
         # execution mode default is serial
         cur_execution_mode = test.get('execution_mode', 'serial')
         if cur_execution_mode not in supported_execution_mode:
@@ -563,25 +564,23 @@ if __name__ == '__main__':
                             "####################################################")
                         cur_node_config.name_prefix = f"{org_name_prefix}{alphabet[i]}"
                         cur_node_config.bind_port = False
-                    linear_network = build_network(
-                        cur_node_config, cur_top_config, test['route'])
-                    if linear_network is None:
+                    network_ins = build_network(
+                        cur_node_config, cur_topology, test['route'])
+                    if network_ins is None:
                         logging.error("Error: failed to build network.")
                         continue
-                    networks.append(linear_network)
+                    networks.append(network_ins)
             elif cur_net_num > target_proto_num:
                 # stop the extra networks
                 stop_networks(target_proto_num, cur_net_num, networks)
                 networks = networks[:target_proto_num]
         # 2.1 or reload networks if networks is already built
-        local_net_top = build_topology(cur_top_config)
-        if local_net_top is None:
-            logging.error("Error: failed to load network top config.")
         for i in range(target_proto_num):
             if not networks[i].is_started():
                 networks[i].start()
             else:
-                networks[i].reload(local_net_top)
+                # reload the already started network
+                networks[i].reload(cur_topology)
             logging.info("########## Oasis reload the network %s.", i)
 
         cur_top_description = networks[0].get_topology_description()
