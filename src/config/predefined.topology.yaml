@@ -62,3 +62,21 @@ topology:
         init_value: [100]
       - link_bandwidth_backward:
         init_value: [100]
+  - name: linear_network_rtt_loss
+    topology_type: linear
+    nodes: 2
+    array_description:
+      - link_loss:
+        init_value: [0]
+        step_len: 2
+        step_num: 5
+      - link_latency:
+        init_value: [10]
+        step_len: 20
+        step_num: 5
+      - link_jitter:
+        init_value: [0]
+      - link_bandwidth_forward:
+        init_value: [100]
+      - link_bandwidth_backward:
+        init_value: [100]
