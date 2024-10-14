@@ -1,5 +1,6 @@
 import logging
 from interfaces.host import IHost
+from var.global_var import g_root_path
 
 
 class ContainernetHostAdapter(IHost):
@@ -62,14 +63,14 @@ class ContainernetHostAdapter(IHost):
     def __setup_ssh(self):
         self.containernet_host.cmd("rm -rf /root/.ssh/")
         self.containernet_host.cmd("mkdir /root/.ssh/")
-        self.containernet_host.cmd(
-            "ssh-keygen -t rsa -P '' -f /root/.ssh/id_rsa")
-        self.containernet_host.cmd(
+        self.containernet_host.cmdPrint(
+            f'cp {g_root_path}src/config/keys/* /root/.ssh/')
+        self.containernet_host.cmdPrint(
             "cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys")
-        self.containernet_host.cmd(
+        self.containernet_host.cmdPrint(
             "echo 'PermitRootLogin yes' | tee -a /etc/ssh/sshd_config")
-        self.containernet_host.cmd(
+        self.containernet_host.cmdPrint(
             "echo 'PasswordAuthentication no' | tee -a /etc/ssh/sshd_config")
-        self.containernet_host.cmd(
+        self.containernet_host.cmdPrint(
             "echo 'StrictModes no' | tee -a /etc/ssh/sshd_config")
         self.containernet_host.cmdPrint("service ssh start")
