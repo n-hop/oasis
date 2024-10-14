@@ -105,7 +105,8 @@ Take `h0` as the sender and `h1` as the receiver.
 
 - TCP Throughput under different link latency and loss rate:
 
-Purpose: To evaluate the BATS protocol performance under different link latency and loss rate.
+  - Purpose: To evaluate the BATS protocol performance under different link latency and loss rate.
+  - Chosen BATS Protocol: BRTP.
 
 <div align="center" style="text-align:center"> 
 <img src="./imgs/bats-brtp.png" alt="BATS Protocol" style="zoom:60%;"></div>
@@ -125,8 +126,7 @@ Purpose: To evaluate the BATS protocol performance under different link latency 
 </div>
 <div align="center">Table 3.4.2 BATS Protocol performance</div>
 
-This test can be repeated by Oasis with running the following command:
-Run with:
+This test can be repeated in Oasis with running the following command:
 
 ```bash
 sudo python3 src/start.py --containernet=default -p src/config -t bats-protocol-rtt-loss-test.yaml
