@@ -9,7 +9,7 @@ class OLSRRouting(IRoutingStrategy):
     """
 
     def __init__(self):
-        self.binary_path = "/root/bin/olsr/olsrd2_static"
+        self.binary_path = f"{g_root_path}bin/olsr/olsrd2_static"
         self.cfg_path = "/etc/olsr/olsr.config"
 
     def setup_routes(self, network: 'INetwork'):
@@ -64,7 +64,7 @@ class OLSRRouting(IRoutingStrategy):
         for host in hosts:
             host.cmd(f'nohup {self.binary_path} --load={self.cfg_path} &')
             # host.cmd(
-            #     f'nohup {self.binary_path} --load={self.cfg_path} > /root/test_results/olsr{host.name()}.log &')
+            #     f'nohup {self.binary_path} --load={self.cfg_path} > {g_root_path}test_results/olsr{host.name()}.log &')
         max_wait_sec = 20 + host_num * 3
         wait_sec = 0
         last_host_ip = f'172.23.1.{host_num}'

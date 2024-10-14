@@ -72,4 +72,4 @@ class ContainernetHostAdapter(IHost):
             "echo 'PasswordAuthentication no' | tee -a /etc/ssh/sshd_config")
         self.containernet_host.cmd(
             "echo 'StrictModes no' | tee -a /etc/ssh/sshd_config")
-        self.containernet_host.cmd("service ssh start")
+        self.containernet_host.cmdPrint("service ssh start")

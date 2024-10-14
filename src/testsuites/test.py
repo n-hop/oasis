@@ -5,6 +5,7 @@ from enum import IntEnum
 from dataclasses import dataclass, field
 from typing import Optional
 from protosuites.proto_info import IProtoInfo
+from var.global_var import g_root_path
 
 
 class TestType(IntEnum):
@@ -13,6 +14,7 @@ class TestType(IntEnum):
     jitter = 2
     rtt = 3
     sshping = 4
+    scp = 5
 
 
 # add mapping for the test type
@@ -21,7 +23,8 @@ test_type_str_mapping = {
     TestType.latency: "latency",
     TestType.jitter: "jitter",
     TestType.rtt: "rtt",
-    TestType.sshping: "sshping"
+    TestType.sshping: "sshping",
+    TestType.scp: "scp"
 }
 
 
@@ -67,13 +70,13 @@ class TestResult:
     is_success: bool
     pattern: str
     record: str
-    result_dir: str = field(default="/root/")
+    result_dir: str = field(default=f"{g_root_path}")
 
 
 class ITestSuite(ABC):
     def __init__(self, config: TestConfig) -> None:
         self.config = config
-        self.result_dir = f"/root/test_results/{self.config.name}/"
+        self.result_dir = f"{g_root_path}test_results/{self.config.name}/"
         if not os.path.exists(f"{self.result_dir}"):
             os.makedirs(f"{self.result_dir}")
         if self.config.test_type is not None:

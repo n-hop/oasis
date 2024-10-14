@@ -73,11 +73,23 @@ jobs:
         run: |
           docker image load --input ./node_cache/containernet_node.tar
       - name: Run tests
+        working-directory: ${{github.workspace}}/
         run: |
+          # --containernet=nuc_sz -p src/config -t protocol-sshping-test.yaml
           echo "Hardware_info=${{secrets.BATS_HARDWARE_INFO}}" >> ${{github.workspace}}/bats/licence
           echo "Licence_id=${{secrets.BATS_LICENCE_ID}}" >> ${{github.workspace}}/bats/licence
-          python3 ${{github.workspace}}/src/start.py \
-          -p ${{github.workspace}}/src/config \
-          -n nested-containernet-config.yaml \
+          python3 ./src/start.py -p src/config \
           --containernet=default \
           -t protocol-single-hop-test.yaml
+          if [ ! -f ${{github.workspace}}/test.success ]; then
+            echo "oasis test failed"
+            exit 1
+          fi
+          rm -rf ${{github.workspace}}/test.success
+          python3 ./src/start.py -p src/config \
+          --containernet=default \
+          -t protocol-sshping-test.yaml
+          if [ ! -f ${{github.workspace}}/test.success ]; then
+            echo "oasis test failed"
+            exit 1
+          fi

@@ -4,6 +4,7 @@ import random
 import time
 import yaml
 from tools.util import is_same_path
+from var.global_var import g_root_path
 from .config import (NestedConfig)
 
 
@@ -61,21 +62,19 @@ class NestedContainernet():
     def tearDown(self) -> None:
         logging.info(
             "NestedContainernet tearDown the Containernet.")
-        # mount_config = os.path.join(self.oasis_workspace, "config")
-        # unmount the mounted directories
-        # if os.path.exists(mount_config):
-        #    os.system(f"umount {mount_config}")
-        #    os.system(f"rm -rf {mount_config}")
         os.system(
             "docker stop $(docker ps -a -q "
             f"-fname={self.test_container_name}) || true")
         os.system("docker container prune --force || true")
+        files = [".bashrc", ".ssh/", ".vim/"]
+        for file in files:
+            os.system(f"rm -rf /root/{file}")
         # calculate the time
         end_time = time.time()
         cost_time = (int)(end_time - self.start_time)
         logging.info(
             "########################## Oasis teardown"
-            "NestedContainernet(%s)##########################",cost_time)
+            "NestedContainernet(%s)##########################", cost_time)
 
     def stop(self):
         self.tearDown()
@@ -114,7 +113,7 @@ class NestedContainernet():
         if not os.path.exists(f"{self.oasis_workspace}/src/containernet/requirements.txt"):
             return
         install_cmd = f"docker exec {self.test_container_name} "\
-            f"/bin/bash -c \"python3 -m pip install -r /root/src/containernet/requirements.txt"\
+            f"/bin/bash -c \"python3 -m pip install -r {g_root_path}src/containernet/requirements.txt"\
             f" -i https://pypi.tuna.tsinghua.edu.cn/simple\""
         logging.info(
             f"Oasis execute install command \" %s \"", install_cmd)
@@ -122,11 +121,11 @@ class NestedContainernet():
 
     def patch(self):
         '''Apply patches to the nested containernet source code.'''
-        for _, _, files in os.walk(f"/root/patch"):
+        for _, _, files in os.walk(f"{g_root_path}patch"):
             for patch_file in files:
                 if patch_file.endswith(".patch"):
                     patch_cmd = f"docker exec {self.test_container_name} "\
-                        f"/bin/bash -c \"cd / && patch -p0 < /root/patch/{patch_file}\""
+                        f"/bin/bash -c \"cd / && patch -p0 < {g_root_path}patch/{patch_file}\""
                     os.system(patch_cmd)
                     logging.info(
                         f"Oasis execute patch command \" %s \"", patch_cmd)
@@ -158,12 +157,12 @@ class NestedContainernet():
             logging.info(
                 "NestedContainernet:: No config path mapping is needed.")
         else:
-            # 2. mount yaml_base_path directory to /root/config/
+            # 2. mount yaml_base_path directory to {g_root_path}config/
             self.formatted_mounts += f" --mount "\
                 f"type=bind,source={self.yaml_base_path},"\
-                f"target=/root/config/,bind-propagation=shared "
+                f"target={g_root_path}config/,bind-propagation=shared "
             logging.info(
-                "NestedContainernet:: Oasis yaml config files mapped to `/root/config/`.")
+                "NestedContainernet:: Oasis yaml config files mapped to `{g_root_path}config/`.")
             logging.info(
                 "NestedContainernet:: yaml_base_path %s,"
                 "oasis_workspace%s", self.yaml_base_path, self.oasis_workspace)

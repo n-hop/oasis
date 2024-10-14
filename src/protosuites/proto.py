@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from dataclasses import dataclass, field
 from typing import (Optional, List)
+from var.global_var import g_root_path
 
 
 class ProtoType(IntEnum):
@@ -41,7 +42,7 @@ class IProtoSuite(ABC):
     def __init__(self, config: ProtoConfig):
         self.is_success = False
         self.config = config
-        self.log_dir = f"/root/test_results/{self.config.test_name}/{self.config.name}/log/"
+        self.log_dir = f"{g_root_path}test_results/{self.config.test_name}/{self.config.name}/log/"
         if not os.path.exists(f"{self.log_dir}"):
             os.makedirs(f"{self.log_dir}")
 
@@ -58,7 +59,7 @@ class IProtoSuite(ABC):
                 logging.info("protocol %s path is a process name.",
                              self.config.path)
             else:
-                if not os.path.isfile(f"/root/{self.config.path}"):
+                if not os.path.isfile(f"{g_root_path}{self.config.path}"):
                     # it is in protocol docker image.
                     logging.warning("protocol %s binary %s is not found.",
                                     self.config.name, self.config.path)

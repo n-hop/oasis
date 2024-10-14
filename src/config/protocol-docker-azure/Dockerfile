@@ -19,7 +19,9 @@ RUN apt-get install --yes \
         curl \
         wget \
         libnl-genl-3-dev \
-        ncat
+        ncat \
+        openssh-server \
+        openssh-client
 
 RUN pip3 install \
         PyYAML==6.0.1 \

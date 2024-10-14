@@ -1,4 +1,4 @@
-from math import log
+import time
 import os
 import sys
 import logging
@@ -21,6 +21,7 @@ from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from testsuites.test_rtt import RTTTest
 from testsuites.test_sshping import SSHPingTest
+from testsuites.test_scp import ScpTest
 from routing.static_routing import StaticRouting
 from routing.olsr_routing import OLSRRouting
 from routing.openr_routing import OpenrRouting
@@ -33,6 +34,7 @@ from protosuites.bats.bats_brtp_proxy import BRTPProxy
 from data_analyzer.analyzer import AnalyzerConfig
 from data_analyzer.analyzer_factory import AnalyzerFactory
 from tools.util import is_same_path
+from var.global_var import g_root_path
 
 supported_execution_mode = ["serial", "parallel"]
 # alphabet table
@@ -111,6 +113,8 @@ def diagnostic_test_results(test_results, top_des):
                     "Test %s failed at sshping test", test_config.name)
                 return False
             analyzer.visualize()
+        if test_type == TestType.scp:
+            logging.error("scp test results: %s", result_files)
     return True
 
 
@@ -182,6 +186,10 @@ def add_test_to_network(network, tool, test_name):
         test_conf.test_type = TestType.sshping
         network.add_test_suite(SSHPingTest(test_conf))
         logging.info("Added sshping test to %s.", test_name)
+    elif tool['name'] == 'scp':
+        test_conf.test_type = TestType.scp
+        network.add_test_suite(ScpTest(test_conf))
+        logging.info("Added scp test to %s.", test_name)
     else:
         logging.error(
             f"Error: unsupported test tool %s", tool['name'])
@@ -415,13 +423,13 @@ def build_network(node_config: NodeConfig, top: ITopology, route: str = "static_
 def handle_test_failure(test_name):
     logging.error("Test %s failed.", test_name)
     # create a regular file to indicate the test failure
-    with open(f"/root/test.failed", 'w', encoding='utf-8') as f_failed:
+    with open(f"{g_root_path}test.failed", 'w', encoding='utf-8') as f_failed:
         f_failed.write(f"{test_name}")
 
 
 def handle_test_success():
     # create a regular file to indicate the test success
-    with open(f"/root/test.success", 'w', encoding='utf-8') as f:
+    with open(f"{g_root_path}test.success", 'w', encoding='utf-8') as f:
         f.write(f"test.success")
 
 
@@ -461,7 +469,7 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
         logging.info("Debug mode is enabled.")
     else:
-        setLogLevel('warning')
+        setLogLevel('info')
         logging.basicConfig(level=logging.INFO)
         logging.info("Debug mode is disabled.")
     logging.info("Platform: %s", platform.platform())
@@ -470,16 +478,17 @@ if __name__ == '__main__':
     oasis_workspace = sys.argv[2]
     logging.info("Yaml config path: %s", yaml_config_base_path)
     logging.info("Oasis workspace: %s", oasis_workspace)
-    # config_mapped_prefix can be `/root/config/` or `/root/src/config/`
+    # config_mapped_prefix can be `{g_root_path}config/` or `{g_root_path}src/config/`
     if is_same_path(yaml_config_base_path, f"{oasis_workspace}/src/config/"):
-        # oasis workspace mapped to `/root/`
+        # oasis workspace mapped to `{g_root_path}`
         logging.info("No config path mapping is needed.")
-        config_mapped_prefix = '/root/src/config/'
+        config_mapped_prefix = f'{g_root_path}src/config/'
     else:
-        # oasis yaml config files mapped to `/root/config/`
-        logging.info("Oasis yaml config files mapped to `/root/config/`.")
-        config_mapped_prefix = '/root/config/'
-    oasis_mapped_prefix = '/root/'
+        # oasis yaml config files mapped to `{g_root_path}config/`
+        config_mapped_prefix = f'{g_root_path}config/'
+        logging.info(
+            "Oasis yaml config files mapped to `%s`.", config_mapped_prefix)
+    oasis_mapped_prefix = f'{g_root_path}'
     logging.info(
         f"run_test.py: Base path of the oasis project: %s", oasis_workspace)
     cur_test_file = sys.argv[3]
@@ -503,7 +512,7 @@ if __name__ == '__main__':
         sys.exit(1)
     # mount the workspace
     cur_node_config.vols.append(f'{oasis_workspace}:{oasis_mapped_prefix}')
-    if config_mapped_prefix == '/root/config/':
+    if config_mapped_prefix == f'{g_root_path}config/':
         cur_node_config.vols.append(
             f'{yaml_config_base_path}:{config_mapped_prefix}')
     target_proto_num = 0
@@ -652,7 +661,7 @@ if __name__ == '__main__':
                 sys.exit(1)
 
             # 5.2 move results(logs, diagrams) to "{cur_results_path}/{cur_top_index}"
-            cur_results_path = merged_results[0]['results'][0].result_dir
+            cur_results_path = f"{g_root_path}test_results/{cur_test_name}/"
             logging.info("cur_results_path %s",
                          cur_results_path)
             archive_dir = f"{cur_results_path}topology-{cur_top_index}"
