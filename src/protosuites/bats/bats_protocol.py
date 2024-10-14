@@ -7,6 +7,7 @@ from interfaces.host import IHost
 from tools.cfg_generator import generate_cfg_files
 from protosuites.proto import (ProtoConfig, IProtoSuite)
 from protosuites.proto_info import IProtoInfo
+from var.global_var import g_root_path
 
 
 class BATSProtocol(IProtoSuite, IProtoInfo):
@@ -18,6 +19,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         self.source_path = '/'.join(self.config.path.split('/')[:-1])
         if self.source_path == '':
             self.source_path = '.'
+        else:
+            self.source_path = f'{g_root_path}{self.source_path}'
         self.virtual_ip_prefix = '1.0.0.'
         self.license_path = f'{self.source_path}/licence'
 
@@ -42,6 +45,8 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
                 self.config.config_base_path, self.config.config_file)
         else:
             logging.error("Config base path or config file is not set.")
+        logging.debug(
+            f"########################## BATSProtocol Source path: %s", self.source_path)
         generate_cfg_files(host_num, hosts_ip_range,
                            self.virtual_ip_prefix, self.source_path, cfg_template_path)
         # generate some error log if the license file is not correct
@@ -68,7 +73,7 @@ class BATSProtocol(IProtoSuite, IProtoInfo):
         host_num = len(hosts)
         for i in range(host_num):
             hosts[i].cmd(
-                f'nohup {self.config.path} {self.protocol_args} '
+                f'nohup {g_root_path}{self.config.path} {self.protocol_args} '
                 f' > {self.log_dir}bats_protocol_h{i}.log &')
 
         # check the protocol is running

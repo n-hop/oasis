@@ -3,6 +3,7 @@ import time
 import re
 from protosuites.proto import (ProtoConfig, IProtoSuite)
 from interfaces.network import INetwork
+from var.global_var import g_root_path
 from .proto_info import IProtoInfo
 
 
@@ -42,7 +43,8 @@ class StdProtocol(IProtoSuite, IProtoInfo):
         for host_id in self.config.hosts:
             cur_protocol_args = self.get_protocol_args(network)
             hosts[host_id].cmd(
-                f'{self.config.path} {cur_protocol_args} > {self.log_dir}{self.config.name}_h{host_id}.log &')
+                f'{g_root_path}{self.config.path} {cur_protocol_args} > '
+                f'{self.log_dir}{self.config.name}_h{host_id}.log &')
         time.sleep(2)
         for host_id in self.config.hosts:
             res = hosts[host_id].cmd(f"ps aux | grep {self.process_name}")

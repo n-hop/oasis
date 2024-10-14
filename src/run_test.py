@@ -469,7 +469,7 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
         logging.info("Debug mode is enabled.")
     else:
-        setLogLevel('info')
+        setLogLevel('warning')
         logging.basicConfig(level=logging.INFO)
         logging.info("Debug mode is disabled.")
     logging.info("Platform: %s", platform.platform())
@@ -681,7 +681,6 @@ if __name__ == '__main__':
             # 5.3 save cur_top_description
             with open(f"{archive_dir}/topology_description.txt", 'w', encoding='utf-8') as f:
                 f.write(f"{cur_top_description}")
-
             # 6. reset the network then go to the next test case
             reset_networks(target_proto_num, networks)
             manager.shutdown()

@@ -149,7 +149,7 @@ class NestedContainernet():
         # 1. mount oasis_workspace directory to /root
         self.formatted_mounts = f" --mount "\
             f"type=bind,source={self.oasis_workspace},"\
-            f"target=/root,bind-propagation=shared "
+            f"target={g_root_path},bind-propagation=shared "
         # don't mount if {yaml_base_path} == {oasis_workspace}/src/config/
         logging.info("Yaml config path: %s", self.yaml_base_path)
         logging.info("Oasis workspace: %s", self.oasis_workspace)

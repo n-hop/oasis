@@ -3,6 +3,7 @@ import sys
 import argparse
 import logging
 
+from var.global_var import g_root_path
 from containernet.containernet import (
     NestedContainernet, load_nested_config)
 
@@ -116,6 +117,6 @@ if __name__ == '__main__':
         sys.exit(1)
     nested_env.start()
     nested_env.execute(
-        f"python3 src/run_test.py {yaml_base_path} {oasis_workspace} "
+        f"python3 {g_root_path}src/run_test.py {yaml_base_path} {oasis_workspace} "
         f"{ns.tests_config_file} {debug_log}")
     nested_env.stop()

@@ -63,14 +63,14 @@ class ContainernetHostAdapter(IHost):
     def __setup_ssh(self):
         self.containernet_host.cmd("rm -rf /root/.ssh/")
         self.containernet_host.cmd("mkdir /root/.ssh/")
-        self.containernet_host.cmdPrint(
+        self.containernet_host.cmd(
             f'cp {g_root_path}src/config/keys/* /root/.ssh/')
-        self.containernet_host.cmdPrint(
+        self.containernet_host.cmd(
             "cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys")
-        self.containernet_host.cmdPrint(
+        self.containernet_host.cmd(
             "echo 'PermitRootLogin yes' | tee -a /etc/ssh/sshd_config")
-        self.containernet_host.cmdPrint(
+        self.containernet_host.cmd(
             "echo 'PasswordAuthentication no' | tee -a /etc/ssh/sshd_config")
-        self.containernet_host.cmdPrint(
+        self.containernet_host.cmd(
             "echo 'StrictModes no' | tee -a /etc/ssh/sshd_config")
-        self.containernet_host.cmdPrint("service ssh start")
+        self.containernet_host.cmd("service ssh start")
