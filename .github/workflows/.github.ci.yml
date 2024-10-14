@@ -92,7 +92,7 @@ jobs:
         run: |
           python3 ./src/start.py -p src/config \
           --containernet=default \
-          -t protocol-scp-test.yaml
+          -t protocol-scp-test.yaml -d True
           if [ ! -f ${{github.workspace}}/test.success ]; then
             echo "oasis test failed"
             exit 1

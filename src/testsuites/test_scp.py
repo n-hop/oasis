@@ -70,5 +70,6 @@ class ScpTest(ITestSuite):
             scp_cmd += f' {file}'
         scp_cmd += f' root@{receiver_ip}:/tmp/'
         scp_cmd += f' > {self.result.record}'
-        hosts[self.config.client_host].cmd(f'{scp_cmd}')
+        scp_res = hosts[self.config.client_host].cmd(f'{scp_cmd}')
+        logging.info(f"ScpTest result: %s", scp_res)
         return True
