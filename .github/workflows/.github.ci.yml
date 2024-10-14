@@ -108,3 +108,11 @@ jobs:
             echo "oasis test failed"
             exit 1
           fi
+      - name: Upload test logs
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: ci-test-logs
+          path: |
+            ${{github.workspace}}/test_results/**
+          retention-days: 1
