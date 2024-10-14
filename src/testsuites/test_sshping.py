@@ -43,7 +43,7 @@ class SSHPingTest(ITestSuite):
                     f"############### Oasis SSHPingTest from "
                     "%s to %s ###############", hosts[i].name(), hosts[0].name())
                 hosts[i].cmd(
-                    f'{self.binary_path} -i / root/.ssh/id_rsa'
+                    f'{self.binary_path} -i /root/.ssh/id_rsa'
                     f' -H root@{receiver_ip} > {self.result.record}')
             return True
         # Run ping test from client to server
