@@ -72,23 +72,40 @@ jobs:
         if: steps.cache-node-image.outputs.cache-hit == 'true'
         run: |
           docker image load --input ./node_cache/containernet_node.tar
-      - name: Run tests
+      - name: SSHPing tests
         working-directory: ${{github.workspace}}/
         run: |
-          # --containernet=nuc_sz -p src/config -t protocol-sshping-test.yaml
           echo "Hardware_info=${{secrets.BATS_HARDWARE_INFO}}" >> ${{github.workspace}}/bats/licence
           echo "Licence_id=${{secrets.BATS_LICENCE_ID}}" >> ${{github.workspace}}/bats/licence
           python3 ./src/start.py -p src/config \
           --containernet=default \
-          -t protocol-single-hop-test.yaml
+          -t protocol-sshping-test.yaml
           if [ ! -f ${{github.workspace}}/test.success ]; then
             echo "oasis test failed"
             exit 1
           fi
           rm -rf ${{github.workspace}}/test.success
+      - name: SCP test
+        working-directory: ${{github.workspace}}/
+        run: |
+          echo "Hardware_info=${{secrets.BATS_HARDWARE_INFO}}" >> ${{github.workspace}}/bats/licence
+          echo "Licence_id=${{secrets.BATS_LICENCE_ID}}" >> ${{github.workspace}}/bats/licence 
           python3 ./src/start.py -p src/config \
           --containernet=default \
-          -t protocol-sshping-test.yaml
+          -t protocol-scp-test.yaml
+          if [ ! -f ${{github.workspace}}/test.success ]; then
+            echo "oasis test failed"
+            exit 1
+          fi
+          rm -rf ${{github.workspace}}/test.success
+      - name: Throughput tests
+        working-directory: ${{github.workspace}}/
+        run: |
+          echo "Hardware_info=${{secrets.BATS_HARDWARE_INFO}}" >> ${{github.workspace}}/bats/licence
+          echo "Licence_id=${{secrets.BATS_LICENCE_ID}}" >> ${{github.workspace}}/bats/licence
+          python3 ./src/start.py -p src/config \
+          --containernet=default \
+          -t protocol-single-hop-test.yaml
           if [ ! -f ${{github.workspace}}/test.success ]; then
             echo "oasis test failed"
             exit 1
