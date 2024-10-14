@@ -65,7 +65,8 @@ class OLSRRouting(IRoutingStrategy):
         for host in hosts:
             host.cmd(f'nohup {self.binary_path} --load={self.cfg_path} &')
             # host.cmd(
-            #     f'nohup {self.binary_path} --load={self.cfg_path} > {g_root_path}test_results/olsr{host.name()}.log &')
+            #     f'nohup {self.binary_path} --load={self.cfg_path} >
+            #  {g_root_path}test_results/olsr{host.name()}.log &')
         max_wait_sec = 20 + host_num * 3
         wait_sec = 0
         last_host_ip = f'172.23.1.{host_num}'

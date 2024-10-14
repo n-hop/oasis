@@ -69,5 +69,6 @@ class ScpTest(ITestSuite):
         for file in self.scp_files:
             scp_cmd += f' {file}'
         scp_cmd += f' root@{receiver_ip}:/tmp/'
+        scp_cmd += f' > {self.result.record}'
         hosts[self.config.client_host].cmd(f'{scp_cmd}')
         return True
