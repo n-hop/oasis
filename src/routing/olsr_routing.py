@@ -1,6 +1,7 @@
 import logging
 import time
 from interfaces.routing import IRoutingStrategy
+from var.global_var import g_root_path
 
 
 class OLSRRouting(IRoutingStrategy):

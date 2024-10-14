@@ -1,4 +1,3 @@
-import time
 import os
 import sys
 import logging
@@ -429,8 +428,8 @@ def handle_test_failure(test_name):
 
 def handle_test_success():
     # create a regular file to indicate the test success
-    with open(f"{g_root_path}test.success", 'w', encoding='utf-8') as f:
-        f.write(f"test.success")
+    with open(f"{g_root_path}test.success", 'w', encoding='utf-8') as f_success:
+        f_success.write(f"test.success")
 
 
 def perform_test_in_process(network, test_name, index, result_dict):
@@ -469,7 +468,7 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
         logging.info("Debug mode is enabled.")
     else:
-        setLogLevel('warning')
+        setLogLevel('info')
         logging.basicConfig(level=logging.INFO)
         logging.info("Debug mode is disabled.")
     logging.info("Platform: %s", platform.platform())
@@ -681,6 +680,7 @@ if __name__ == '__main__':
             # 5.3 save cur_top_description
             with open(f"{archive_dir}/topology_description.txt", 'w', encoding='utf-8') as f:
                 f.write(f"{cur_top_description}")
+
             # 6. reset the network then go to the next test case
             reset_networks(target_proto_num, networks)
             manager.shutdown()
