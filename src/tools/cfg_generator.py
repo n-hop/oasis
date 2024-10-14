@@ -102,7 +102,7 @@ class ConfigGenerator:
         item += f"proxies.port_forward.proxy.item0.forward_protocol = tcp,udp\n"
         return item
 
-    def _generate_route_item(self,
+    def _generate_route_item(self,  # pylint disable=R0917
                              index, src, dst, gw, mask="255.255.255.255", metric=1):  # pylint disable=R0917
         item = f"routes.item{index}.src = {src}\n"
         item += f"routes.item{index}.dst = {dst}\n"
