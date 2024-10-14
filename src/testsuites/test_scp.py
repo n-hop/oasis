@@ -46,8 +46,9 @@ class ScpTest(ITestSuite):
                 scp_cmd += f' -o StrictHostKeyChecking=no'
                 for file in self.scp_files:
                     scp_cmd += f' {file}'
-                scp_cmd += f' root@{receiver_ip}:/tmp/ > {self.result.record}'
-                hosts[i].cmdPrint(f'{scp_cmd}')
+                scp_cmd += f' root@{receiver_ip}:/tmp/'
+                hosts[i].cmdPrint(
+                    f'script -c \'{scp_cmd}\' | tee {self.result.record} ')
             return True
         # Run ping test from client to server
         logging.info(
@@ -69,7 +70,7 @@ class ScpTest(ITestSuite):
         for file in self.scp_files:
             scp_cmd += f' {file}'
         scp_cmd += f' root@{receiver_ip}:/tmp/'
-        scp_cmd += f' > {self.result.record}'
-        scp_res = hosts[self.config.client_host].cmd(f'{scp_cmd}')
+        scp_res = hosts[self.config.client_host].cmd(
+            f'script -c \'{scp_cmd}\' | tee {self.result.record} ')
         logging.info(f"ScpTest result: %s", scp_res)
         return True
