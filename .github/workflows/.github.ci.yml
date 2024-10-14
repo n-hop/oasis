@@ -72,11 +72,13 @@ jobs:
         if: steps.cache-node-image.outputs.cache-hit == 'true'
         run: |
           docker image load --input ./node_cache/containernet_node.tar
-      - name: SSHPing tests
-        working-directory: ${{github.workspace}}/
+      - name: Loading secrets
         run: |
           echo "Hardware_info=${{secrets.BATS_HARDWARE_INFO}}" >> ${{github.workspace}}/bats/licence
           echo "Licence_id=${{secrets.BATS_LICENCE_ID}}" >> ${{github.workspace}}/bats/licence
+      - name: SSHPing tests
+        working-directory: ${{github.workspace}}/
+        run: |
           python3 ./src/start.py -p src/config \
           --containernet=default \
           -t protocol-sshping-test.yaml
@@ -88,8 +90,6 @@ jobs:
       - name: SCP test
         working-directory: ${{github.workspace}}/
         run: |
-          echo "Hardware_info=${{secrets.BATS_HARDWARE_INFO}}" >> ${{github.workspace}}/bats/licence
-          echo "Licence_id=${{secrets.BATS_LICENCE_ID}}" >> ${{github.workspace}}/bats/licence 
           python3 ./src/start.py -p src/config \
           --containernet=default \
           -t protocol-scp-test.yaml
@@ -101,8 +101,6 @@ jobs:
       - name: Throughput tests
         working-directory: ${{github.workspace}}/
         run: |
-          echo "Hardware_info=${{secrets.BATS_HARDWARE_INFO}}" >> ${{github.workspace}}/bats/licence
-          echo "Licence_id=${{secrets.BATS_LICENCE_ID}}" >> ${{github.workspace}}/bats/licence
           python3 ./src/start.py -p src/config \
           --containernet=default \
           -t protocol-single-hop-test.yaml
