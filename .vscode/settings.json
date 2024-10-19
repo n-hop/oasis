@@ -1,9 +1,11 @@
 {
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
   },
   "[python]": {
-    "editor.defaultFormatter": "ms-python.autopep8"
+    "editor.defaultFormatter": "ms-python.autopep8",
+    "editor.formatOnSave": true
   },
   "[yaml]": {
     "editor.defaultFormatter": "redhat.vscode-yaml",
@@ -19,7 +21,9 @@
       "action.yml"
     ]
   },
-  "pylint.args": ["--rcfile=${workspaceFolder}/.pylintrc"],
+  "pylint.args": [
+    "--rcfile=${workspaceFolder}/.pylintrc"
+  ],
   "cSpell.words": [
     "Containernet",
     "dimage",
@@ -40,5 +44,5 @@
     "pylint"
   ],
   "python.analysis.typeCheckingMode": "basic",
-  "python.analysis.autoImportCompletions": true
+  "python.analysis.autoImportCompletions": true"
 }

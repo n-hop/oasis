@@ -1,5 +1,10 @@
 from abc import ABC, abstractmethod
+from enum import IntEnum
 
+class RouteType(IntEnum):
+    static = 0
+    olsr = 1
+    openr = 2
 
 class IRoutingStrategy(ABC):
     @abstractmethod
