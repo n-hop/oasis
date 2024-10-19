@@ -28,12 +28,13 @@ Oasis integrates the QUIC protocol using [gost](https://gost.run/en/tutorials/pr
 
 Oasis currently supports the following test tools:
 
-| Tools                | Description                                  | Name in YAML |
-| -------------------- | -------------------------------------------- | ------------ |
-| ping                 | tool of sending ICMP messages                | ping         |
-| Iperf3               | tool of perform throughput test with UDP/TCP | iperf        |
-| tcp_message_endpoint | tool of sending/echoing TCP messages         | rtt          |
-| sshping              | tool of sending ping messages over SSH       | sshping      |
+| Tools                | Description                                            | Name in YAML |
+| -------------------- | ------------------------------------------------------ | ------------ |
+| ping                 | tool of sending ICMP messages                          | ping         |
+| Iperf3               | tool of perform throughput test with UDP/TCP           | iperf        |
+| tcp_message_endpoint | tool of sending/echoing TCP messages                   | rtt          |
+| sshping              | tool of sending ping messages over SSH                 | sshping      |
+| scp                  | tool of testing file transfer over different protocols | scp          |
 
 ### 2.1 TCP messaging endpoint
 
