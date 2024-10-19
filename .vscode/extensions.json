@@ -3,6 +3,7 @@
     "redhat.vscode-yaml",
     "ms-python.autopep8",
     "streetsidesoftware.code-spell-checker",
-    "ms-python.pylint"
+    "ms-python.pylint",
+    "yzhang.markdown-all-in-one"
   ]
 }

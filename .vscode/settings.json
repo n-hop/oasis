@@ -3,6 +3,11 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
+  "[markdown]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true
+  },
   "[python]": {
     "editor.defaultFormatter": "ms-python.autopep8",
     "editor.formatOnSave": true
@@ -21,9 +26,7 @@
       "action.yml"
     ]
   },
-  "pylint.args": [
-    "--rcfile=${workspaceFolder}/.pylintrc"
-  ],
+  "pylint.args": ["--rcfile=${workspaceFolder}/.pylintrc"],
   "cSpell.words": [
     "Containernet",
     "dimage",
