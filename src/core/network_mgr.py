@@ -83,10 +83,11 @@ class NetworkManager:
         for i in range(self.num_of_networks):
             if not self.networks[i].is_started():
                 self.networks[i].start()
+                logging.info("########## Oasis start the network %s.", i)
             else:
                 # reload the network instances can save time
                 self.networks[i].reload(top_config)
-            logging.info("########## Oasis start the network %s.", i)
+                logging.info("########## Oasis reload the network %s.", i)
 
     def stop_networks(self):
         # Stop all networks
