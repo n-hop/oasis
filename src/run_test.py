@@ -52,8 +52,8 @@ def diagnostic_test_results(test_results, top_des):
         result_files = []
         logging.debug("test_result['results'] len %s", len(
             test_result['results']))
-        for res in test_result['results']:
-            result_files.append(res.record)
+        for result in test_result['results']:
+            result_files.append(result.record)
         # analyze those results files according to the test type
         if test_type == TestType.throughput:
             output_svg = ""
@@ -401,14 +401,20 @@ def handle_test_success():
         f_success.write(f"test.success")
 
 
-def perform_test_in_process(network, test_name, index, result_dict):
+def perform_test_in_process(network, test_name, id, result_dict):
+    """Execute the test in a separate process, 
+        then store the results in the shared dictionary.
+
+    Args:
+        id (int): The id of the process.
+    """
     logging.info(
-        "########## Oasis process %d Performing the test for %s", index, test_name)
+        "########## Oasis process %d Performing the test for %s", id, test_name)
     network.perform_test()
-    result_dict[index] = network.get_test_results()
+    result_dict[id] = network.get_test_results()
     logging.debug(
         "########## Oasis process %d finished the test for %s, results %s",
-        index, test_name, result_dict[index])
+        id, test_name, result_dict[id])
 
 
 class ContainerTestRunner:
