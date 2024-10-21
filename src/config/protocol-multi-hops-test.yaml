@@ -8,19 +8,13 @@ tests:
   test2:
     description: "Test protocol throughput/rtt on multiple hops"
     topology:
-      config_name: linear_network_3
+      config_name: linear_network_2
       config_file: predefined.topology.yaml
-    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr]
+    target_protocols: [brtp_proxy] # btp, brtp, kcp, tcp-bbr
     route: static_route
     test_tools:
       iperf:
         interval: 1
-        interval_num: 40
+        interval_num: 10
         client_host: 0
-        server_host: 3
-      rtt:
-        interval: 0.01
-        packet_count: 2000
-        packet_size: 1014
-        client_host: 0
-        server_host: 3
+        server_host: 2

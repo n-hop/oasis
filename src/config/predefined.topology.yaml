@@ -44,6 +44,20 @@ topology:
         init_value: [100]
       - link_bandwidth_backward:
         init_value: [100]
+  - name: linear_network_2
+    topology_type: linear
+    nodes: 3
+    array_description:
+      - link_loss:
+        init_value: [2]
+      - link_latency:
+        init_value: [10]
+      - link_jitter:
+        init_value: [0]
+      - link_bandwidth_forward:
+        init_value: [100]
+      - link_bandwidth_backward:
+        init_value: [100]
   - name: 4-hops-linear-network
     topology_type: linear
     nodes: 5
