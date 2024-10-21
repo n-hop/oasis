@@ -50,3 +50,21 @@ tc qdisc add dev ifb0 root netem loss 5% delay 10ms limit 20000000
 ```
 
 In order to have a better simulation result for latency, a larger buffer/queue size is preferred(specified by `limit 20000000` in tc command) otherwise tc will drop more packets when buffer is overwhelmed.
+
+## tc_rules script
+
+`./src/tools/tc_rules.sh` can be used to apply or unset the above tc rules for a topology H0-H1.
+
+```bash
+# run `tc_rules.sh eth0 set` on host H0 to apply the tc rules:
+sudo ./src/tools/tc_rules.sh eth0 set
+
+# run `tc_rules.sh eth0 set` on host H1 to apply the tc rules:
+sudo ./src/tools/tc_rules.sh eth0 set
+```
+
+To unset the rules, run:
+
+```bash
+sudo ./src/tools/tc_rules.sh eth0 unset
+```
