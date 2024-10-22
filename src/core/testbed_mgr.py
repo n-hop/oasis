@@ -1,7 +1,4 @@
 import logging
-from math import log
-import os
-import yaml
 
 from containernet.topology import ITopology
 from interfaces.network_mgr import (INetworkManager, NetworkType)

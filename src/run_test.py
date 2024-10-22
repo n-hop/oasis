@@ -671,7 +671,7 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
         logging.info("Debug mode is enabled.")
     else:
-        setLogLevel('warn')
+        setLogLevel('warning')
         logging.basicConfig(level=logging.INFO)
         logging.info("Debug mode is disabled.")
     logging.info("Platform: %s", platform.platform())
