@@ -19,16 +19,16 @@ def parse_args():
     Parse command line arguments.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n',
-                        help='YAML configuration file for nested containernet',
-                        dest='nested_config_file',
-                        type=str,
-                        default="nested-containernet-config.yaml")
     parser.add_argument('--containernet',
                         help='nested containernet name in the YAML file',
                         dest='containernet',
                         type=str,
-                        default="nuc_sz")
+                        default="")
+    parser.add_argument('--testbed',
+                        help='The name of testbed that will be used',
+                        dest='testbed',
+                        type=str,
+                        default="")
     parser.add_argument('-t',
                         help='YAML file for the test case to be executed',
                         dest='tests_config_file',
@@ -47,10 +47,10 @@ def parse_args():
     return parser
 
 
-def build_nested_env(config_file, containernet_name, yaml_base_path_input, oasis_workspace_input):
+def build_nested_env(containernet_name, yaml_base_path_input, oasis_workspace_input):
     # join cur_workspace with nested_config_file
     absolute_path_of_config_file = os.path.join(
-        yaml_base_path_input + "/", config_file)
+        yaml_base_path_input + "/", 'nested-containernet-config.yaml')
     if not os.path.exists(f'{absolute_path_of_config_file}'):
         logging.info(f"Error: %s does not exist.", {
                      absolute_path_of_config_file})
@@ -71,8 +71,8 @@ if __name__ == '__main__':
     local_parser = parse_args()
     ns, args = local_parser.parse_known_args()
     cur_test_yaml_file = ns.tests_config_file
-    nested_config_file = ns.nested_config_file
     nested_containernet = ns.containernet
+    baremetal_testbed = ns.testbed
     yaml_base_path = ns.yaml_base_path
     debug_log = ns.debug_log
     if debug_log == 'True':
@@ -110,8 +110,21 @@ if __name__ == '__main__':
     if not os.path.exists(f'{test_case_file}'):
         logging.info(f"Error: %s does not exist.", {test_case_file})
         sys.exit(1)
+    # @Note: Oasis support test on containernet and bare metal testbed.
+    #        For containernet, network is constructed and maintained by containernet.
+    #        For bare metal testbed, network is constructed by real physical machines.
+    if nested_containernet == "" and baremetal_testbed == "":
+        logging.info(
+            "Error: neither nested_containernet nor baremetal_testbed is provided.")
+        sys.exit(1)
+    if nested_containernet != "" and baremetal_testbed == "":
+        logging.info("Oasis is running on nested containernet.")
+    if nested_containernet == "" and baremetal_testbed != "":
+        logging.info("Oasis is running on baremetal testbed [%s].",
+                     baremetal_testbed)
+    # Both mode needs the nested containernet since the source code dependencies
     nested_env = build_nested_env(
-        nested_config_file, nested_containernet, yaml_base_path, oasis_workspace)
+        nested_containernet, yaml_base_path, oasis_workspace)
     if nested_env is None:
         logging.info("Error: failed to build the nested containernet.")
         sys.exit(1)

@@ -1,0 +1,16 @@
+testbed_nhop_shenzhen:
+  - user: nhop
+    ip: 10.53.1.189
+    arch: arm64 # arm32, arm64, amd64
+    authorized_key: src/config/keys/id_rsa
+    intf: [eth0]
+  - user: nhop
+    ip: 10.53.1.218
+    arch: arm64
+    authorized_key: src/config/keys/id_rsa
+    intf: [eth0]
+  - user: nhop
+    ip: 10.53.1.186
+    arch: arm64
+    authorized_key: src/config/keys/id_rsa
+    intf: [eth0]

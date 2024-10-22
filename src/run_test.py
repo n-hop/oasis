@@ -413,26 +413,35 @@ def load_topology(config_base_path, test_case_yaml) -> ITopology:
     return build_topology(loaded_conf)  # type: ignore
 
 
+def load_testbed_config(name, yaml_base_path_input):
+    absolute_path_of_testbed_config_file = os.path.join(
+        yaml_base_path_input + "/", 'testbed/predefined.testbed.yaml')
+    if not os.path.exists(f'{absolute_path_of_testbed_config_file}'):
+        logging.info(f"Error: %s does not exist.", {
+                     absolute_path_of_testbed_config_file})
+        return None
+    all_testbeds = None
+    with open(absolute_path_of_testbed_config_file, 'r', encoding='utf-8') as stream:
+        try:
+            all_testbeds = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            logging.error(exc)
+            return None
+    logging.debug("all_testbeds: %s", all_testbeds)
+    for testbed in all_testbeds.keys():
+        if name == testbed:
+            logging.info("found the testbed: %s", all_testbeds[testbed])
+            return all_testbeds[testbed]
+    logging.error("Testbed %s is not found.", name)
+    logging.info("The supported testbeds are: %s",
+                 all_testbeds.keys())
+    return None
+
+
 def handle_test_success():
     # create a regular file to indicate the test success
     with open(f"{g_root_path}test.success", 'w', encoding='utf-8') as f_success:
         f_success.write(f"test.success")
-
-
-def perform_test_in_process(network, test_name, id, result_dict):
-    """Execute the test in a separate process,
-        then store the results in the shared dictionary.
-
-    Args:
-        id (int): The id of the process.
-    """
-    logging.info(
-        "########## Oasis process %d Performing the test for %s", id, test_name)
-    network.perform_test()
-    result_dict[id] = network.get_test_results()
-    logging.debug(
-        "########## Oasis process %d finished the test for %s, results %s",
-        id, test_name, result_dict[id])
 
 
 class TestRunner:
@@ -662,7 +671,7 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
         logging.info("Debug mode is enabled.")
     else:
-        setLogLevel('info')
+        setLogLevel('warn')
         logging.basicConfig(level=logging.INFO)
         logging.info("Debug mode is disabled.")
     logging.info("Platform: %s", platform.platform())
@@ -685,6 +694,9 @@ if __name__ == '__main__':
     logging.info(
         f"run_test.py: Base path of the oasis project: %s", oasis_workspace)
     running_in_nested = not is_base_path(os.getcwd(), oasis_workspace)
+    if not running_in_nested:
+        logging.info("Nested containernet environment is required.")
+        sys.exit(1)
 
     cur_test_file = sys.argv[3]
     cur_selected_test = ""
@@ -700,16 +712,20 @@ if __name__ == '__main__':
         logging.info(f"Error: %s does not exist.", yaml_test_file_path)
         sys.exit(1)
 
+    is_using_testbed = False
     cur_node_config = None
     network_manager = None
-    if running_in_nested:
-        logging.info("##### running in a nested environment.")
+    if not is_using_testbed:
+        logging.info("##### running tests on containernet.")
         network_manager = create_network_mgr(NetworkType.containernet)
         cur_node_config = prepare_node_config(
             config_path, yaml_test_file_path, oasis_workspace, yaml_config_base_path)
     else:
-        logging.info("##### running in a hosted environment.")
+        logging.info("##### running tests on testbed.")
         network_manager = create_network_mgr(NetworkType.testbed)
+        cur_node_config = load_testbed_config(
+            'testbed_nhop_shenzhen', config_path)
+
     if network_manager is None:
         logging.error("Error: failed to load proper network manager")
         sys.exit(1)

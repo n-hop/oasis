@@ -88,9 +88,6 @@ class NetworkManager(INetworkManager):
 
     def start_networks(self):
         """reload networks if networks is already built; otherwise, start networks.
-
-        Args:
-            topology (ITopology): The topology to be built.
         """
         if self.cur_top is None:
             logging.error("Current topology is not set.")
