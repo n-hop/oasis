@@ -8,13 +8,16 @@ class ContainernetHostAdapter(IHost):
         self.containernet_host = containernet_host
         self.__setup_ssh()
 
+    def is_connected(self) -> bool:
+        return True
+
     def cmd(self, command):
         return self.containernet_host.cmd(command)
 
-    def cmdPrint(self, command: str) -> str:
+    def cmd(self, command: str) -> str:
         """Execute a command on the host and print the output.
         """
-        return self.containernet_host.cmdPrint(command)
+        return self.containernet_host.cmd(command)
 
     def name(self) -> str:
         """Get the name of the host.

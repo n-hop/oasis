@@ -1,6 +1,7 @@
 import logging
 import copy
 from abc import ABC, abstractmethod
+from typing import List
 from containernet.topology import (ITopology)
 from protosuites.proto import IProtoSuite
 from interfaces.routing import IRoutingStrategy
@@ -14,6 +15,10 @@ class INetwork(ABC):
         self.proto_suites = []
         self.test_results = {}
         self.is_started_flag = False
+        self.is_accessible_flag = True
+
+    def is_accessible(self):
+        return self.is_accessible_flag
 
     @abstractmethod
     def start(self):
@@ -24,15 +29,15 @@ class INetwork(ABC):
         pass
 
     @abstractmethod
-    def get_hosts(self) -> list[IHost]:
+    def get_hosts(self) -> List[IHost]:
         pass
 
     @abstractmethod
-    def get_num_of_host(self):
+    def get_num_of_host(self) -> int:
         pass
 
     @abstractmethod
-    def get_host_ip_range(self):
+    def get_host_ip_range(self) -> str:
         pass
 
     @abstractmethod

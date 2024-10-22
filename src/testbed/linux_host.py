@@ -8,6 +8,11 @@ from .config import HostConfig
 
 
 class LinuxHost(IHost):
+    """Linux host class.
+
+       Define the way to interact with a Linux host.
+    """
+
     def __init__(self, config: HostConfig):
         self.host_config = config
         if self.host_config.ip is None:
@@ -21,6 +26,18 @@ class LinuxHost(IHost):
                 f"The private key {private_key} does not exist.")
         self.ssh_cmd_prefix = f"ssh -i {self.host_config.authorized_key} {self.host_config.user}@{self.host_config.ip}"
         self.intf_list = ['eth0', 'eth1']
+        result = subprocess.run(
+            [f"{self.ssh_cmd_prefix} hostname"], shell=True, capture_output=True, text=True, check=False)
+        if result.returncode == 0:
+            self.is_connected_flag = True
+            logging.info("Connected to the host %s", self.host_config.ip)
+        else:
+            logging.error("Failed to connect to the host %s: %s",
+                          self.host_config.ip, result.stderr)
+            self.is_connected_flag = False
+
+    def is_connected(self) -> bool:
+        return self.is_connected_flag
 
     def cmd(self, command):
         cmd_str = f"{self.ssh_cmd_prefix} \"{command}\""

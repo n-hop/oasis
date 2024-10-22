@@ -38,3 +38,8 @@ class IHost(ABC):
 
     def get_host(self):
         pass
+
+    @abstractmethod
+    def is_connected(self) -> bool:
+        """Check if the host is connected to the network.
+            """
