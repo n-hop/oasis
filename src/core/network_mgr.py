@@ -4,20 +4,23 @@ from containernet.config import NodeConfig
 from containernet.containernet_network import ContainerizedNetwork
 from containernet.topology import ITopology
 from routing.routing_factory import RoutingFactory, route_string_to_enum
+from interfaces.network_mgr import (INetworkManager, NetworkType)
 
 # alphabet table
 alphabet = ['h', 'i', 'j', 'k', 'l', 'm',
             'n', 'o', 'p', 'q', 'r', 's', 't']
 
 
-class NetworkManager:
+class NetworkManager(INetworkManager):
     """NetworkManager manages multiple network instances.
     """
 
     def __init__(self):
+        super().__init__()
         self.networks = []
         self.num_of_networks = 0
         self.cur_top = None
+        self.type = NetworkType.containernet
 
     def get_top_description(self):
         if len(self.networks) > 0:
@@ -29,29 +32,29 @@ class NetworkManager:
 
     def build_networks(self, node_config: NodeConfig,
                        topology: ITopology,
-                       num_networks: int,
+                       net_num: int,
                        route: str = "static_route"):
         """Build multiple network instances based on the given topology.
 
         Args:
             node_config (NodeConfig): The configuration of each node in the network.
             topology (ITopology): The topology to be built.
-            num_networks (int): The number of networks to be built.
+            net_num (int): The number of networks to be built.
             route (str, optional): The route strategy. Defaults to "static_route".
 
         Returns:
             bool: True if the networks are built successfully, False otherwise.
         """
-        if num_networks > len(alphabet):
+        if net_num > len(alphabet):
             logging.error("Error: number of networks exceeds the limit.")
             return False
         org_name_prefix = node_config.name_prefix
         cur_net_num = len(self.networks)
         logging.info(
-            "########## Oasis request network number %s.", num_networks)
-        if cur_net_num < num_networks:
-            for i in range(cur_net_num, num_networks):
-                if num_networks > 1:
+            "########## Oasis request network number %s.", net_num)
+        if cur_net_num < net_num:
+            for i in range(cur_net_num, net_num):
+                if net_num > 1:
                     logging.info(
                         "####################################################")
                     logging.info(
@@ -66,12 +69,12 @@ class NetworkManager:
                     route_string_to_enum[route])
                 self.networks.append(ContainerizedNetwork(
                     node_config, topology, route_strategy))
-        elif cur_net_num > num_networks:
+        elif cur_net_num > net_num:
             # stop the extra networks
-            for i in range(num_networks, cur_net_num):
+            for i in range(net_num, cur_net_num):
                 self.networks[i].stop()
                 logging.info("########## Oasis stop the network %s.", i)
-            self.networks = self.networks[:num_networks]
+            self.networks = self.networks[:net_num]
         logging.info(
             "######################################################")
         logging.info("########## Oasis traverse the topologies: \n %s .",

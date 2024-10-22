@@ -9,6 +9,7 @@ import yaml
 
 # from mininet.cli import CLI
 from mininet.log import setLogLevel
+from interfaces.network_mgr import (INetworkManager, NetworkType)
 from interfaces.network import INetwork
 from containernet.topology import ITopology
 from containernet.linear_topology import LinearTopology
@@ -30,7 +31,7 @@ from data_analyzer.analyzer import AnalyzerConfig
 from data_analyzer.analyzer_factory import AnalyzerFactory
 from tools.util import (is_same_path, is_base_path)
 from var.global_var import g_root_path
-from core.network_mgr import NetworkManager
+from core.network_factory import (create_network_mgr)
 
 supported_execution_mode = ["serial", "parallel"]
 # alphabet table
@@ -419,16 +420,41 @@ def perform_test_in_process(network, test_name, id, result_dict):
         id, test_name, result_dict[id])
 
 
-class ContainerTestRunner:
-    def __init__(self, test_yml_config, config_path, mgr: NetworkManager):
+class TestRunner:
+    def __init__(self, test_yml_config, config_path, network_mgr: INetworkManager):
         self.test_yml_config = test_yml_config
         self.config_mapped_prefix = config_path
         self.target_protocols = None
         self.results_dict = None
-        self.network_mgr = mgr
+        self.network_mgr = network_mgr
         self.net_num = 0
         self.top_description = ''
+        self.is_ready_flag = False
         self._load_protocols()
+
+    def init(self, node_config, topology: ITopology):
+        # Test execution mode default is serial
+        exec_mode = self.test_yml_config.get('execution_mode', 'serial')
+        if exec_mode not in supported_execution_mode:
+            logging.warning("Error: unsupported execution mode.")
+            return
+        if not is_parallel_execution(exec_mode):
+            # serial execution only needs one network instance.
+            required_network_ins = 1
+        else:
+            # @Note: About the parallel execution mode:
+            # if parallel execution is enabled, oasis will create multiple
+            # networks instances for each target protocol;
+            # and each target protocol will be tested on each network instance.
+            required_network_ins = self.target_protocol_num()
+        # 1.2 Build multiple network instances.
+        self.is_ready_flag = self.network_mgr.build_networks(node_config,
+                                                             topology,
+                                                             required_network_ins,
+                                                             self.test_yml_config['route'])
+
+    def is_ready(self):
+        return self.is_ready_flag
 
     def target_protocol_num(self):
         return len(self.target_protocols) if self.target_protocols is not None else 0
@@ -486,7 +512,7 @@ class ContainerTestRunner:
         test_name = self.test_yml_config['name']
         # 4. perform the test for each target protocol in parallel with different processes
         for i in range(self.net_num):
-            p = multiprocessing.Process(target=perform_test_in_process,
+            p = multiprocessing.Process(target=self._perform_test_in_process,
                                         args=(networks[i],
                                               test_name,
                                               i, process_shared_dict))
@@ -587,6 +613,21 @@ class ContainerTestRunner:
             return False
         return True
 
+    def _perform_test_in_process(self, network, test_name, id, result_dict):
+        """Execute the test in a separate process,
+            then store the results in the shared dictionary.
+
+        Args:
+            id (int): The id of the process.
+        """
+        logging.info(
+            "########## Oasis process %d Performing the test for %s", id, test_name)
+        network.perform_test()
+        result_dict[id] = network.get_test_results()
+        logging.debug(
+            "########## Oasis process %d finished the test for %s, results %s",
+            id, test_name, result_dict[id])
+
     def handle_failure(self):
         self.cleanup()
         test_name = self.test_yml_config['name']
@@ -628,14 +669,8 @@ if __name__ == '__main__':
     oasis_mapped_prefix = f'{g_root_path}'
     logging.info(
         f"run_test.py: Base path of the oasis project: %s", oasis_workspace)
-    running_in_nested = False
-    current_process_dir = os.getcwd()
-    if is_base_path(current_process_dir, oasis_workspace):
-        running_in_nested = False
-        logging.info("##### running in a hosted environment.")
-    else:
-        running_in_nested = True
-        logging.info("##### running in a nested environment.")
+    running_in_nested = not is_base_path(os.getcwd(), oasis_workspace)
+
     cur_test_file = sys.argv[3]
     cur_selected_test = ""
     temp_list = cur_test_file.split(":")
@@ -652,7 +687,7 @@ if __name__ == '__main__':
 
     cur_node_config = load_node_config(
         config_mapped_prefix, yaml_test_file_path)
-    if cur_node_config.name == "":
+    if cur_node_config is None or cur_node_config.name == "":
         logging.error("Error: no containernet node config.")
         sys.exit(1)
     # mount the workspace
@@ -660,10 +695,17 @@ if __name__ == '__main__':
     if config_mapped_prefix == f'{g_root_path}config/':
         cur_node_config.vols.append(
             f'{yaml_config_base_path}:{config_mapped_prefix}')
-
-    network_manager = NetworkManager()
+    network_manager = None
+    if running_in_nested:
+        logging.info("##### running in a nested environment.")
+        network_manager = create_network_mgr(NetworkType.containernet)
+    else:
+        logging.info("##### running in a hosted environment.")
+        network_manager = create_network_mgr(NetworkType.testbed)
+    if network_manager is None:
+        logging.error("Error: failed to load proper network manager")
+        sys.exit(1)
     # 1. execute all the tests on all constructed networks
-    all_networks = []
     all_tests = load_test(yaml_test_file_path, cur_selected_test)
     if all_tests is None:
         logging.error("Error: no test case found.")
@@ -673,30 +715,12 @@ if __name__ == '__main__':
         # 1.1 The topology in one case can be composed of multiple topologies:
         #      Traverse all the topologies in the test case.
         for index, cur_top_ins in enumerate(cur_topology):
-            test_runner = ContainerTestRunner(
+            test_runner = TestRunner(
                 test, config_mapped_prefix, network_manager)
-            # Test execution mode default is serial
-            test_exec_mode = test.get('execution_mode', 'serial')
-            if test_exec_mode not in supported_execution_mode:
-                logging.warning("Error: unsupported execution mode.")
-                continue
-            if not is_parallel_execution(test_exec_mode):
-                # serial execution only needs one network instance.
-                required_network_ins = 1
-            else:
-                # @Note: About the parallel execution mode:
-                # if parallel execution is enabled, oasis will create multiple
-                # networks instances for each target protocol;
-                # and each target protocol will be tested on each network instance.
-                required_network_ins = test_runner.target_protocol_num()
-            # 1.2 Build multiple network instances.
-            logging.info("cur_top_ins %s", cur_top_ins)
-            res = network_manager.build_networks(cur_node_config,
-                                                 cur_top_ins,
-                                                 required_network_ins,
-                                                 test['route'])
-            if res is False:
-                continue
+            test_runner.init(cur_node_config,
+                             cur_top_ins)
+            if not test_runner.is_ready():
+                test_runner.handle_failure()
             # 1.3 Load test to the network instance
             res = test_runner.setup_tests()
             if res is False:
