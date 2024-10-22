@@ -11,9 +11,6 @@ class ContainernetHostAdapter(IHost):
     def is_connected(self) -> bool:
         return True
 
-    def cmd(self, command):
-        return self.containernet_host.cmd(command)
-
     def cmd(self, command: str) -> str:
         """Execute a command on the host and print the output.
         """
