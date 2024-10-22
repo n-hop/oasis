@@ -14,7 +14,7 @@ Oasis is built on [Containernet](https://github.com/containernet/containernet/),
 ## Architecture Overview
 
 <div align="center" style="text-align:center"> 
-<img src="./docs/imgs/oasis_arch.svg" alt="Oasis" style="zoom:50%;></div>
+<img src="./docs/imgs/oasis_arch.svg" alt="Oasis" style="zoom:50%;"></div>
 <div align="center">Fig 1.1 Oasis brief architecture</div>
 
 ## Features
