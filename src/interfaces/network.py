@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from containernet.topology import (ITopology)
 from protosuites.proto import IProtoSuite
 from interfaces.routing import IRoutingStrategy
+from interfaces.host import IHost
 from testsuites.test import (ITestSuite)
 
 
@@ -23,7 +24,7 @@ class INetwork(ABC):
         pass
 
     @abstractmethod
-    def get_hosts(self):
+    def get_hosts(self) -> list[IHost]:
         pass
 
     @abstractmethod

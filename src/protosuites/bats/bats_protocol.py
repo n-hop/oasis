@@ -6,11 +6,10 @@ from interfaces.network import INetwork
 from interfaces.host import IHost
 from tools.cfg_generator import generate_cfg_files
 from protosuites.proto import (ProtoConfig, IProtoSuite)
-from protosuites.proto_info import IProtoInfo
 from var.global_var import g_root_path
 
 
-class BATSProtocol(IProtoSuite, IProtoInfo):
+class BATSProtocol(IProtoSuite):
     def __init__(self, config: ProtoConfig):
         super().__init__(config)
         if self.config.path is None:

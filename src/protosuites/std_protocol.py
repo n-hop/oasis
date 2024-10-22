@@ -4,10 +4,9 @@ import re
 from protosuites.proto import (ProtoConfig, IProtoSuite)
 from interfaces.network import INetwork
 from var.global_var import g_root_path
-from .proto_info import IProtoInfo
 
 
-class StdProtocol(IProtoSuite, IProtoInfo):
+class StdProtocol(IProtoSuite):
     """StdProtocol is used to load the protocol which be described by YAML.
     """
 
@@ -127,9 +126,7 @@ class StdProtocol(IProtoSuite, IProtoInfo):
 
     def __handle_tcp_version_restore(self, network: INetwork):
         hosts = network.get_hosts()
-        if hosts is None:
-            return False
-        for host in hosts:  # type: ignore
+        for host in hosts:
             default_ver = self.default_version_dict[host.name()]
             if default_ver is None:
                 continue
@@ -147,12 +144,15 @@ class StdProtocol(IProtoSuite, IProtoInfo):
                 "TCP version %s is not supported, please check the configuration.", version)
             return
         hosts = network.get_hosts()
-        if hosts is None:
-            return
-        for host in hosts:  # type: ignore
+        for host in hosts:
             # read `tcp_congestion_control` before change
-            res = host.popen(
-                f"sysctl net.ipv4.tcp_congestion_control").stdout.read().decode('utf-8')
+            pf = host.popen(
+                f"sysctl net.ipv4.tcp_congestion_control")
+            if pf is None:
+                logging.error(
+                    "Failed to get the tcp congestion control on %s", host.name())
+                continue
+            res = pf.stdout.read().decode('utf-8')
             default_version = res.split('=')[-1].strip()
             if default_version == version:
                 continue

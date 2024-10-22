@@ -1,10 +1,9 @@
 import logging
 from interfaces.network import INetwork
 from protosuites.proto import (ProtoConfig, IProtoSuite)
-from protosuites.proto_info import IProtoInfo
 
 
-class CSProtocol(IProtoSuite, IProtoInfo):
+class CSProtocol(IProtoSuite):
     def __init__(self, config: ProtoConfig, client: IProtoSuite, server: IProtoSuite):
         super().__init__(config)
         self.client = client

@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from dataclasses import dataclass, field
 from typing import (Optional, List)
+from protosuites.proto_info import IProtoInfo
 from var.global_var import g_root_path
 
 
@@ -29,8 +30,7 @@ class ProtoConfig:
     port: Optional[int] = field(default=0)
     type: Optional[str] = field(default='distributed')
     test_name: str = field(default="")
-    protocols: Optional[List['ProtoConfig']] = field(
-        default=None)  # type: ignore
+    protocols: Optional[List['ProtoConfig']] = field(default=None)
     config_base_path: Optional[str] = field(default=None)
 
 
@@ -38,7 +38,7 @@ SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp', 'quic']
 SupportedBATSProto = ['btp', 'brtp', 'brtp_proxy']
 
 
-class IProtoSuite(ABC):
+class IProtoSuite(IProtoInfo, ABC):
     def __init__(self, config: ProtoConfig):
         self.is_success = False
         self.config = config
@@ -68,18 +68,18 @@ class IProtoSuite(ABC):
         return self.config
 
     @abstractmethod
-    def post_run(self, network: 'INetwork'):  # type: ignore
+    def post_run(self, network: 'INetwork') -> bool:  # type: ignore
         pass
 
     @abstractmethod
-    def pre_run(self, network: 'INetwork'):  # type: ignore
+    def pre_run(self, network: 'INetwork') -> bool:  # type: ignore
         pass
 
     @abstractmethod
-    def run(self, network: 'INetwork'):  # type: ignore
+    def run(self, network: 'INetwork') -> bool:  # type: ignore
         pass
 
-    def start(self, network: 'INetwork') -> bool:
+    def start(self, network: 'INetwork') -> bool:  # type: ignore
         self.is_success = self.pre_run(network)
         if not self.is_success:
             logging.debug("pre_run failed")
