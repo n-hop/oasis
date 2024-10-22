@@ -11,11 +11,11 @@ Oasis is a network emulation platform that enables protocol developers to test t
 
 Oasis is built on [Containernet](https://github.com/containernet/containernet/), a fork of [Mininet](http://mininet.org/), and [Docker](https://www.docker.com/). It offers a web-based user interface for creating and managing testbeds, test cases, and test results. Additionally, it provides a RESTful API for interacting with the DevOps platform. One of the most impressive features of Oasis is its extensive set of components for visualizing and analyzing test results, as well as automatically generating test reports based on provided templates.
 
-## Architecture Overview
+## Architecture
 
 <div align="center" style="text-align:center"> 
 <img src="./docs/imgs/oasis_arch.svg" alt="Oasis" style="zoom:50%;"></div>
-<div align="center">Fig 1.1 Oasis brief architecture</div>
+<div align="center">Fig 1.1 Oasis architecture brief view</div>
 
 ## Features
 
