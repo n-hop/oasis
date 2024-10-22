@@ -8,7 +8,7 @@ class IProtoInfo(ABC):
     - UDS listening port
     """
     @abstractmethod
-    def get_forward_port(self) -> int:  # type: ignore
+    def get_forward_port(self) -> int:
         """The UDP forward port of the protocol.
         """
 

@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import platform
+from typing import Optional
 import yaml
 
 # from mininet.cli import CLI
@@ -9,7 +10,7 @@ from mininet.log import setLogLevel
 from interfaces.network_mgr import NetworkType
 from containernet.topology import ITopology
 from containernet.linear_topology import LinearTopology
-from containernet.config import (IConfig, NodeConfig)
+from containernet.config import (IConfig, NodeConfig, TopologyConfig)
 from tools.util import (is_same_path, is_base_path, parse_test_file_name)
 from var.global_var import g_root_path
 from core.network_factory import (create_network_mgr)
@@ -75,8 +76,13 @@ def load_node_config(config_base_path, file_path) -> NodeConfig:
     if node_config_yaml is None:
         logging.error("Error: no containernet node config.")
         return NodeConfig(name="", img="")
-    return IConfig.load_yaml_config(config_base_path,
-                                    node_config_yaml, 'node_config')
+    loaded_conf = IConfig.load_yaml_config(config_base_path,
+                                           node_config_yaml, 'node_config')
+    if isinstance(loaded_conf, NodeConfig):
+        # Ensure the loaded configuration is a NodeConfig
+        return loaded_conf
+    logging.error("Error: loaded configuration is not a NodeConfig.")
+    return NodeConfig(name="", img="")
 
 
 def prepare_node_config(mapped_config_path, yaml_test_file, source_workspace, original_config_path):
@@ -94,30 +100,31 @@ def prepare_node_config(mapped_config_path, yaml_test_file, source_workspace, or
     return node_config
 
 
-def load_topology(config_base_path, test_case_yaml) -> ITopology:
+def load_topology(config_base_path, test_case_yaml) -> Optional[ITopology]:
     """Load network related configuration from the yaml file.
     """
     if 'topology' not in test_case_yaml:
         logging.error("Error: missing key topology in the test case yaml.")
-        return None  # type: ignore
+        return None
     local_yaml = test_case_yaml['topology']
     logging.info(f"Test: local_yaml %s",
                  local_yaml)
     if local_yaml is None:
         logging.error("Error: content of topology is None.")
-        return None  # type: ignore
+        return None
     loaded_conf = IConfig.load_yaml_config(config_base_path,
                                            local_yaml,
                                            'topology')
     if loaded_conf is None:
         logging.error("Error: loaded_conf of topology is None.")
-        return None  # type: ignore
-    if loaded_conf.topology_type == "linear":  # type: ignore
-        built_net_top = LinearTopology(loaded_conf)  # type: ignore
-    else:
-        logging.error("Error: unsupported topology type.")
-        return None  # type: ignore
-    return built_net_top
+        return None
+    if not isinstance(loaded_conf, TopologyConfig):
+        logging.error("Error: loaded_conf of topology is None.")
+        return None
+    if loaded_conf.topology_type == "linear":
+        return LinearTopology(loaded_conf)
+    logging.error("Error: unsupported topology type.")
+    return None
 
 
 def load_testbed_config(name, yaml_base_path_input):
@@ -218,6 +225,8 @@ if __name__ == '__main__':
         sys.exit(1)
     for test in all_tests:
         cur_topology = load_topology(config_path, test)
+        if not cur_topology:
+            continue
         # 1.1 The topology in one case can be composed of multiple topologies:
         #      Traverse all the topologies in the test case.
         for index, cur_top_ins in enumerate(cur_topology):
