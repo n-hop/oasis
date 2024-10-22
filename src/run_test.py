@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 import logging
 import platform
 import multiprocessing
@@ -27,7 +28,7 @@ from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
 from data_analyzer.analyzer import AnalyzerConfig
 from data_analyzer.analyzer_factory import AnalyzerFactory
-from tools.util import is_same_path
+from tools.util import (is_same_path, is_base_path)
 from var.global_var import g_root_path
 from core.network_mgr import NetworkManager
 
@@ -403,7 +404,7 @@ def handle_test_success():
 
 
 def perform_test_in_process(network, test_name, id, result_dict):
-    """Execute the test in a separate process, 
+    """Execute the test in a separate process,
         then store the results in the shared dictionary.
 
     Args:
@@ -419,31 +420,43 @@ def perform_test_in_process(network, test_name, id, result_dict):
 
 
 class ContainerTestRunner:
-    def __init__(self, test_yml_config, config_path):
+    def __init__(self, test_yml_config, config_path, mgr: NetworkManager):
         self.test_yml_config = test_yml_config
         self.config_mapped_prefix = config_path
         self.target_protocols = None
+        self.results_dict = None
+        self.network_mgr = mgr
+        self.net_num = 0
+        self.top_description = ''
         self._load_protocols()
 
     def target_protocol_num(self):
         return len(self.target_protocols) if self.target_protocols is not None else 0
 
-    def setup_tests(self, networks):
+    def set_network_manager(self, mgr):
+        if self.network_mgr is None:
+            self.network_mgr = mgr
+
+    def setup_tests(self):
+        if self.network_mgr is None:
+            logging.error("Error: no network manager.")
+            return False
+        networks = self.network_mgr.get_networks()
         if self.target_protocols is None:
             logging.error("Error: no target protocols.")
             return False
         pro_num = len(self.target_protocols)
-        net_num = len(networks)
-        if net_num == 0:
+        self.net_num = len(networks)
+        if self.net_num == 0:
             logging.error("Error: no networks.")
             return False
         if pro_num == 0:
             logging.error("Error: no protocols.")
             return False
         # 3. setup the test for each target protocol
-        for i in range(net_num):
+        for i in range(self.net_num):
             selected_protocols = []
-            if net_num == pro_num:
+            if self.net_num == pro_num:
                 selected_protocols = [self.target_protocols[i]]
             else:
                 selected_protocols = self.target_protocols
@@ -454,22 +467,29 @@ class ContainerTestRunner:
                 return False
         return True
 
-    def execute_tests(self, networks, shared_dict):
+    def execute_tests(self):
+        if self.network_mgr is None:
+            logging.error("Error: no network manager.")
+            return False
         if self.target_protocols is None:
             logging.error("Error: no target protocols.")
             return False
-        net_num = len(networks)
-        if net_num == 0:
+        self.network_mgr.start_networks()
+        networks = self.network_mgr.get_networks()
+        self.top_description = self.network_mgr.get_top_description()
+        if self.net_num == 0:
             logging.error("Error: no networks.")
             return False
+        process_manager = Manager()
+        process_shared_dict = process_manager.dict()
         processes = []
         test_name = self.test_yml_config['name']
         # 4. perform the test for each target protocol in parallel with different processes
-        for i in range(net_num):
+        for i in range(self.net_num):
             p = multiprocessing.Process(target=perform_test_in_process,
                                         args=(networks[i],
                                               test_name,
-                                              i, shared_dict))
+                                              i, process_shared_dict))
             processes.append(p)
             p.start()
 
@@ -486,17 +506,28 @@ class ContainerTestRunner:
             else:
                 logging.info(f"Process %s for test %s is completed successfully.",
                              i, test_name)
+        # save results from different process.
+        self.results_dict = copy.deepcopy(process_shared_dict)
+        if process_manager:
+            process_manager.shutdown()
+            process_manager = None
+            process_shared_dict = None
+            processes = []
+        self.network_mgr.reset_networks()
         return True
 
-    def handle_test_results(self, net_num, top_index, top_description, shared_dict):
+    def handle_test_results(self, top_index):
         # 5. merge multiple test results into one dictionary
+        if self.results_dict is None:
+            logging.error("Process shared dict is None.")
+            return False
         test_name = self.test_yml_config['name']
         merged_results = {}
-        for i in range(net_num):
-            if i not in shared_dict:
+        for i in range(self.net_num):
+            if i not in self.results_dict:
                 logging.error(f"No results found for process %s.", i)
-                self._handle_failure()
-            for shared_test_type, shared_test_result in shared_dict[i].items():
+                return False
+            for shared_test_type, shared_test_result in self.results_dict[i].items():
                 if shared_test_type not in merged_results:
                     merged_results[shared_test_type] = {
                         'results': [],
@@ -508,9 +539,9 @@ class ContainerTestRunner:
             "########## Oasis merge parallel test results. %s", merged_results)
         # 5.1 diagnostic the test results
         if diagnostic_test_results(merged_results,
-                                   top_description) is False:
+                                   self.top_description) is False:
             logging.error("Test %s results analysis not passed.", test_name)
-            self._handle_failure()
+            return False
 
         # 5.2 move results(logs, diagrams) to "{cur_results_path}/{top_index}"
         cur_results_path = f"{g_root_path}test_results/{test_name}/"
@@ -531,11 +562,13 @@ class ContainerTestRunner:
                 os.system(f"mv {root}/{file_name} {archive_dir}")
         # 5.3 save top_description
         with open(f"{archive_dir}/topology_description.txt", 'w', encoding='utf-8') as f:
-            f.write(f"{top_description}")
+            f.write(f"{self.top_description}")
         return True
 
     def cleanup(self):
-        # 6. reset the network then go to the next test case
+        # 6. clean up the network instance
+        if self.network_mgr:
+            self.network_mgr.stop_networks()
         return True
 
     def _load_protocols(self):
@@ -554,18 +587,14 @@ class ContainerTestRunner:
             return False
         return True
 
-    def _handle_failure(self):
+    def handle_failure(self):
+        self.cleanup()
         test_name = self.test_yml_config['name']
         logging.error("Test %s failed.", test_name)
         # create a regular file to indicate the test failure
         with open(f"{g_root_path}test.failed", 'w', encoding='utf-8') as f_failed:
             f_failed.write(f"{test_name}")
         sys.exit(1)
-
-    def _handle_success(self):
-        # create a regular file to indicate the test success
-        with open(f"{g_root_path}test.success", 'w', encoding='utf-8') as f_success:
-            f_success.write(f"test.success")
 
 
 if __name__ == '__main__':
@@ -599,6 +628,14 @@ if __name__ == '__main__':
     oasis_mapped_prefix = f'{g_root_path}'
     logging.info(
         f"run_test.py: Base path of the oasis project: %s", oasis_workspace)
+    running_in_nested = False
+    current_process_dir = os.getcwd()
+    if is_base_path(current_process_dir, oasis_workspace):
+        running_in_nested = False
+        logging.info("##### running in a hosted environment.")
+    else:
+        running_in_nested = True
+        logging.info("##### running in a nested environment.")
     cur_test_file = sys.argv[3]
     cur_selected_test = ""
     temp_list = cur_test_file.split(":")
@@ -612,7 +649,7 @@ if __name__ == '__main__':
     if not os.path.exists(yaml_test_file_path):
         logging.info(f"Error: %s does not exist.", yaml_test_file_path)
         sys.exit(1)
-    linear_network = None
+
     cur_node_config = load_node_config(
         config_mapped_prefix, yaml_test_file_path)
     if cur_node_config.name == "":
@@ -636,7 +673,8 @@ if __name__ == '__main__':
         # 1.1 The topology in one case can be composed of multiple topologies:
         #      Traverse all the topologies in the test case.
         for index, cur_top_ins in enumerate(cur_topology):
-            test_runner = ContainerTestRunner(test, config_mapped_prefix)
+            test_runner = ContainerTestRunner(
+                test, config_mapped_prefix, network_manager)
             # Test execution mode default is serial
             test_exec_mode = test.get('execution_mode', 'serial')
             if test_exec_mode not in supported_execution_mode:
@@ -659,43 +697,19 @@ if __name__ == '__main__':
                                                  test['route'])
             if res is False:
                 continue
-            network_manager.start_networks(cur_top_ins)
-            all_networks = network_manager.get_networks()
-            all_networks_num = len(all_networks)
-            description = network_manager.get_top_description()
-            logging.info(
-                "######################################################")
-            logging.info("########## Oasis traverse the topologies: [%d] \n %s.",
-                         index,
-                         description)
-            logging.info(
-                "######################################################")
             # 1.3 Load test to the network instance
-            res = test_runner.setup_tests(all_networks)
+            res = test_runner.setup_tests()
             if res is False:
-                test_runner.cleanup()
-                network_manager.stop_networks()
-                sys.exit(1)
+                test_runner.handle_failure()
             # 1.4 Execute the test on all network instances
-            process_manager = Manager()
-            process_shared_dict = process_manager.dict()
-            res = test_runner.execute_tests(
-                all_networks, process_shared_dict)
+            res = test_runner.execute_tests()
             if res is False:
-                test_runner.cleanup()
-                network_manager.stop_networks()
-                sys.exit(1)
+                test_runner.handle_failure()
             # 1.5 Collect the test results, and analyze/diagnostic the results.
-            res = test_runner.handle_test_results(
-                all_networks_num, index, description, process_shared_dict)
+            res = test_runner.handle_test_results(index)
             if res is False:
-                test_runner.cleanup()
-                network_manager.stop_networks()
-                sys.exit(1)
-            process_manager.shutdown()
-            network_manager.reset_networks()
-            test_runner.cleanup()
-        # > for cur_top_index, cur_top_ins in enumerate(cur_topology):
+                test_runner.handle_failure()
+        # > for index, cur_top_ins in enumerate(cur_topology):
     # > for test in all_tests
     handle_test_success()
     sys.exit(0)

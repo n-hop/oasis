@@ -35,6 +35,7 @@
     "dimage",
     "intf",
     "Iperf",
+    "nhop",
     "noqueue",
     "olsr",
     "openr",

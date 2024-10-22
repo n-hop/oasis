@@ -17,6 +17,7 @@ class NetworkManager:
     def __init__(self):
         self.networks = []
         self.num_of_networks = 0
+        self.cur_top = None
 
     def get_top_description(self):
         if len(self.networks) > 0:
@@ -71,22 +72,34 @@ class NetworkManager:
                 self.networks[i].stop()
                 logging.info("########## Oasis stop the network %s.", i)
             self.networks = self.networks[:num_networks]
+        logging.info(
+            "######################################################")
+        logging.info("########## Oasis traverse the topologies: \n %s .",
+                     self.get_top_description())
+        logging.info(
+            "######################################################")
         self.num_of_networks = len(self.networks)
+        # use `self.cur_top` to reload network
+        self.cur_top = topology
         return True
 
-    def start_networks(self, top_config: ITopology):
+    def start_networks(self):
         """reload networks if networks is already built; otherwise, start networks.
 
         Args:
             topology (ITopology): The topology to be built.
         """
+        if self.cur_top is None:
+            logging.error("Current topology is not set.")
+        if self.num_of_networks == 0:
+            logging.error("nothing to start")
         for i in range(self.num_of_networks):
             if not self.networks[i].is_started():
                 self.networks[i].start()
                 logging.info("########## Oasis start the network %s.", i)
             else:
                 # reload the network instances can save time
-                self.networks[i].reload(top_config)
+                self.networks[i].reload(self.cur_top)
                 logging.info("########## Oasis reload the network %s.", i)
 
     def stop_networks(self):
@@ -94,9 +107,11 @@ class NetworkManager:
         for i in range(self.num_of_networks):
             self.networks[i].stop()
             logging.info("########## Oasis stop the network %s.", i)
+        self.networks = []
+        self.num_of_networks = 0
 
     def reset_networks(self):
-        # Reset all networks
+        # Reset all networks, mainly for routes/tc rules/ip config.
         for i in range(self.num_of_networks):
             self.networks[i].reset()
             logging.info("########## Oasis reset the network %s.", i)
