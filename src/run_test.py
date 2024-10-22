@@ -367,6 +367,21 @@ def load_node_config(config_base_path, file_path) -> NodeConfig:
                                     node_config_yaml, 'node_config')
 
 
+def prepare_node_config(mapped_config_path, yaml_test_file, source_workspace, original_config_path):
+    # print all input parameters
+    node_config = load_node_config(
+        mapped_config_path, yaml_test_file)
+    if node_config is None or node_config.name == "":
+        logging.error("Error: no containernet node config.")
+        sys.exit(1)
+    # mount the workspace
+    node_config.vols.append(f'{source_workspace}:{g_root_path}')
+    if mapped_config_path == f'{g_root_path}config/':
+        node_config.vols.append(
+            f'{original_config_path}:{mapped_config_path}')
+    return node_config
+
+
 def build_topology(top_config: TopologyConfig):
     built_net_top = None
     if top_config.topology_type == "linear":
@@ -421,9 +436,9 @@ def perform_test_in_process(network, test_name, id, result_dict):
 
 
 class TestRunner:
-    def __init__(self, test_yml_config, config_path, network_mgr: INetworkManager):
+    def __init__(self, test_yml_config, path, network_mgr: INetworkManager):
         self.test_yml_config = test_yml_config
-        self.config_mapped_prefix = config_path
+        self.config_path = path
         self.target_protocols = None
         self.results_dict = None
         self.network_mgr = network_mgr
@@ -602,7 +617,7 @@ class TestRunner:
         logging.info("########################## Oasis Loading Protocols "
                      "##########################")
         self.target_protocols = load_target_protocols_config(
-            self.config_mapped_prefix, self.test_yml_config)
+            self.config_path, self.test_yml_config)
         if self.target_protocols is None:
             logging.error("Error: no target protocols.")
             return False
@@ -656,16 +671,16 @@ if __name__ == '__main__':
     oasis_workspace = sys.argv[2]
     logging.info("Yaml config path: %s", yaml_config_base_path)
     logging.info("Oasis workspace: %s", oasis_workspace)
-    # config_mapped_prefix can be `{g_root_path}config/` or `{g_root_path}src/config/`
+    # config_path can be `{g_root_path}config/` or `{g_root_path}src/config/`
     if is_same_path(yaml_config_base_path, f"{oasis_workspace}/src/config/"):
         # oasis workspace mapped to `{g_root_path}`
         logging.info("No config path mapping is needed.")
-        config_mapped_prefix = f'{g_root_path}src/config/'
+        config_path = f'{g_root_path}src/config/'
     else:
         # oasis yaml config files mapped to `{g_root_path}config/`
-        config_mapped_prefix = f'{g_root_path}config/'
+        config_path = f'{g_root_path}config/'
         logging.info(
-            "Oasis yaml config files mapped to `%s`.", config_mapped_prefix)
+            "Oasis yaml config files mapped to `%s`.", config_path)
     oasis_mapped_prefix = f'{g_root_path}'
     logging.info(
         f"run_test.py: Base path of the oasis project: %s", oasis_workspace)
@@ -680,25 +695,18 @@ if __name__ == '__main__':
     if len(temp_list) == 2:
         cur_test_file = temp_list[0]
         cur_selected_test = temp_list[1]
-    yaml_test_file_path = f'{config_mapped_prefix}/{cur_test_file}'
+    yaml_test_file_path = f'{config_path}/{cur_test_file}'
     if not os.path.exists(yaml_test_file_path):
         logging.info(f"Error: %s does not exist.", yaml_test_file_path)
         sys.exit(1)
 
-    cur_node_config = load_node_config(
-        config_mapped_prefix, yaml_test_file_path)
-    if cur_node_config is None or cur_node_config.name == "":
-        logging.error("Error: no containernet node config.")
-        sys.exit(1)
-    # mount the workspace
-    cur_node_config.vols.append(f'{oasis_workspace}:{oasis_mapped_prefix}')
-    if config_mapped_prefix == f'{g_root_path}config/':
-        cur_node_config.vols.append(
-            f'{yaml_config_base_path}:{config_mapped_prefix}')
+    cur_node_config = None
     network_manager = None
     if running_in_nested:
         logging.info("##### running in a nested environment.")
         network_manager = create_network_mgr(NetworkType.containernet)
+        cur_node_config = prepare_node_config(
+            config_path, yaml_test_file_path, oasis_workspace, yaml_config_base_path)
     else:
         logging.info("##### running in a hosted environment.")
         network_manager = create_network_mgr(NetworkType.testbed)
@@ -711,12 +719,12 @@ if __name__ == '__main__':
         logging.error("Error: no test case found.")
         sys.exit(1)
     for test in all_tests:
-        cur_topology = load_topology(config_mapped_prefix, test)
+        cur_topology = load_topology(config_path, test)
         # 1.1 The topology in one case can be composed of multiple topologies:
         #      Traverse all the topologies in the test case.
         for index, cur_top_ins in enumerate(cur_topology):
             test_runner = TestRunner(
-                test, config_mapped_prefix, network_manager)
+                test, config_path, network_manager)
             test_runner.init(cur_node_config,
                              cur_top_ins)
             if not test_runner.is_ready():

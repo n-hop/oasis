@@ -18,7 +18,7 @@ class NetworkManager(INetworkManager):
     def __init__(self):
         super().__init__()
         self.networks = []
-        self.num_of_networks = 0
+        self.net_num = 0
         self.cur_top = None
         self.type = NetworkType.containernet
 
@@ -81,7 +81,7 @@ class NetworkManager(INetworkManager):
                      self.get_top_description())
         logging.info(
             "######################################################")
-        self.num_of_networks = len(self.networks)
+        self.net_num = len(self.networks)
         # use `self.cur_top` to reload network
         self.cur_top = topology
         return True
@@ -94,9 +94,9 @@ class NetworkManager(INetworkManager):
         """
         if self.cur_top is None:
             logging.error("Current topology is not set.")
-        if self.num_of_networks == 0:
+        if self.net_num == 0:
             logging.error("nothing to start")
-        for i in range(self.num_of_networks):
+        for i in range(self.net_num):
             if not self.networks[i].is_started():
                 self.networks[i].start()
                 logging.info("########## Oasis start the network %s.", i)
@@ -107,14 +107,14 @@ class NetworkManager(INetworkManager):
 
     def stop_networks(self):
         # Stop all networks
-        for i in range(self.num_of_networks):
+        for i in range(self.net_num):
             self.networks[i].stop()
             logging.info("########## Oasis stop the network %s.", i)
         self.networks = []
-        self.num_of_networks = 0
+        self.net_num = 0
 
     def reset_networks(self):
         # Reset all networks, mainly for routes/tc rules/ip config.
-        for i in range(self.num_of_networks):
+        for i in range(self.net_num):
             self.networks[i].reset()
             logging.info("########## Oasis reset the network %s.", i)

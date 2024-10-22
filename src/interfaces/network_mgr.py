@@ -19,7 +19,7 @@ class INetworkManager(ABC):
 
     def __init__(self):
         self.networks = []
-        self.num_of_networks = 0
+        self.net_num = 0
         self.cur_top = None
         self.type = NetworkType.none
 
