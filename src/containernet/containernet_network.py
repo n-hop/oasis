@@ -42,7 +42,6 @@ class ContainerizedNetwork (INetwork):
         self.node_bind_port = node_config.bind_port
         self.node_name_prefix = node_config.name_prefix
         self.node_ip_range = node_config.ip_range or ""
-        self.node_route = node_config.route
         self.topology_type = net_topology.get_topology_type()
         logging.info('ContainerizedNetwork uses node_img %s', self.node_img)
         # `node_ip_start` init from node_ip_range

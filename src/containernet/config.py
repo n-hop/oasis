@@ -40,9 +40,8 @@ class NodeConfig:
     img: str
     vols: Optional[list] = field(default_factory=list)
     bind_port: Optional[bool] = field(default=True)
-    name_prefix: Optional[str] = field(default='h') # h i j k.
+    name_prefix: Optional[str] = field(default='h')  # h i j k.
     ip_range: Optional[str] = field(default='10.0.0.0/8')
-    route: Optional[str] = field(default='ip')
 
 
 @dataclass
