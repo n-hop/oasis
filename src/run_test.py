@@ -10,7 +10,7 @@ from interfaces.network_mgr import NetworkType
 from containernet.topology import ITopology
 from containernet.linear_topology import LinearTopology
 from containernet.config import (IConfig, NodeConfig)
-from tools.util import (is_same_path, is_base_path)
+from tools.util import (is_same_path, is_base_path, parse_test_file_name)
 from var.global_var import g_root_path
 from core.network_factory import (create_network_mgr)
 from core.runner import TestRunner
@@ -157,10 +157,10 @@ if __name__ == '__main__':
         setLogLevel('warning')
         logging.basicConfig(level=logging.INFO)
         logging.info("Debug mode is disabled.")
-    logging.info("Platform: %s", platform.platform())
-    logging.info("Python version: %s", platform.python_version())
     yaml_config_base_path = sys.argv[1]
     oasis_workspace = sys.argv[2]
+    logging.info("Platform: %s", platform.platform())
+    logging.info("Python version: %s", platform.python_version())
     logging.info("Yaml config path: %s", yaml_config_base_path)
     logging.info("Oasis workspace: %s", oasis_workspace)
     # config_path can be `{g_root_path}config/` or `{g_root_path}src/config/`
@@ -182,14 +182,13 @@ if __name__ == '__main__':
         sys.exit(1)
 
     cur_test_file = sys.argv[3]
-    cur_selected_test = ""
-    temp_list = cur_test_file.split(":")
-    if len(temp_list) not in [1, 2]:
-        logging.info("Error: invalid test case file format.")
+    cur_selected_test = "all"
+    cur_test_file, cur_selected_test = parse_test_file_name(cur_test_file)
+    if not cur_test_file:
+        logging.info("Error: invalid test file name.")
         sys.exit(1)
-    if len(temp_list) == 2:
-        cur_test_file = temp_list[0]
-        cur_selected_test = temp_list[1]
+    if not cur_selected_test:
+        cur_selected_test = "all"
     yaml_test_file_path = f'{config_path}/{cur_test_file}'
     if not os.path.exists(yaml_test_file_path):
         logging.info(f"Error: %s does not exist.", yaml_test_file_path)

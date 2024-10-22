@@ -35,6 +35,7 @@
     "dimage",
     "intf",
     "Iperf",
+    "mininet",
     "nhop",
     "noqueue",
     "olsr",

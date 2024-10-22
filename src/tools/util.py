@@ -39,3 +39,20 @@ def str_to_mbps(x, unit):
     elif unit == "":
         ret = float(x) / 1000000
     return round(ret, 2)
+
+
+def parse_test_file_name(test_file_path_string):
+    """
+    Parse the test YAML file string to extract the file path and test name.
+    for example: `test.yaml:test1` will be parsed to `test.yaml` and `test1`
+
+    return value: test_file_path, test_name
+    """
+    file = None
+    temp_list = test_file_path_string.split(":")
+    if len(temp_list) not in [1, 2]:
+        return None, None
+    if len(temp_list) == 2:
+        file = temp_list[0]
+        return file, temp_list[1]
+    return test_file_path_string, None

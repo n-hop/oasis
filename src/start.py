@@ -4,6 +4,7 @@ import argparse
 import logging
 
 from var.global_var import g_root_path
+from tools.util import parse_test_file_name
 from containernet.containernet import (
     NestedContainernet, load_nested_config)
 
@@ -92,16 +93,13 @@ if __name__ == '__main__':
     else:
         logging.info("running outside the workspace directory of oasis")
     # ############### workspace dir and process dir ################
-    # python source files are always started from the `oasis_workspace`
-    # none py source files are always started from the `yaml_base_path`
+    # (1) python source files are always started from the `oasis_workspace`
+    # (2) yaml/json configuration files are always started from the `yaml_base_path`
     # ##############################################################
-    # format of `cur_test_yaml_file`: folder1/folder2/test.yaml:test1
-    temp_list = cur_test_yaml_file.split(":")
-    if len(temp_list) not in [1, 2]:
-        logging.info("Error: invalid test case file format.")
+    cur_test_yaml_file, _ = parse_test_file_name(cur_test_yaml_file)
+    if not cur_test_yaml_file:
+        logging.info("Error: invalid test file name.")
         sys.exit(1)
-    if len(temp_list) == 2:
-        cur_test_yaml_file = temp_list[0]
     # check whether yaml_base_path is an absolute path
     if not os.path.isabs(yaml_base_path):
         yaml_base_path = os.path.join(current_process_dir, yaml_base_path)
@@ -122,10 +120,10 @@ if __name__ == '__main__':
     if nested_containernet == "" and baremetal_testbed != "":
         logging.info("Oasis is running on baremetal testbed [%s].",
                      baremetal_testbed)
-    # Both mode needs the nested containernet since the source code dependencies
+    # Both modes need the nested containernet due to mininet dependencies
     nested_env = build_nested_env(
         nested_containernet, yaml_base_path, oasis_workspace)
-    if nested_env is None:
+    if not nested_env:
         logging.info("Error: failed to build the nested containernet.")
         sys.exit(1)
     nested_env.start()
