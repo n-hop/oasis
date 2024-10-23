@@ -59,11 +59,11 @@ def diagnostic_test_results(test_results, top_des):
                 data_type=f"{test_config.packet_type}",
                 subtitle=top_des)
             analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
+            analyzer.visualize()
             if analyzer.analyze() is False:
                 logging.error(
                     "Test %s failed at throughput test", test_config.name)
                 return False
-            analyzer.visualize()
         if test_type == TestType.rtt:
             if test_config.packet_count > 1:
                 config = AnalyzerConfig(
@@ -71,11 +71,11 @@ def diagnostic_test_results(test_results, top_des):
                     output=f"{test_result['results'][0].result_dir}",
                     subtitle=top_des)
                 analyzer = AnalyzerFactory.get_analyzer("rtt", config)
+                analyzer.visualize()
                 if analyzer.analyze() is False:
                     logging.error(
                         "Test %s failed at rtt test", test_config.name)
                     return False
-                analyzer.visualize()
             if test_config.packet_count == 1:
                 config = AnalyzerConfig(
                     input=result_files,
@@ -83,22 +83,22 @@ def diagnostic_test_results(test_results, top_des):
                     subtitle=top_des)
                 analyzer = AnalyzerFactory.get_analyzer(
                     "first_rtt", config)
+                analyzer.visualize()
                 if analyzer.analyze() is False:
                     logging.error(
                         "Test %s failed at first_rtt test", test_config.name)
                     return False
-                analyzer.visualize()
         if test_type == TestType.sshping:
             config = AnalyzerConfig(
                 input=result_files,
                 output=f"{test_result['results'][0].result_dir}",
                 subtitle=top_des)
             analyzer = AnalyzerFactory.get_analyzer("sshping", config)
+            analyzer.visualize()
             if analyzer.analyze() is False:
                 logging.error(
                     "Test %s failed at sshping test", test_config.name)
                 return False
-            analyzer.visualize()
         if test_type == TestType.scp:
             logging.error("scp test results: %s", result_files)
     return True
@@ -436,11 +436,14 @@ class TestRunner:
                     shared_test_result['results'])
         logging.info(
             "########## Oasis merge parallel test results. %s", merged_results)
+        allow_failure = self.test_yml_config.get('allow_failure', 'false')
         # 5.1 diagnostic the test results
         if diagnostic_test_results(merged_results,
                                    self.top_description) is False:
             logging.error("Test %s results analysis not passed.", test_name)
-            return False
+            # allow_failure true  ===> return True
+            # allow_failure false ===> return False
+            return allow_failure not in ('False', 'false')
 
         # 5.2 move results(logs, diagrams) to "{cur_results_path}/{top_index}"
         cur_results_path = f"{g_root_path}test_results/{test_name}/"
