@@ -152,7 +152,7 @@ The above tests can be repeated by Oasis with running the following table of tes
 
 | Test Name          | Description        | Test Yaml File                             |
 | ------------------ | ------------------ | ------------------------------------------ |
-| Single hop test    | Single hop test    |                                            |
+| Single hop test    | Single hop test    | protocol-performance-comparison.yaml:test2 |
 | Multiple hops test | Multiple hops test | protocol-performance-comparison.yaml:test3 |
 
 Take `Multiple hops test` as an example:

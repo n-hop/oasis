@@ -4,7 +4,7 @@ import copy
 from .topology import (ITopology, MatrixType, MatType2LinkAttr, LinkAttr)
 
 max_link_bandwidth = 100
-max_link_latency = 110
+max_link_latency = 150
 
 
 class LinearTopology(ITopology):

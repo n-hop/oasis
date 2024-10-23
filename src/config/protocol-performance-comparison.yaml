@@ -5,12 +5,12 @@ containernet:
     config_file: predefined.node_config.yaml
 
 tests:
-  test1:
+  test2:
     description: "Test protocol throughput/rtt on single hop"
     topology:
       config_name: linear_network_1
       config_file: predefined.topology.yaml
-    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr, quic]
+    target_protocols: [btp, brtp_proxy, kcp, tcp-bbr, quic]
     route: static_route
     test_tools:
       iperf:
@@ -22,20 +22,6 @@ tests:
         interval: 0.01
         packet_count: 2000
         packet_size: 512
-        client_host: 0
-        server_host: 1
-  test2:
-    description: "Test protocol first-rtt on single hop"
-    topology:
-      config_name: linear_network_1
-      config_file: predefined.topology.yaml
-    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr, quic]
-    route: static_route
-    test_tools:
-      rtt:
-        interval: 0.01
-        packet_count: 1
-        packet_size: 20
         client_host: 0
         server_host: 1
   test3:
@@ -43,7 +29,7 @@ tests:
     topology:
       config_name: linear_network_3
       config_file: predefined.topology.yaml
-    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr, quic]
+    target_protocols: [btp, brtp_proxy, kcp, tcp-bbr, quic]
     route: static_route
     test_tools:
       iperf:
@@ -55,19 +41,5 @@ tests:
         interval: 0.01
         packet_count: 2000
         packet_size: 512
-        client_host: 0
-        server_host: 3
-  test4:
-    description: "Test protocol first-rtt on multiple hops"
-    topology:
-      config_name: linear_network_3
-      config_file: predefined.topology.yaml
-    target_protocols: [btp, brtp, brtp_proxy, kcp, tcp-bbr, quic]
-    route: static_route
-    test_tools:
-      rtt:
-        interval: 0.01
-        packet_count: 1
-        packet_size: 20
         client_host: 0
         server_host: 3
