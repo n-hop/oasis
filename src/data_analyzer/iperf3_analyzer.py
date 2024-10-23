@@ -58,6 +58,7 @@ class Iperf3Analyzer(IDataAnalyzer):
         default_title += self.config.subtitle
         plt.title(default_title, fontsize=10, fontweight="bold")
         max_data_value = 0
+        data_len = 0
         for input_log in self.config.input:
             logging.info(f"Visualize iperf3 log: %s", input_log)
             # input_log format /a/b/c/iperf3_h1_h2.log
@@ -72,11 +73,19 @@ class Iperf3Analyzer(IDataAnalyzer):
             for key, data_array in visualize_data.items():
                 logging.debug(f"Added %s data: %s  %s",
                               key, data_array, log_base_name)
-                cur_max_data_value = max(data_array)
-                max_data_value = max(max_data_value, cur_max_data_value)
-                x = np.arange(1, len(data_array))
-                plt.plot(x, data_array[0: len(x)],
-                         'o-', markersize=3, linewidth=1.5, label=f"{log_label}")
+                if len(data_array) == 0:
+                    # plot empty data
+                    data_array = [0] * data_len
+                    x = np.arange(1, data_len)
+                    plt.plot(x, data_array[0: len(x)],
+                             'o-', markersize=3, linewidth=1.5, label=f"{log_label}")
+                else:
+                    cur_max_data_value = max(data_array)
+                    max_data_value = max(max_data_value, cur_max_data_value)
+                    data_len = max(data_len, len(data_array))
+                    x = np.arange(1, len(data_array))
+                    plt.plot(x, data_array[0: len(x)],
+                             'o-', markersize=3, linewidth=1.5, label=f"{log_label}")
                 plt.ylim(0, max_data_value + 10)
             plt.legend(loc="lower right", fontsize=8)
         if not self.config.output:
