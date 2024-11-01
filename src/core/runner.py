@@ -436,15 +436,17 @@ class TestRunner:
                     shared_test_result['results'])
         logging.info(
             "########## Oasis merge parallel test results. %s", merged_results)
-        allow_failure = self.test_yml_config.get('allow_failure', 'false')
+        allow_failure = self.test_yml_config.get('allow_failure', False)
+        diag_suc = diagnostic_test_results(
+            merged_results, self.top_description)
         # 5.1 diagnostic the test results
-        if diagnostic_test_results(merged_results,
-                                   self.top_description) is False:
-            logging.error("Test %s results analysis not passed.", test_name)
-            # allow_failure true  ===> return True
-            # allow_failure false ===> return False
-            return allow_failure not in ('False', 'false')
-
+        if not diag_suc and not allow_failure:
+            logging.error("Test %s results analysis not passed.",
+                          test_name)
+            return False
+        if not diag_suc and allow_failure:
+            logging.warning(
+                "Test %s results analysis not passed, and failure is ignored.", test_name)
         # 5.2 move results(logs, diagrams) to "{cur_results_path}/{top_index}"
         cur_results_path = f"{g_root_path}test_results/{test_name}/"
         logging.info("cur_results_path %s", cur_results_path)
