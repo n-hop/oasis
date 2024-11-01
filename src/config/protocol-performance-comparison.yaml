@@ -48,7 +48,7 @@ tests:
     topology:
       config_name: long_fat_network
       config_file: predefined.topology.yaml
-    target_protocols: [brtp_proxy, kcp, tcp-bbr]
+    target_protocols: [brtp_proxy, tcp-cubic, tcp-bbr]
     route: static_route
     test_tools:
       iperf:
