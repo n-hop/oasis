@@ -51,5 +51,7 @@
     "testsuites"
   ],
   "python.analysis.typeCheckingMode": "basic",
-  "python.analysis.autoImportCompletions": true
+  "python.analysis.autoImportCompletions": true,
+  "svg.preview.background": "white",
+  "markdown-preview-github-styles.colorTheme": "light"
 }

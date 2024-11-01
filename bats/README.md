@@ -1,7 +1,7 @@
 This binary is a minimized BATS™ protocol with the following limitations added:
 
-- limited maximum input rate at 100Mbps.
-- limited maximum running time at 80 seconds.
+- limited maximum input rate to 100Mbps.
+- limited maximum running time to 80 seconds.
 - limited feature set.
 - required a software license to run.
 
@@ -14,9 +14,11 @@ To run the tests on your local machine, please contact peng.lei@n-hop.com to obt
 - [About BATS™ Protocol](#about-bats-protocol)
   - [2. Advanced Features](#2-advanced-features)
   - [3. Performance](#3-performance)
-  - [3.1 Single hop test](#31-single-hop-test)
-  - [3.2 Multiple hops test](#32-multiple-hops-test)
-  - [3.3 Repeat the tests with Oasis](#33-repeat-the-tests-with-oasis)
+  - [3.1 Single-hop TCP test](#31-single-hop-tcp-test)
+  - [3.2 Single-hop UDP test](#32-single-hop-udp-test)
+  - [3.3 Multi-hops TCP test](#33-multi-hops-tcp-test)
+  - [3.4 Long fat network test](#34-long-fat-network-test)
+  - [3.5 Repeat the tests with Oasis](#35-repeat-the-tests-with-oasis)
 
 ## About BATS™ Protocol
 
@@ -69,7 +71,7 @@ In the test, we used some protocols and tools which are listed in [Protocols and
 
 In RTT measurement, `KCP` represents the RTT for TCP messages transmitted over `KCP`; and `BTP`,`BRTP`,`BRTP_PROXY` have the same meaning. TCP messages are transmitted in a rate of 100 packets per second with fixed length of 512 bytes.
 
-### 3.1 Single hop test
+### 3.1 Single-hop TCP test
 
 ```
 h0 -- h1
@@ -86,12 +88,6 @@ Take `h0` as the sender and `h1` as the receiver.
 <div align="center" style="text-align:center"> 
 <img src="./imgs/test1/iperf3_throughput.svg" alt="Throughput measurement"></div>
 <div align="center">Fig 3.2 Single hop throughput test</div>
-
-- UDP test:
-
-<div align="center" style="text-align:center"> 
-<img src="./imgs/iperf3_udp_statistics.svg" alt="UDP measurement"></div>
-<div align="center">Fig 3.3 Single hop UDP test result</div>
 
 - TCP Throughput under different link latency and loss rate:
 
@@ -114,6 +110,7 @@ Take `h0` as the sender and `h1` as the receiver.
 | 10.00%            | 70.1 | 68.8 | 66.3 | 62.8 | 49.4 | 28.6  |
 
 </div>
+
 <div align="center">Table 3.4.1 BATS Protocol performance</div>
 
 This test can be repeated in Oasis with running the following command:
@@ -130,7 +127,22 @@ Outputs of the above command:
 - test_results/test1000/throughput_latency_loss.svg (3D bar plot)
 - the original test records and logs for each selected latency and loss rate, such as `test_results/test1000/topology-10`
 
-### 3.2 Multiple hops test
+### 3.2 Single-hop UDP test
+
+The purpose of this test is to evaluate the BATS protocol reliability in lossy networks.
+
+```
+h0 -- h1
+```
+
+Take `h0` as the sender and `h1` as the receiver.
+
+<div align="center" style="text-align:center"> 
+<img src="./imgs/iperf3_udp_statistics.svg" alt="UDP measurement" style="zoom:65%;"></div>
+<div align="center">Fig 3.3 Single hop UDP test result</div>
+
+
+### 3.3 Multi-hops TCP test
 
 ```
 h0 -- h1 -- h2 -- h3
@@ -146,7 +158,13 @@ Take `h0` as the sender and `h3` as the receiver.
 <img src="./imgs/test3/iperf3_throughput.svg" alt="Throughput measurement"></div>
 <div align="center">Fig 3.6 Multiple hops throughput test</div>
 
-### 3.3 Repeat the tests with Oasis
+### 3.4 Long fat network test
+
+<div align="center" style="text-align:center"> 
+<img src="./imgs/test4/iperf3_throughput.svg" alt="Throughput measurement"></div>
+<div align="center">Fig 3.7 Long fat network throughput</div>
+
+### 3.5 Repeat the tests with Oasis
 
 The above tests can be repeated by Oasis with running the following table of test yaml file:
 

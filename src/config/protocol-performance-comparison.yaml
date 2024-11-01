@@ -43,3 +43,16 @@ tests:
         packet_size: 512
         client_host: 0
         server_host: 3
+  test4:
+    description: "Long fat network test"
+    topology:
+      config_name: long_fat_network
+      config_file: predefined.topology.yaml
+    target_protocols: [brtp_proxy, kcp, tcp-bbr]
+    route: static_route
+    test_tools:
+      iperf:
+        interval: 1
+        interval_num: 40
+        client_host: 0
+        server_host: 1
