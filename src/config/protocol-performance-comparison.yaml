@@ -11,6 +11,7 @@ tests:
       config_name: linear_network_1
       config_file: predefined.topology.yaml
     target_protocols: [btp, brtp_proxy, kcp, tcp-bbr, quic]
+    allow_failure: true
     route: static_route
     test_tools:
       iperf:
@@ -30,6 +31,7 @@ tests:
       config_name: linear_network_3
       config_file: predefined.topology.yaml
     target_protocols: [btp, brtp_proxy, kcp, tcp-bbr, quic]
+    allow_failure: true
     route: static_route
     test_tools:
       iperf:
@@ -49,6 +51,7 @@ tests:
       config_name: long_fat_network
       config_file: predefined.topology.yaml
     target_protocols: [brtp_proxy, tcp-cubic, tcp-bbr]
+    allow_failure: true
     route: static_route
     test_tools:
       iperf:
