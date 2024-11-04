@@ -9,6 +9,7 @@ class IperfTest(ITestSuite):
     def __init__(self, config: TestConfig) -> None:
         super().__init__(config)
         self.is_udp_mode = False
+        self.is_port_forward = False
         if self.config.packet_type == "udp":
             self.is_udp_mode = True
             if self.config.bitrate == 0:
@@ -67,8 +68,12 @@ class IperfTest(ITestSuite):
                 tun_ip = client.IP()
             receiver_ip = tun_ip
         else:
-            if upper_proto_name in ["BTP", "BRTP"] and self.is_udp_mode:
+            if upper_proto_name in ["BTP", "BRTP"] and self.is_port_forward:
+                # iperf3 default port 5201 is set as udp port-forwarding port in h0.
+                # send data to h0:5201, then forward to the last node in the chain.
                 receiver_ip = client.IP()
+                logging.debug(
+                    "Test iperf3 with port forwarding from %s:5201 to %s", receiver_ip, server.IP())
             else:
                 tun_ip = proto_info.get_tun_ip(
                     network, self.config.server_host)
