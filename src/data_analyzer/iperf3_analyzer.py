@@ -101,6 +101,7 @@ class Iperf3Analyzer(IDataAnalyzer):
         fig, axs = plt.subplots(2, 1, figsize=(10, 8))
         fig.suptitle("Iperf3 UDP statistics \n" +
                      self.config.subtitle, fontsize=12, fontweight="bold")
+        max_loss_rate = 50  # %
         for input_log in self.config.input:
             logging.info(f"Visualize iperf3 log: %s", input_log)
             log_base_name = os.path.basename(input_log)
@@ -112,7 +113,9 @@ class Iperf3Analyzer(IDataAnalyzer):
                     continue
             log_label = log_base_name.split("_")[0]
             loss_rate_array = visualize_data.get("loss_rate", [])
-            max_loss_rate = max(loss_rate_array)
+            cur_max = max(loss_rate_array)
+            max_loss_rate = max(max_loss_rate, cur_max)
+            logging.debug(f"loss_rate array: %s", loss_rate_array)
             jitter_array = visualize_data.get("jitter", [])
             x = np.arange(1, len(loss_rate_array))
             # Plot loss rate
@@ -123,10 +126,7 @@ class Iperf3Analyzer(IDataAnalyzer):
             axs[0].set_ylabel('Loss Rate (%)', fontsize=9)
             axs[0].legend(loc="upper right", fontsize=8)
             axs[0].grid(True)  # Add grid lines for better readability
-            if max_loss_rate < 0.5:
-                axs[0].set_ylim(-0.5, 0.5)
-            else:
-                axs[0].set_ylim(-0.5, 1)
+            axs[0].set_ylim(-10, max_loss_rate + 10)
             axs[1].plot(x, jitter_array[0: len(x)], 'o-',
                         markersize=4, label=f"{log_label}")
             axs[1].set_title('Jitter', fontsize=10)
