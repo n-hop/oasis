@@ -37,7 +37,7 @@ class TestConfig:
     packet_size: The size of the packet to be sent.
     packet_count: The number of packets to be sent.
     test_type: The type of test to be performed.
-    client_host: The host id of the client. 
+    client_host: The host id of the client.
         for iperf, iperf client will be run on this host.
         if None, iperf client will be run on all hosts.
     server_host: The host id of the server.
@@ -127,6 +127,9 @@ class ITestSuite(ABC):
                 return self.result
         if not self.result.is_success:
             return self.result
+        if not self.__validate_host_config(network):
+            self.result.is_success = False
+            return self.result
         self.result.is_success = self._run_test(network, proto_info)
         if not self.result.is_success:
             logging.error("ITestSuite %s failed.", self.config.name)
@@ -147,3 +150,15 @@ class ITestSuite(ABC):
 
     def get_config(self) -> TestConfig:
         return self.config
+
+    def __validate_host_config(self, network: 'INetwork') -> bool:  # type: ignore
+        hosts = network.get_hosts()
+        if hosts is None:
+            return True
+        hosts_num = len(hosts)
+        if self.config.client_host is not None and self.config.server_host is not None:
+            if self.config.client_host >= hosts_num or self.config.server_host >= hosts_num:
+                logging.error("Invalid client or server host id, client: %d, server: %d",
+                              self.config.client_host, self.config.server_host)
+                return False
+        return True
