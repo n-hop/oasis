@@ -85,11 +85,13 @@ class INetwork(ABC):
                 if not valid_config:
                     continue
                 # run `test` on `network`(self) specified by `proto`
+                logging.info("Running test protocol %s %s",  proto.get_config().name,
+                             test.type())
                 result = test.run(self, proto)
                 if result.is_success is False:
                     logging.error(
                         "Test %s failed, please check the log file %s",
-                        test.config.name, result.record)
+                        test.config.test_name, result.record)
                     return False
                 if test.type() not in self.test_results:
                     self.test_results[test.type()] = {}

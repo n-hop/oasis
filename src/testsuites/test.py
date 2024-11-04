@@ -45,7 +45,8 @@ class TestConfig:
         If None, iperf server will be run on all hosts.
     allow_fail: A boolean value that indicates whether the test can fail.
     """
-    name: str = field(default="")
+    name: str = field(default="")  # name of test tool
+    test_name: str = field(default="")  # name of test
     interval: Optional[float] = field(default=1.0)
     interval_num: Optional[int] = field(default=10)
     packet_size: Optional[int] = field(default=1024)
@@ -75,13 +76,14 @@ class TestResult:
 
 class ITestSuite(ABC):
     def __init__(self, config: TestConfig) -> None:
+        self.base_name = ""
         self.config = config
-        self.result_dir = f"{g_root_path}test_results/{self.config.name}/"
+        self.result_dir = f"{g_root_path}test_results/{self.config.test_name}/"
         if not os.path.exists(f"{self.result_dir}"):
             os.makedirs(f"{self.result_dir}")
         if self.config.test_type is not None:
             self.result = TestResult(
-                False, pattern=f"{self.__class__.__name__}_{self.config.packet_type}"
+                False, pattern=f"{self.__class__.__name__}_{self.config.name}_{self.config.packet_type}"
                 f"_{test_type_str_mapping[self.config.test_type]}"
                 f"_h{self.config.client_host}_h{self.config.server_host}.log",
                 record="", result_dir=self.result_dir)
@@ -106,14 +108,14 @@ class ITestSuite(ABC):
             return self.result
         if proto_info.get_protocol_version() != "" and proto_info.get_protocol_version() != 'latest':
             if 'tcp' not in proto_info.get_protocol_name():
-                base_name = proto_info.get_protocol_name().upper() + "-" + \
+                self.base_name = proto_info.get_protocol_name().upper() + "-" + \
                     proto_info.get_protocol_version()
             else:
-                base_name = proto_info.get_protocol_name().upper()
+                self.base_name = proto_info.get_protocol_name().upper()
         else:
-            base_name = proto_info.get_protocol_name().upper()
+            self.base_name = proto_info.get_protocol_name().upper()
         self.result.record = self.result.result_dir + \
-            base_name + "_" + self.result.pattern
+            self.base_name + "_" + self.result.pattern
         self.result.is_success = self.pre_process()
         # checking for non-distributed protocols
         if not proto_info.is_distributed():
@@ -132,7 +134,7 @@ class ITestSuite(ABC):
             return self.result
         self.result.is_success = self._run_test(network, proto_info)
         if not self.result.is_success:
-            logging.error("ITestSuite %s failed.", self.config.name)
+            logging.error("ITestSuite %s failed.", self.config.test_name)
             return self.result
         self.result.is_success = self.post_process()
         if not self.result.is_success:
