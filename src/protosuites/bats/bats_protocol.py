@@ -30,7 +30,9 @@ class BATSProtocol(IProtoSuite):
         # Init the license file for bats, otherwise it will not run.
         hosts = network.get_hosts()
         if hosts is None:
+            logging.error("No host found in the network")
             return False
+        net_id = network.get_id()
         host_num = len(hosts)
         # prepare the bats protocol config files
         hosts_ip_range = network.get_host_ip_range()
@@ -43,17 +45,19 @@ class BATSProtocol(IProtoSuite):
             cfg_template_path = os.path.join(
                 self.config.config_base_path, self.config.config_file)
         else:
-            logging.error("Config base path or config file is not set.")
-        logging.debug(
-            f"########################## BATSProtocol Source path: %s", self.source_path)
+            logging.error(
+                "%s Config base path or config file is not set.", net_id)
+        # configurations are separated by network
+        logging.info(
+            f"########################## BATSProtocol Source path: %s, %s", self.source_path, net_id)
         generate_cfg_files(host_num, hosts_ip_range,
-                           self.virtual_ip_prefix, self.source_path, cfg_template_path)
+                           self.virtual_ip_prefix, f'{self.source_path}/{net_id}', cfg_template_path)
         # generate some error log if the license file is not correct
         self._verify_license()
         for i in range(host_num):
             hosts[i].cmd(f'iptables -F -t nat')
             self._init_tun(hosts[i])
-            self._init_config(hosts[i])
+            self._init_config(hosts[i], net_id)
             logging.info(
                 f"############### Oasis install bats protocol config files on "
                 "%s ###############",
@@ -88,6 +92,9 @@ class BATSProtocol(IProtoSuite):
                 res = hosts[host_idx].cmd(f'ls /tmp | grep "{running_flag}"')
                 if res.find(running_flag) == -1:
                     unready_idx.append(host_idx)
+                else:
+                    logging.info("Bats protocol is running on %s",
+                                 hosts[host_idx].name())
             host_range = unready_idx
 
         if len(host_range) > 0:
@@ -140,7 +147,7 @@ class BATSProtocol(IProtoSuite):
                 return False
         return True
 
-    def _init_config(self, host: IHost):
+    def _init_config(self, host: IHost, id: int):
         # {host.name()} = h0, h1, h2, ... the last character is the index of the host
         host_idx = int(host.name()[-1])
         host.cmd(
@@ -150,7 +157,7 @@ class BATSProtocol(IProtoSuite):
         host.cmd(
             f'mkdir -p /etc/bats-protocol')
         host.cmd(
-            f'cp {self.source_path}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
+            f'cp {self.source_path}/{id}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
         return True
 
     def _get_ip_from_host(self, host: IHost, dev: str) -> str:
