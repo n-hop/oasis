@@ -26,6 +26,22 @@ class BATSProtocol(IProtoSuite):
     def post_run(self, network: INetwork):
         return True
 
+    def is_ready_on(self, host: IHost) -> bool:
+        pf = host.popen(
+            f"{self.source_path}/bats_cli api main_node")
+        if pf is None:
+            logging.error("Failed to run bats_cli on %s", host.name())
+            return False
+        output = pf.stdout.read().decode('utf-8')
+        match = re.search(r'state: started', output)
+        if match:
+            logging.info("Bats protocol is ready on %s %s",
+                         host.name(), output)
+            return True
+        logging.debug("Bats protocol is not ready on %s,%s",
+                      host.name(), output)
+        return False
+
     def pre_run(self, network: INetwork):
         # Init the license file for bats, otherwise it will not run.
         hosts = network.get_hosts()
@@ -80,26 +96,26 @@ class BATSProtocol(IProtoSuite):
                 f' > {self.log_dir}bats_protocol_h{i}.log &')
 
         # check the protocol is running
-        max_sleep_time = host_num
-        running_flag = "bats_uds_socket_bind_point."
-        host_range = list(range(host_num))
-        while max_sleep_time > 0 and len(host_range) > 0:
+        max_sleep_time = host_num + 1
+        not_ready_host_range = list(range(host_num))
+        while max_sleep_time > 0 and len(not_ready_host_range) > 0:
             max_sleep_time -= 1
             time.sleep(1)
-            unready_idx = []
-            for host_idx in host_range:
-                # /tmp/bats_uds_socket_bind_point.xxx
-                res = hosts[host_idx].cmd(f'ls /tmp | grep "{running_flag}"')
-                if res.find(running_flag) == -1:
-                    unready_idx.append(host_idx)
+            cur_not_ready_idx = []
+            for host_idx in not_ready_host_range:
+                if not self.is_ready_on(hosts[host_idx]):
+                    cur_not_ready_idx.append(host_idx)
                 else:
                     logging.info("Bats protocol is running on %s",
                                  hosts[host_idx].name())
-            host_range = unready_idx
+            logging.info(
+                f"############### checking round %d, not ready hosts: %s ###############",
+                max_sleep_time, cur_not_ready_idx)
+            not_ready_host_range = cur_not_ready_idx
 
-        if len(host_range) > 0:
+        if len(not_ready_host_range) > 0:
             failed_hosts = ""
-            for idx in host_range:
+            for idx in not_ready_host_range:
                 failed_hosts += f"{hosts[idx].name()} "
             logging.error(
                 f"############### Oasis run bats protocol failed on "
