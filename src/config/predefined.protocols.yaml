@@ -13,6 +13,7 @@ protocols:
     path: bats/bats_protocol
     args:
       - "--daemon_enabled=true"
+      - "--api_enabled=true"
       - "--tun_protocol=BTP"
     version: latest
   - name: brtp
@@ -20,6 +21,7 @@ protocols:
     path: bats/bats_protocol
     args:
       - "--daemon_enabled=true"
+      - "--api_enabled=true"
       - "--tun_protocol=BRTP"
     version: latest
   - name: brtp_proxy
@@ -27,6 +29,7 @@ protocols:
     path: bats/bats_protocol
     args:
       - "--daemon_enabled=true"
+      - "--api_enabled=true"
     version: latest
   - name: kcp
     type: none_distributed
