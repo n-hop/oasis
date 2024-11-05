@@ -16,6 +16,11 @@ class ContainernetHostAdapter(IHost):
         """
         return self.containernet_host.cmd(command)
 
+    def cmdPrint(self, command: str) -> str:
+        """Execute a command on the host and print the output.
+        """
+        return self.containernet_host.cmdPrint(command)
+
     def name(self) -> str:
         """Get the name of the host.
         """

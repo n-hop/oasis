@@ -47,7 +47,7 @@ class ScpTest(ITestSuite):
                 for file in self.scp_files:
                     scp_cmd += f' {file}'
                 scp_cmd += f' root@{receiver_ip}:/tmp/'
-                hosts[i].cmdPrint(
+                hosts[i].cmd(
                     f'script -c \'{scp_cmd}\' | tee {self.result.record} ')
             return True
         # Run ping test from client to server

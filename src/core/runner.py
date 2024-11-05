@@ -388,8 +388,7 @@ class TestRunner:
         for i in range(self.net_num):
             p = multiprocessing.Process(target=self._perform_test_in_process,
                                         args=(networks[i],
-                                              test_name,
-                                              i, process_shared_dict))
+                                              test_name, process_shared_dict))
             processes.append(p)
             p.start()
 
@@ -450,9 +449,11 @@ class TestRunner:
                 "Test %s results analysis not passed, and failure is ignored.", test_name)
         # 5.2 move results(logs, diagrams) to "{cur_results_path}/{top_index}"
         cur_results_path = f"{g_root_path}test_results/{test_name}/"
-        logging.info("cur_results_path %s", cur_results_path)
         archive_dir = f"{cur_results_path}topology-{top_index}"
+        logging.info("cur_results_path %s, archive_dir %s",
+                     cur_results_path, archive_dir)
         if not os.path.exists(archive_dir):
+            logging.info("Create archive directory %s", archive_dir)
             os.makedirs(archive_dir)
         # move all files and folders to the archive directory except folder which start with "topology-*"
         for root, dirs, files in os.walk(cur_results_path):
@@ -463,11 +464,15 @@ class TestRunner:
                 if dir_name.startswith("topology-"):
                     continue
                 os.system(f"mv {root}/{dir_name} {archive_dir}")
+                logging.info("Move %s to %s", dir_name, archive_dir)
             for file_name in files:
                 os.system(f"mv {root}/{file_name} {archive_dir}")
+                logging.info("Move %s to %s", file_name, archive_dir)
         # 5.3 save top_description
         with open(f"{archive_dir}/topology_description.txt", 'w', encoding='utf-8') as f:
             f.write(f"{self.top_description}")
+            logging.debug("Save topology description to %s",
+                          f"{archive_dir}/topology_description.txt")
         return True
 
     def cleanup(self):
@@ -492,13 +497,11 @@ class TestRunner:
             return False
         return True
 
-    def _perform_test_in_process(self, network, test_name, id, result_dict):
+    def _perform_test_in_process(self, network, test_name, result_dict):
         """Execute the test in a separate process,
             then store the results in the shared dictionary.
-
-        Args:
-            id (int): The id of the process.
         """
+        id = network.get_id()
         logging.info(
             "########## Oasis process %d Performing the test for %s", id, test_name)
         network.perform_test()

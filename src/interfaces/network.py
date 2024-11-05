@@ -11,6 +11,7 @@ from testsuites.test import (ITestSuite)
 
 class INetwork(ABC):
     def __init__(self):
+        self.id = 0
         self.test_suites = []
         self.proto_suites = []
         self.test_results = {}
@@ -19,6 +20,9 @@ class INetwork(ABC):
 
     def is_accessible(self):
         return self.is_accessible_flag
+
+    def get_id(self):
+        return self.id
 
     @abstractmethod
     def start(self):
@@ -76,6 +80,8 @@ class INetwork(ABC):
         # Combination of protocol and test
         for proto in self.proto_suites:
             # start the protocol
+            logging.info("Starting protocol %s on network %s",
+                         proto.get_config().name, self.get_id())
             if proto.start(self) is False:
                 logging.error("Protocol %s failed to start",
                               proto.get_config().name)

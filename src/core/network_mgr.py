@@ -67,8 +67,10 @@ class NetworkManager(INetworkManager):
                     node_config.bind_port = False
                 route_strategy = RoutingFactory().create_routing(
                     route_string_to_enum[route])
-                self.networks.append(ContainerizedNetwork(
-                    node_config, topology, route_strategy))
+                net = ContainerizedNetwork(
+                    node_config, topology, route_strategy)
+                net.id = i
+                self.networks.append(net)
         elif cur_net_num > net_num:
             # stop the extra networks
             for i in range(net_num, cur_net_num):

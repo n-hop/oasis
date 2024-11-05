@@ -1,3 +1,4 @@
+import os
 import argparse
 import logging
 from mininet.util import ipStr, netParse
@@ -189,6 +190,8 @@ def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8",
                        virtual_ip_prefix="1.0.0.",
                        output_dir="/tmp",
                        config_file_template=None):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     generator = ConfigGenerator(
         node_ip_range, output_dir, config_file_template)
     generator.generate_cfg(num_nodes, virtual_ip_prefix)
