@@ -53,6 +53,15 @@ class NestedContainernet():
         self.start_time = time.time()
         self.setUp()
 
+    def __check_leaked_mounts(self):
+        # check whether there are leaked mounts
+        cmd = "sudo mount | grep -i oasis | wc -l"
+        result = os.popen(cmd).read()
+        if int(result) > 0:
+            logging.warning("Error: there are leaked mounts. %s", result)
+            cmd = "sudo mount | grep -i 'oasis' | awk -F ' on | type ' '{print $2}' | xargs -I {} sudo umount \"{}\""
+            os.system(cmd)
+
     def setUp(self) -> None:
         logging.info(
             "########################## Oasis setup "
@@ -78,6 +87,7 @@ class NestedContainernet():
 
     def stop(self):
         self.tearDown()
+        self.__check_leaked_mounts()
 
     def start(self):
         # NestedContainernet, use case file name as the container name.
