@@ -33,11 +33,11 @@ class Iperf3Analyzer(IDataAnalyzer):
                         zero_bit_line_cnt = 0
                     if zero_bit_line_cnt > 3:
                         logging.info(
-                            "The iperf3 %s has too many zero bit", input_log)
+                            "The iperf3 log %s has too many zero bit lines", input_log)
                         return False
                 if not is_test_finished:
                     logging.info(
-                        "The iperf3 %s is not finished", input_log)
+                        "The iperf3 log %s is not finished", input_log)
                     return False
         return True
 
@@ -47,7 +47,7 @@ class Iperf3Analyzer(IDataAnalyzer):
         elif self.config.data_type == "udp":
             self.plot_udp_data()
         else:
-            logging.error("Unsupported data type %s", self.config.data_type)
+            logging.error("Unsupported data type: %s", self.config.data_type)
 
     def plot_tcp_data(self):
         plt.clf()
@@ -66,7 +66,7 @@ class Iperf3Analyzer(IDataAnalyzer):
             with open(f"{input_log}", "r", encoding='utf-8') as f:
                 content = f.read()
                 visualize_data = self.get_tcp_visualize_data(content)
-                if len(visualize_data) == {}:
+                if not visualize_data:
                     logging.error(f"no visualize data in %s", log_base_name)
                     continue
             log_label = log_base_name.split("_")[0]
@@ -113,7 +113,7 @@ class Iperf3Analyzer(IDataAnalyzer):
                     continue
             log_label = log_base_name.split("_")[0]
             loss_rate_array = visualize_data.get("loss_rate", [])
-            cur_max = max(loss_rate_array)
+            cur_max = max(loss_rate_array, default=0)
             max_loss_rate = max(max_loss_rate, cur_max)
             logging.debug(f"loss_rate array: %s", loss_rate_array)
             jitter_array = visualize_data.get("jitter", [])
@@ -157,9 +157,9 @@ class Iperf3Analyzer(IDataAnalyzer):
         jitter_pattern = r"(K|M|G)?bits/sec(\s+)(\d+(\.\d+)?) ms"
         matches4 = re.findall(loss_rate_pattern, content)
         matches2 = re.findall(jitter_pattern, content)
-        loss_array = [float(match[4]) for match in matches4 if match[4] != ""]
+        loss_array = [float(match[4]) for match in matches4]
         jitter_array = [float(match[2])
-                        for match in matches2 if match[2] != ""]
+                        for match in matches2]
         visualize_data["loss_rate"] = loss_array
         visualize_data["jitter"] = jitter_array
         logging.debug(f"loss_rate array: %s", loss_array)
