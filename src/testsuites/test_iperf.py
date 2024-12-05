@@ -34,7 +34,7 @@ class IperfTest(ITestSuite):
         iperf3_client_cmd = f'iperf3 -c {recv_ip} -p {recv_port} -i {int(interval)}' \
             f' -t {int(interval_num * interval)}'
         if self.is_udp_mode:
-            iperf3_client_cmd += f' -l 2048 -u -b {self.config.bitrate}M'
+            iperf3_client_cmd += f' -u -b {self.config.bitrate}M'
         else:
             iperf3_client_cmd += f' --connect-timeout 5000'
             if self.config.bitrate != 0:
