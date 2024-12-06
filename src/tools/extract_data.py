@@ -4,8 +4,6 @@ import sys
 import logging
 import re
 from dataclasses import dataclass
-import matplotlib.pyplot as plt
-import numpy as np
 from util import (is_same_path, str_to_mbps)
 '''
 Usage:
@@ -93,19 +91,9 @@ def plot_compound_throughput(test_results_dir):
                     logging.info(
                         f"found a perf data %s", perf_data)
                     perf_point.append(perf_data)
-    # Plot 3D bar chart for perf_point
-    plt.style.use('ggplot')  # ggplot _mpl-gallery
-    plt.clf()
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+
     x = [perf.loss_rate for perf in perf_point]
     y = [perf.latency for perf in perf_point]
-    z = [0] * len(perf_point)
-    dx = np.ones_like(x)*0.1
-    dy = np.ones_like(x)*0.1
-    dz = [perf.throughput for perf in perf_point]
-    # Plot
-    # remove duplicate value in x and y
 
     xlabel = deepcopy(x)
     ylabel = deepcopy(y)
@@ -113,19 +101,6 @@ def plot_compound_throughput(test_results_dir):
     ylabel = list(set(ylabel))
     xlabel.sort()
     ylabel.sort()
-    ax.bar3d(x, y, z, dx, dy, dz)
-    ax.set_xticks(xlabel)
-    ax.set_xticklabels([str(int(x_val)) for x_val in xlabel])
-    ax.set_yticks(ylabel)
-    ax.set_yticklabels([str(int(y_val)) for y_val in ylabel])
-    logging.info(f"xlabel: %s", xlabel)
-    logging.info(f"ylabel: %s", ylabel)
-
-    # Set axis labels
-    ax.set_xlabel('Loss Rate (%)')
-    ax.set_ylabel('Latency (ms)')
-    ax.set_zlabel('Throughput (Mbps)')
-    plt.savefig(f"{test_results_dir}/throughput_latency_loss.svg")
 
     # all perf point data to CVS file too
     with open(f"{test_results_dir}/throughput_latency_loss.csv", "w", encoding="utf-8") as f:
