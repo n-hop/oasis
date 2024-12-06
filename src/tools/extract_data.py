@@ -141,6 +141,24 @@ def plot_compound_throughput(test_results_dir):
                         f.write(f"{perf.throughput},")
                         break
             f.write("\n")
+    # all perf point data to markdown file with table format
+    with open(f"{test_results_dir}/throughput_latency_loss.md", "w", encoding="utf-8") as f:
+        f.write("|Loss Rate/Latency|")
+        for latency in ylabel:
+            f.write(f"{latency}ms|")
+        f.write("\n")
+        f.write("|---|")
+        for latency in ylabel:
+            f.write("---|")
+        f.write("\n")
+        for loss_rate in xlabel:
+            f.write(f"|{loss_rate}%|")
+            for latency in ylabel:
+                for perf in perf_point:
+                    if perf.loss_rate == loss_rate and perf.latency == latency:
+                        f.write(f"{perf.throughput}|")
+                        break
+            f.write("\n")
 
 
 if __name__ == '__main__':
