@@ -1,6 +1,5 @@
-
-[![Oasis CI Test](https://github.com/n-hop/oasis/actions/workflows/.github.ci.yml/badge.svg)](https://github.com/n-hop/oasis/actions/workflows/.github.ci.yml)
-[![CodeQL,Pylint,Unittest](https://github.com/n-hop/oasis/actions/workflows/.github.ci.yml/badge.svg)](https://github.com/n-hop/oasis/actions/workflows/.github.ci.yml)
+[![Oasis CI](https://github.com/n-hop/oasis/actions/workflows/.github.oasis-ci.yml/badge.svg)](https://github.com/n-hop/oasis/actions/workflows/.github.oasis-ci.yml)
+[![CI Pipeline](https://github.com/n-hop/oasis/actions/workflows/.github.ci.yml/badge.svg)](https://github.com/n-hop/oasis/actions/workflows/.github.ci.yml)
 
 -----
 
