@@ -48,11 +48,12 @@ def parse_test_file_name(test_file_path_string):
 
     return value: test_file_path, test_name
     """
-    file = None
+    if not test_file_path_string or test_file_path_string == ':':
+        return None, None
+
     temp_list = test_file_path_string.split(":")
     if len(temp_list) not in [1, 2]:
         return None, None
     if len(temp_list) == 2:
-        file = temp_list[0]
-        return file, temp_list[1]
+        return temp_list[0], temp_list[1]
     return test_file_path_string, None
