@@ -5,7 +5,7 @@ from .util import str_to_mbps
 from .util import parse_test_file_name
 
 
-class TestUtil(unittest.TestCase):
+class TestIsSamePath(unittest.TestCase):
 
     def test_is_same_path_identical_paths(self):
         self.assertTrue(is_same_path(
@@ -26,6 +26,9 @@ class TestUtil(unittest.TestCase):
     def test_is_same_path_with_mixed_slashes(self):
         self.assertTrue(is_same_path(
             '/home/user//file.txt/', '/home//user/file.txt'))
+
+
+class TestIsSameBase(unittest.TestCase):
 
     def test_is_base_path_base_path(self):
         self.assertTrue(is_base_path(
@@ -50,6 +53,9 @@ class TestUtil(unittest.TestCase):
     def test_is_base_path_with_mixed_slashes(self):
         self.assertTrue(is_base_path(
             '/home/user//', '/home//user/file.txt'))
+
+
+class TestStrToMbps(unittest.TestCase):
 
     def test_str_to_mbps_kilobits(self):
         self.assertEqual(str_to_mbps(1000, "K"), 1.00)
