@@ -15,18 +15,23 @@ def load_nested_config(nested_config_file: str,
     """
     if nested_config_file == "" or containernet_name == "":
         return NestedConfig(image="")
-    containernet_list = []
     logging.info(
         f"process yaml file: %s", {nested_config_file})
-    with open(nested_config_file, 'r', encoding='utf-8') as stream:
-        try:
+    try:
+        with open(nested_config_file, 'r', encoding='utf-8') as stream:
             nested_config = yaml.safe_load(stream)
-            logging.info(
-                f"loaded nested_config: %s", nested_config)
-            containernet_list = nested_config["containernet"]
-        except yaml.YAMLError as exc:
-            logging.error(exc)
-            return NestedConfig(image="")
+    except FileNotFoundError:
+        logging.error(
+            "YAML file '%s' not found.", nested_config_file)
+        return NestedConfig(image="")
+    except yaml.YAMLError as exc:
+        logging.error("Error parsing YAML file: %s", exc)
+        return NestedConfig(image="")
+    if not nested_config or 'containernet' not in nested_config:
+        logging.error("No containernet found in the YAML file.")
+        return NestedConfig(image="")
+    logging.info(f"loaded nested_config: %s", nested_config)
+    containernet_list = nested_config["containernet"]
     containernet_names = containernet_list.keys()
     logging.info(
         f"loaded containernet: %s", containernet_list)

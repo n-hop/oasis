@@ -144,14 +144,20 @@ def load_predefined_protocols(config_base_path):
     """
     Load predefined protocols from the yaml file.
     """
-    predefined_protocols = None
-    with open(f'{config_base_path}/predefined.protocols.yaml', 'r', encoding='utf-8') as stream:
-        try:
+    try:
+        with open(f'{config_base_path}/predefined.protocols.yaml', 'r', encoding='utf-8') as stream:
             yaml_content = yaml.safe_load(stream)
-            predefined_protocols = yaml_content['protocols']
-        except yaml.YAMLError as exc:
-            logging.error(exc)
-            return None
+    except FileNotFoundError:
+        logging.error(
+            "YAML file '%s'/predefined.protocols.yaml not found.", config_base_path)
+        return None
+    except yaml.YAMLError as exc:
+        logging.error("Error parsing YAML file: %s", exc)
+        return None
+    if not yaml_content or 'protocols' not in yaml_content:
+        logging.error("No protocols found in the YAML file.")
+        return None
+    predefined_protocols = yaml_content['protocols']
     predefined_proto_conf_dict = {}
     for protocol in predefined_protocols:
         if 'protocols' not in protocol:

@@ -9,8 +9,8 @@ import logging
 import os
 import yaml
 
-from core.topology import (ITopology, TopologyConfig)
-from core.linear_topology import LinearTopology
+from .topology import (ITopology, TopologyConfig)
+from .linear_topology import LinearTopology
 
 
 @dataclass
@@ -62,13 +62,17 @@ class IConfig(ABC):
                 f"load_config_reference: file %s does not exist.",
                 full_yaml_config_file)
             return None
-        loaded_yaml_config = []
-        with open(full_yaml_config_file, 'r', encoding='utf-8') as stream:
-            try:
+        try:
+            with open(full_yaml_config_file, 'r', encoding='utf-8') as stream:
                 loaded_yaml_config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                logging.error(exc)
-                return None
+        except FileNotFoundError:
+            logging.error(
+                "YAML file '%s' not found.", full_yaml_config_file)
+            return None
+        except yaml.YAMLError as exc:
+            logging.error("Error parsing YAML file: %s", exc)
+            return None
+
         # check key 'config_key' in the yaml content
         if loaded_yaml_config is None or config_key not in loaded_yaml_config:
             logging.error(
@@ -131,7 +135,7 @@ class Test:
         return self.test_yaml
 
     def is_active(self):
-        if self.test_yaml is None:
+        if not self.test_yaml:
             return False
         if "if" in self.test_yaml and not self.test_yaml["if"]:
             return False
@@ -171,15 +175,19 @@ def load_all_tests(test_yaml_file: str, test_name: str = "all") -> List[Test]:
     logging.info(
         "########################## Oasis Loading Tests "
         "##########################")
-    # List of active cases.
-    test_cases = None
-    with open(test_yaml_file, 'r', encoding='utf-8') as stream:
-        try:
+    try:
+        with open(test_yaml_file, 'r', encoding='utf-8') as stream:
             yaml_content = yaml.safe_load(stream)
-            test_cases = yaml_content["tests"]
-        except yaml.YAMLError as exc:
-            logging.error(exc)
-            return []
+    except FileNotFoundError:
+        logging.error("Test YAML file '%s' not found.", test_yaml_file)
+        return []
+    except yaml.YAMLError as exc:
+        logging.error("Error parsing YAML file: %s", exc)
+        return []
+    if not yaml_content or 'tests' not in yaml_content:
+        logging.error("No tests found in the YAML file.")
+        return []
+    test_cases = yaml_content["tests"]
     # ------------------------------------------------
     if test_cases is None:
         logging.error("No test cases are loaded from %s", test_yaml_file)

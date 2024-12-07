@@ -17,20 +17,21 @@ from core.runner import TestRunner
 def containernet_node_config(config_base_path, file_path) -> NodeConfig:
     """Load node related configuration from the yaml file.
     """
-    node_config_yaml = None
-    with open(file_path, 'r', encoding='utf-8') as stream:
-        try:
+    try:
+        with open(file_path, 'r', encoding='utf-8') as stream:
             yaml_content = yaml.safe_load(stream)
-            if yaml_content['containernet'] is None:
-                logging.error("Error: no containernet node config.")
-                return NodeConfig(name="", img="")
-            node_config_yaml = yaml_content['containernet']["node_config"]
-        except yaml.YAMLError as exc:
-            logging.error(exc)
-            return NodeConfig(name="", img="")
-    if node_config_yaml is None:
-        logging.error("Error: no containernet node config.")
+    except FileNotFoundError:
+        logging.error(
+            "YAML file '%s' not found.", file_path)
         return NodeConfig(name="", img="")
+    except yaml.YAMLError as exc:
+        logging.error("Error parsing YAML file: %s", exc)
+        return NodeConfig(name="", img="")
+
+    if not yaml_content or 'containernet' not in yaml_content:
+        logging.error("No containernet node config found in the YAML file.")
+        return NodeConfig(name="", img="")
+    node_config_yaml = yaml_content['containernet']["node_config"]
     loaded_conf = IConfig.load_yaml_config(config_base_path,
                                            node_config_yaml, 'node_config')
     if isinstance(loaded_conf, NodeConfig):
