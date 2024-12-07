@@ -18,6 +18,7 @@ class TestbedNetwork (INetwork):
                  routing_strategy: IRoutingStrategy,
                  ** params) -> None:
         super().__init__(**params)
+        self.is_started_flag = False
         self.routing_strategy = routing_strategy
         self.hosts = []
         self.hosts_conf = hosts_config

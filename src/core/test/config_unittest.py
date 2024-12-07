@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 import yaml
 from src.core.config import load_all_tests
-from src.core.config import Test, TopologyConfig, LinearTopology
+from src.core.config import Test, TopologyConfig
 from src.core.topology import TopologyType
 
 

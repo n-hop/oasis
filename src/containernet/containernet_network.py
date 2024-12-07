@@ -33,6 +33,7 @@ class ContainerizedNetwork (INetwork):
                  routing_strategy: IRoutingStrategy,
                  ** params) -> None:
         super().__init__(**params)
+        self.is_started_flag = False
         self.containernet = Containernet()
         self.routing_strategy = routing_strategy
         self.hosts = []

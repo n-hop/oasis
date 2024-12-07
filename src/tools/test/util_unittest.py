@@ -1,8 +1,8 @@
 import unittest
-from .util import is_same_path
-from .util import is_base_path
-from .util import str_to_mbps
-from .util import parse_test_file_name
+from src.tools.util import is_same_path
+from src.tools.util import is_base_path
+from src.tools.util import str_to_mbps
+from src.tools.util import parse_test_file_name
 
 
 class TestIsSamePath(unittest.TestCase):

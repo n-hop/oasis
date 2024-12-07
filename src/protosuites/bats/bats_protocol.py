@@ -12,6 +12,7 @@ from var.global_var import g_root_path
 class BATSProtocol(IProtoSuite):
     def __init__(self, config: ProtoConfig):
         super().__init__(config)
+        self.protocol_args: str = self.protocol_args
         if self.config.path is None:
             logging.error("No protocol path specified.")
             return

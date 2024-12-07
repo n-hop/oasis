@@ -1,0 +1,118 @@
+name: Oasis CI
+on:
+  pull_request:
+    branches: ["main", "dev"]
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+    paths-ignore:
+      - "**.md"
+      - "**.json"
+  push:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - "**.md"
+      - "**.json"
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  oasis-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: sync git-lfs
+        run: git lfs install && git lfs pull
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10.14"
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r ${{github.workspace}}/src/containernet/requirements.txt
+      - name: Restore Cached Containernet Image
+        id: cache-containernet-image
+        uses: actions/cache@v4
+        with:
+          path: ${{github.workspace}}/containernet_cache/
+          key: docker_cache-${{ hashFiles('**/containernet-docker-official/Dockerfile') }}
+      - name: Restore Cached Node Image
+        id: cache-node-image
+        uses: actions/cache@v4
+        with:
+          path: ${{github.workspace}}/node_cache/
+          key: docker_cache-${{ hashFiles('**/protocol-docker-azure/Dockerfile') }}
+      - name: Build containernet
+        if: steps.cache-containernet-image.outputs.cache-hit != 'true'
+        run: |
+          cd ${{github.workspace}}/src/config/containernet-docker-official && docker build -t containernet:latest .
+          mkdir -p ${{github.workspace}}/containernet_cache/
+          docker image save containernet:latest --output ${{github.workspace}}/containernet_cache/containernet.tar
+          docker images
+      - name: Build containernet node
+        if: steps.cache-node-image.outputs.cache-hit != 'true'
+        run: |
+          cd ${{github.workspace}}/src/config/protocol-docker-azure && docker build -t ubuntu:22.04 .
+          mkdir -p ${{github.workspace}}/node_cache/
+          docker image save ubuntu:22.04 --output ${{github.workspace}}/node_cache/containernet_node.tar
+          docker images
+      - name: Load containernet image
+        working-directory: ${{github.workspace}}/
+        if: steps.cache-containernet-image.outputs.cache-hit == 'true'
+        run: |
+          docker image load --input ./containernet_cache/containernet.tar
+      - name: Load containernet node image
+        working-directory: ${{github.workspace}}/
+        if: steps.cache-node-image.outputs.cache-hit == 'true'
+        run: |
+          docker image load --input ./node_cache/containernet_node.tar
+      - name: Loading secrets
+        run: |
+          echo "Hardware_info=${{secrets.BATS_HARDWARE_INFO}}" >> ${{github.workspace}}/bats/licence
+          echo "Licence_id=${{secrets.BATS_LICENCE_ID}}" >> ${{github.workspace}}/bats/licence
+      - name: SSHPing tests
+        working-directory: ${{github.workspace}}/
+        run: |
+          python3 ./src/start.py -p src/config \
+          --containernet=default \
+          -t protocol-sshping-test.yaml
+          if [ ! -f ${{github.workspace}}/test.success ]; then
+            echo "oasis test failed"
+            exit 1
+          fi
+          rm -rf ${{github.workspace}}/test.success
+      - name: SCP test
+        working-directory: ${{github.workspace}}/
+        run: |
+          python3 ./src/start.py -p src/config \
+          --containernet=default \
+          -t protocol-scp-test.yaml -d True
+          if [ ! -f ${{github.workspace}}/test.success ]; then
+            echo "oasis test failed"
+            exit 1
+          fi
+          rm -rf ${{github.workspace}}/test.success
+      - name: Throughput tests
+        working-directory: ${{github.workspace}}/
+        run: |
+          python3 ./src/start.py -p src/config \
+          --containernet=default \
+          -t protocol-single-hop-test.yaml
+          if [ ! -f ${{github.workspace}}/test.success ]; then
+            echo "oasis test failed"
+            exit 1
+          fi
+      - name: Upload test logs
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: ci-test-logs
+          path: |
+            ${{github.workspace}}/test_results/**
+          retention-days: 1

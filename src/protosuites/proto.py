@@ -46,7 +46,7 @@ class IProtoSuite(IProtoInfo, ABC):
         if not os.path.exists(f"{self.log_dir}"):
             os.makedirs(f"{self.log_dir}")
 
-        self.protocol_args = ''
+        self.protocol_args: str = ''
         if self.config.args:
             for arg in self.config.args:
                 self.protocol_args += arg + ' '
