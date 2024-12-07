@@ -1,8 +1,8 @@
 import logging
 
-from containernet.config import NodeConfig
+from core.config import NodeConfig
+from core.topology import ITopology
 from containernet.containernet_network import ContainerizedNetwork
-from containernet.topology import ITopology
 from routing.routing_factory import RoutingFactory, route_string_to_enum
 from interfaces.network_mgr import (INetworkManager, NetworkType)
 

@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 from enum import IntEnum
+
+from dataclasses import dataclass, field
+from typing import Optional, List
 import logging
 import os
 import json
-from .config import (TopologyConfig, MatrixType)
 
 
 class LinkAttr(IntEnum):
@@ -14,6 +16,19 @@ class LinkAttr(IntEnum):
     link_bandwidth_backward = 4
 
 
+class MatrixType(IntEnum):
+    # Adjacency matrix to describe the network topology
+    ADJACENCY_MATRIX = 0
+    # Bandwidth matrix to describe the network bandwidth link-by-link
+    BANDW_MATRIX = 1
+    # Loss matrix to describe the network loss link-by-link
+    LOSS_MATRIX = 2
+    # Latency matrix to describe the network latency link-by-link
+    LATENCY_MATRIX = 3
+    # Jitter matrix to describe the network jitter link-by-link
+    JITTER_MATRIX = 4
+
+
 # mapping MatrixType to the link attribute except for the adjacency matrix
 MatType2LinkAttr = {
     MatrixType.LOSS_MATRIX: LinkAttr.link_loss,
@@ -21,6 +36,33 @@ MatType2LinkAttr = {
     MatrixType.JITTER_MATRIX: LinkAttr.link_jitter,
     MatrixType.BANDW_MATRIX: LinkAttr.link_bandwidth_forward
 }
+
+
+class TopologyType(IntEnum):
+    linear = 0      # Linear chain topology
+    star = 1        # Star topology
+    tree = 2        # Complete Binary Tree
+    butterfly = 3   # Butterfly topology
+    mesh = 5        # Random Mesh topology
+
+
+@dataclass
+class Parameter:
+    name: str
+    init_value: List[int]
+
+
+@dataclass
+class TopologyConfig:
+    """Configuration for the network topology.
+    """
+    name: str
+    nodes: int
+    topology_type: TopologyType
+    # @array_description: the array description of the topology
+    array_description: Optional[List[Parameter]] = field(default=None)
+    # @json_description: the json description of the topology
+    json_description: Optional[str] = field(default=None)
 
 
 class ITopology(ABC):

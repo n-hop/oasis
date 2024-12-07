@@ -2,11 +2,11 @@ import logging
 import os
 from mininet.net import Containernet  # type: ignore
 from mininet.util import ipStr, netParse
-from containernet.topology import (ITopology, MatrixType)
+from core.config import (NodeConfig)
+from core.topology import (ITopology, MatrixType)
 from containernet.containernet_host import ContainernetHostAdapter
 from interfaces.network import INetwork
 from interfaces.routing import IRoutingStrategy
-from .config import (NodeConfig)
 
 
 def subnets(base_ip, parent_ip):

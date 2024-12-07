@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from containernet.topology import (ITopology, MatrixType)
+from core.topology import (ITopology, MatrixType)
 from interfaces.network import INetwork
 from interfaces.routing import IRoutingStrategy
 from testbed.linux_host import LinuxHost

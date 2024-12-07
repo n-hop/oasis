@@ -5,7 +5,7 @@ import time
 import yaml
 from tools.util import is_same_path
 from var.global_var import g_root_path
-from .config import (NestedConfig)
+from core.config import (NestedConfig)
 
 
 def load_nested_config(nested_config_file: str,

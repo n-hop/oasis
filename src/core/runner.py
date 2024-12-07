@@ -8,7 +8,7 @@ import yaml
 
 from interfaces.network_mgr import INetworkManager
 from interfaces.network import INetwork
-from containernet.topology import ITopology
+from core.topology import ITopology
 from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest

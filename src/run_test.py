@@ -2,64 +2,19 @@ import os
 import sys
 import logging
 import platform
-from typing import Optional
 import yaml
 
-# from mininet.cli import CLI
 from mininet.log import setLogLevel
+
 from interfaces.network_mgr import NetworkType
-from containernet.topology import ITopology
-from containernet.linear_topology import LinearTopology
-from containernet.config import (IConfig, NodeConfig, TopologyConfig)
 from tools.util import (is_same_path, is_base_path, parse_test_file_name)
 from var.global_var import g_root_path
+from core.config import (IConfig, NodeConfig, load_all_tests)
 from core.network_factory import (create_network_mgr)
 from core.runner import TestRunner
 
 
-def load_test(test_yaml_file: str, test_name: str = "all"):
-    """
-        Load the test case configuration from a yaml file.
-    """
-    logging.info(
-        "########################## Oasis Loading Tests "
-        "##########################")
-    # List of active cases.
-    test_cases = None
-    with open(test_yaml_file, 'r', encoding='utf-8') as stream:
-        try:
-            yaml_content = yaml.safe_load(stream)
-            test_cases = yaml_content["tests"]
-        except yaml.YAMLError as exc:
-            logging.error(exc)
-            return None
-    # ------------------------------------------------
-    test_names = test_cases.keys()
-    active_test_list = []
-    if test_name in ("all", "All", "ALL"):
-        test_name = ""
-    for name in test_names:
-        if test_name not in ("", name):
-            logging.debug("Oasis skips the test case %s", name)
-            continue
-        test_cases[name]['name'] = name
-        active_test_list.append(test_cases[name])
-    for case in active_test_list.copy():
-        # ignore the inactive case by "if: False"
-        if "if" in case and not case["if"]:
-            logging.info(
-                f"case %s is disabled!", case['name'])
-            active_test_list.remove(case)
-        else:
-            logging.info(
-                f"case %s is enabled!", case['name'])
-    if len(active_test_list) == 0:
-        logging.info(f"No active test case in %s", test_yaml_file)
-        return None
-    return active_test_list
-
-
-def load_node_config(config_base_path, file_path) -> NodeConfig:
+def containernet_node_config(config_base_path, file_path) -> NodeConfig:
     """Load node related configuration from the yaml file.
     """
     node_config_yaml = None
@@ -85,10 +40,9 @@ def load_node_config(config_base_path, file_path) -> NodeConfig:
     return NodeConfig(name="", img="")
 
 
-def prepare_node_config(mapped_config_path, yaml_test_file, source_workspace, original_config_path):
+def load_containernet_config(mapped_config_path, yaml_test_file, source_workspace, original_config_path):
     # print all input parameters
-    node_config = load_node_config(
-        mapped_config_path, yaml_test_file)
+    node_config = containernet_node_config(mapped_config_path, yaml_test_file)
     if node_config is None or node_config.name == "":
         logging.error("Error: no containernet node config.")
         sys.exit(1)
@@ -98,33 +52,6 @@ def prepare_node_config(mapped_config_path, yaml_test_file, source_workspace, or
         node_config.vols.append(
             f'{original_config_path}:{mapped_config_path}')
     return node_config
-
-
-def load_topology(config_base_path, test_case_yaml) -> Optional[ITopology]:
-    """Load network related configuration from the yaml file.
-    """
-    if 'topology' not in test_case_yaml:
-        logging.error("Error: missing key topology in the test case yaml.")
-        return None
-    local_yaml = test_case_yaml['topology']
-    logging.info(f"Test: local_yaml %s",
-                 local_yaml)
-    if local_yaml is None:
-        logging.error("Error: content of topology is None.")
-        return None
-    loaded_conf = IConfig.load_yaml_config(config_base_path,
-                                           local_yaml,
-                                           'topology')
-    if loaded_conf is None:
-        logging.error("Error: loaded_conf of topology is None.")
-        return None
-    if not isinstance(loaded_conf, TopologyConfig):
-        logging.error("Error: loaded_conf of topology is None.")
-        return None
-    if loaded_conf.topology_type == "linear":
-        return LinearTopology(loaded_conf)
-    logging.error("Error: unsupported topology type.")
-    return None
 
 
 def load_testbed_config(name, yaml_base_path_input):
@@ -202,38 +129,36 @@ if __name__ == '__main__':
         sys.exit(1)
 
     is_using_testbed = False
-    cur_node_config = None
+    cur_hosts_config = None
     network_manager = None
     if not is_using_testbed:
         logging.info("##### running tests on containernet.")
         network_manager = create_network_mgr(NetworkType.containernet)
-        cur_node_config = prepare_node_config(
+        cur_hosts_config = load_containernet_config(
             config_path, yaml_test_file_path, oasis_workspace, yaml_config_base_path)
     else:
         logging.info("##### running tests on testbed.")
         network_manager = create_network_mgr(NetworkType.testbed)
-        cur_node_config = load_testbed_config(
+        cur_hosts_config = load_testbed_config(
             'testbed_nhop_shenzhen', config_path)
 
     if network_manager is None:
         logging.error("Error: failed to load proper network manager")
         sys.exit(1)
     # 1. execute all the tests on all constructed networks
-    all_tests = load_test(yaml_test_file_path, cur_selected_test)
-    if all_tests is None:
+    loaded_tests = load_all_tests(yaml_test_file_path, cur_selected_test)
+    if loaded_tests is None or len(loaded_tests) == 0:
         logging.error("Error: no test case found.")
         sys.exit(1)
-    for test in all_tests:
-        cur_topology = load_topology(config_path, test)
+    for test in loaded_tests:
+        cur_topology = test.load_topology(config_path)
         if not cur_topology:
             continue
         # 1.1 The topology in one case can be composed of multiple topologies:
         #      Traverse all the topologies in the test case.
         for index, cur_top_ins in enumerate(cur_topology):
-            test_runner = TestRunner(
-                test, config_path, network_manager)
-            test_runner.init(cur_node_config,
-                             cur_top_ins)
+            test_runner = TestRunner(test.yaml(), config_path, network_manager)
+            test_runner.init(cur_hosts_config, cur_top_ins)
             if not test_runner.is_ready():
                 test_runner.handle_failure()
             # 1.3 Load test to the network instance
@@ -248,8 +173,8 @@ if __name__ == '__main__':
             res = test_runner.handle_test_results(index)
             if res is False:
                 test_runner.handle_failure()
-        # > for index, cur_top_ins in enumerate(cur_topology):
-    # > for test in all_tests
+        # # for index, cur_top_ins in enumerate(cur_topology):
+    # # for test in loaded_tests:
     # create a regular file to indicate the test success
     with open(f"{g_root_path}test.success", 'w', encoding='utf-8') as f_success:
         f_success.write(f"test.success")

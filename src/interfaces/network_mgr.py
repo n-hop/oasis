@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import IntEnum
-from containernet.topology import ITopology
+from core.topology import ITopology
 
 # alphabet table
 alphabet = ['h', 'i', 'j', 'k', 'l', 'm',

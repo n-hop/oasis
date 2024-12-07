@@ -2,7 +2,7 @@ import logging
 import copy
 from abc import ABC, abstractmethod
 from typing import List
-from containernet.topology import (ITopology)
+from core.topology import (ITopology)
 from protosuites.proto import IProtoSuite
 from interfaces.routing import IRoutingStrategy
 from interfaces.host import IHost

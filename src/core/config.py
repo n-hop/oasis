@@ -5,31 +5,12 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any
-from enum import IntEnum
 import logging
 import os
 import yaml
 
-
-class MatrixType(IntEnum):
-    # Adjacency matrix to describe the network topology
-    ADJACENCY_MATRIX = 0
-    # Bandwidth matrix to describe the network bandwidth link-by-link
-    BANDW_MATRIX = 1
-    # Loss matrix to describe the network loss link-by-link
-    LOSS_MATRIX = 2
-    # Latency matrix to describe the network latency link-by-link
-    LATENCY_MATRIX = 3
-    # Jitter matrix to describe the network jitter link-by-link
-    JITTER_MATRIX = 4
-
-
-class TopologyType(IntEnum):
-    linear = 0      # Linear chain topology
-    star = 1        # Star topology
-    tree = 2        # Complete Binary Tree
-    butterfly = 3   # Butterfly topology
-    mesh = 5        # Random Mesh topology
+from core.topology import (ITopology, TopologyConfig)
+from core.linear_topology import LinearTopology
 
 
 @dataclass
@@ -56,25 +37,6 @@ class NestedConfig:
     dns_server: Optional[List[str]] = field(default=None)
     dns_resolve: Optional[List[str]] = field(default=None)
     mounts: Optional[List[str]] = field(default=None)
-
-
-@dataclass
-class Parameter:
-    name: str
-    init_value: List[int]
-
-
-@dataclass
-class TopologyConfig:
-    """Configuration for the network topology.
-    """
-    name: str
-    nodes: int
-    topology_type: TopologyType
-    # @array_description: the array description of the topology
-    array_description: Optional[List[Parameter]] = field(default=None)
-    # @json_description: the json description of the topology
-    json_description: Optional[str] = field(default=None)
 
 
 supported_config_keys = ["topology", "node_config"]
@@ -155,3 +117,87 @@ class IConfig(ABC):
         if config_key == "topology":
             return TopologyConfig(**yaml_description)
         return None
+
+
+class Test:
+    """Class to hold the test configuration(yaml) for one cases
+    """
+
+    def __init__(self, test_yaml: Dict[str, Any], name: str):
+        self.name = name
+        self.test_yaml = test_yaml
+
+    def yaml(self):
+        return self.test_yaml
+
+    def is_active(self):
+        if self.test_yaml is None:
+            return False
+        if "if" in self.test_yaml and not self.test_yaml["if"]:
+            return False
+        return True
+
+    def load_topology(self, config_base_path) -> Optional[ITopology]:
+        """Load network related configuration from the yaml file.
+        """
+        if 'topology' not in self.test_yaml:
+            logging.error("Error: missing key topology in the test case yaml.")
+            return None
+        local_yaml = self.test_yaml['topology']
+        logging.info(f"Test: local_yaml %s",
+                     local_yaml)
+        if local_yaml is None:
+            logging.error("Error: content of topology is None.")
+            return None
+        loaded_conf = IConfig.load_yaml_config(config_base_path,
+                                               local_yaml,
+                                               'topology')
+        if loaded_conf is None:
+            logging.error("Error: loaded_conf of topology is None.")
+            return None
+        if not isinstance(loaded_conf, TopologyConfig):
+            logging.error("Error: loaded_conf of topology is None.")
+            return None
+        if loaded_conf.topology_type == "linear":
+            return LinearTopology(loaded_conf)
+        logging.error("Error: unsupported topology type.")
+        return None
+
+
+def load_all_tests(test_yaml_file: str, test_name: str = "all") -> List[Test]:
+    """
+        Load the test case configuration from a yaml file.
+    """
+    logging.info(
+        "########################## Oasis Loading Tests "
+        "##########################")
+    # List of active cases.
+    test_cases = None
+    with open(test_yaml_file, 'r', encoding='utf-8') as stream:
+        try:
+            yaml_content = yaml.safe_load(stream)
+            test_cases = yaml_content["tests"]
+        except yaml.YAMLError as exc:
+            logging.error(exc)
+            return []
+    # ------------------------------------------------
+    if test_cases is None:
+        logging.error("No test cases are loaded from %s", test_yaml_file)
+        return []
+    active_test_list = []
+    if test_name in ("all", "All", "ALL"):
+        test_name = ""
+    for name in test_cases.keys():
+        if test_name not in ("", name):
+            logging.debug("Oasis skips the test case %s", name)
+            continue
+        test_cases[name]["name"] = name
+        test = Test(test_cases[name], name)
+        if test.is_active():
+            active_test_list.append(test)
+            logging.info(f"case %s is enabled!", name)
+        else:
+            logging.info(f"case %s is disabled!", name)
+    if len(active_test_list) == 0:
+        logging.info(f"No active test case in %s", test_yaml_file)
+    return active_test_list

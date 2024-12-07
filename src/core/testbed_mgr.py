@@ -1,6 +1,6 @@
 import logging
 
-from containernet.topology import ITopology
+from core.topology import ITopology
 from interfaces.network_mgr import (INetworkManager, NetworkType)
 from testbed.config import HostConfig
 
