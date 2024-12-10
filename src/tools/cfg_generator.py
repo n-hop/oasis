@@ -163,6 +163,12 @@ class ConfigGenerator:
                 node_ips.append([all_ips[i * 2 - 1], all_ips[i * 2]])
         return node_ips
 
+    def _generate_oslr_node_ips(self, num_nodes, virtual_ip_prefix):
+        node_ips = []
+        for i in range(num_nodes):
+            node_ips.append(f"{virtual_ip_prefix}{i+1}")
+        return node_ips
+
     def generate_cfg(self, num_nodes, virtual_ip_prefix):
         node_ips = self._generate_node_ips(num_nodes)
         tun_mappings = self._generate_tun_cfg(node_ips, virtual_ip_prefix)
@@ -188,6 +194,31 @@ class ConfigGenerator:
                                              tun_mappings=tun_mappings))
                 logging.info("Generated %s/h%d.ini", self.path, i)
 
+    def generate_oslr_cfg(self, num_nodes, virtual_ip_prefix):
+        node_ips = self._generate_oslr_node_ips(num_nodes, virtual_ip_prefix)
+        for i in range(num_nodes):
+            tcp_proxy_cnt, tcp_proxies = 0, ""
+            if i == 0:
+                tcp_proxy_cnt = 1
+                tcp_proxies = self._generate_tcp_proxy_item(
+                    i, node_ips[-1], node_ips[-1])
+            port_forward = ""
+            # oasis core didn't support port forward but ini configs have port forward rules.
+            # port forward rules for h0, h1, ..., h(n-1) to h(n)
+            if i != num_nodes - 1:
+                # generate port forward from h0 to the last node in the chain.
+                port_forward = self._generate_port_forward_item(
+                    node_ips[-1][0])
+            with open(f"{self.path}/h{i}.ini", "w", encoding="utf-8") as f:
+                f.write(self.template.format(link_cnt=0, links="",
+                                             route_cnt=0, routes="",
+                                             tcp_proxy_cnt=tcp_proxy_cnt, tcp_proxies=tcp_proxies,
+                                             port_forward=port_forward,
+                                             tun_ip=f"{virtual_ip_prefix}{i+1}", tun_mapping_cnt=0,
+                                             tun_mode=self.tun_mode,
+                                             tun_mappings=""))
+                logging.info("Generated %s/h%d.ini", self.path, i)
+
 
 def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8",
                        virtual_ip_prefix="1.0.0.",
@@ -199,6 +230,14 @@ def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8",
     generator = ConfigGenerator(
         node_ip_range, output_dir, tun_mode, config_file_template)
     generator.generate_cfg(num_nodes, virtual_ip_prefix)
+
+
+def generate_olsr_cfg_files(num_nodes, virtual_ip_prefix="172.23.1.",
+                            output_dir="/tmp"):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    generator = ConfigGenerator(path=output_dir)
+    generator.generate_oslr_cfg(num_nodes, virtual_ip_prefix)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import time
 import re
 from interfaces.network import INetwork
 from interfaces.host import IHost
-from tools.cfg_generator import generate_cfg_files
+from tools.cfg_generator import generate_cfg_files, generate_olsr_cfg_files
 from protosuites.proto import (ProtoConfig, IProtoSuite)
 from var.global_var import g_root_path
 
@@ -67,12 +67,17 @@ class BATSProtocol(IProtoSuite):
         # configurations are separated by network
         logging.info(
             f"########################## BATSProtocol Source path: %s, %s", self.source_path, net_id)
-        # BTP OR BRTP
-        test_tun_mode = 'BRTP' if self.get_protocol_name() == 'BRTP' else 'BTP'
-        generate_cfg_files(host_num, hosts_ip_range,
-                           self.virtual_ip_prefix, f'{self.source_path}/{net_id}',
-                           test_tun_mode,
-                           cfg_template_path)
+        routing_type_name = network.get_routing_strategy().routing_type()
+        if routing_type_name == 'OLSRRouting':
+            self.virtual_ip_prefix = '172.23.1.'
+            generate_olsr_cfg_files(
+                host_num, self.virtual_ip_prefix, f'{self.source_path}/{net_id}')
+        else:
+            test_tun_mode = 'BRTP' if self.get_protocol_name() == 'BRTP' else 'BTP'
+            generate_cfg_files(host_num, hosts_ip_range,
+                               self.virtual_ip_prefix, f'{self.source_path}/{net_id}',
+                               test_tun_mode,
+                               cfg_template_path)
         # generate some error log if the license file is not correct
         self._verify_license()
         for i in range(host_num):
@@ -93,7 +98,10 @@ class BATSProtocol(IProtoSuite):
         if routing_type_name == 'OLSRRouting':
             self.protocol_args += " --olsr_adaption_enabled=true"
             self.protocol_args += " --use_netlink_routing_table=true"
+            self.protocol_args += " --use_user_routing_table=false"
             self.protocol_args += " --use_system_link_config=true"
+            self.protocol_args += " --use_user_link_config=false"
+
         host_num = len(hosts)
         for i in range(host_num):
             hosts[i].cmd(
