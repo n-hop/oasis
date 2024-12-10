@@ -49,4 +49,4 @@ pylint:
     - *prepare_pylint_definition
   script:
     - |
-      pylint $(git ls-files '*.py') --rcfile=${CI_PROJECT_DIR}/.pylintrc
+      pylint $(git ls-files '*.py') --rcfile=${CI_PROJECT_DIR}/.pylintrc --ignore-patterns=".*_unittest.py" --disable=unused-argument

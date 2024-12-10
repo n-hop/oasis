@@ -12,7 +12,7 @@ from var.global_var import g_root_path
 class BATSProtocol(IProtoSuite):
     def __init__(self, config: ProtoConfig):
         super().__init__(config)
-        self.protocol_args: str = self.protocol_args
+        self.protocol_args: str
         if self.config.path is None:
             logging.error("No protocol path specified.")
             return
@@ -67,8 +67,12 @@ class BATSProtocol(IProtoSuite):
         # configurations are separated by network
         logging.info(
             f"########################## BATSProtocol Source path: %s, %s", self.source_path, net_id)
+        # BTP OR BRTP
+        test_tun_mode = 'BRTP' if self.get_protocol_name() == 'BRTP' else 'BTP'
         generate_cfg_files(host_num, hosts_ip_range,
-                           self.virtual_ip_prefix, f'{self.source_path}/{net_id}', cfg_template_path)
+                           self.virtual_ip_prefix, f'{self.source_path}/{net_id}',
+                           test_tun_mode,
+                           cfg_template_path)
         # generate some error log if the license file is not correct
         self._verify_license()
         for i in range(host_num):
