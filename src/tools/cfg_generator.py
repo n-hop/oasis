@@ -5,10 +5,11 @@ from mininet.util import ipStr, netParse
 
 
 class ConfigGenerator:
-    def __init__(self, node_ip_range="10.0.0.0/8", path="/tmp", config_file_template=None):
+    def __init__(self, node_ip_range="10.0.0.0/8", path="/tmp", tun_mode="BTP", config_file_template=None):
         self.node_ip_range = node_ip_range
         self.path = path
         self.template = ""
+        self.tun_mode = tun_mode
         if config_file_template is not None:
             with open(config_file_template, "r", encoding="utf-8") as f:
                 self.template = f.read()
@@ -37,6 +38,7 @@ class ConfigGenerator:
             self.template += "\n"
             self.template += "tun.name = tun_session\n"
             self.template += "tun.ip = {tun_ip}\n"
+            self.template += "tun.mode = {tun_mode}\n"
             self.template += "tun.max_flow_per_session = 1\n"
             self.template += "tun.mapping.cnt = {tun_mapping_cnt}\n"
             self.template += "{tun_mappings}\n"
@@ -182,6 +184,7 @@ class ConfigGenerator:
                                              tcp_proxy_cnt=tcp_proxy_cnt, tcp_proxies=tcp_proxies,
                                              port_forward=port_forward,
                                              tun_ip=f"{virtual_ip_prefix}{i+1}", tun_mapping_cnt=num_nodes,
+                                             tun_mode=self.tun_mode,
                                              tun_mappings=tun_mappings))
                 logging.info("Generated %s/h%d.ini", self.path, i)
 
@@ -189,11 +192,12 @@ class ConfigGenerator:
 def generate_cfg_files(num_nodes, node_ip_range="10.0.0.0/8",
                        virtual_ip_prefix="1.0.0.",
                        output_dir="/tmp",
+                       tun_mode="BTP",
                        config_file_template=None):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     generator = ConfigGenerator(
-        node_ip_range, output_dir, config_file_template)
+        node_ip_range, output_dir, tun_mode, config_file_template)
     generator.generate_cfg(num_nodes, virtual_ip_prefix)
 
 
@@ -208,7 +212,9 @@ if __name__ == "__main__":
                         help='Output directory (default: /tmp)')
     parser.add_argument('-p', type=str, default="1.0.0.",
                         help='Virtual IP prefix (default: 1.0.0.)')
+    parser.add_argument('-m', type=str, default="BTP",
+                        help='TUN mode BTP|BRTP (default: BTP)')
     args = parser.parse_args()
 
     generate_cfg_files(num_nodes=args.n, node_ip_range=args.ip,
-                       virtual_ip_prefix=args.p, output_dir=args.o)
+                       virtual_ip_prefix=args.p, output_dir=args.o, tun_mode=args.m)
