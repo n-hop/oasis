@@ -545,6 +545,6 @@ class TestRunner:
             max_test_time = max(max_test_time, interval * interval_num)
             sum_test_time += interval * interval_num
         if execution_mode == 'serial':
-            #  additional "proto_num * 2" is for initialization and cleanup
-            return sum_test_time * proto_num + proto_num * 2
-        return max_test_time * proto_num + proto_num * 2
+            #  additional "proto_num * 15" is for initialization and cleanup
+            return sum_test_time * proto_num + proto_num * 30
+        return max_test_time * proto_num + proto_num * 30
