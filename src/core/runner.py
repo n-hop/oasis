@@ -400,7 +400,12 @@ class TestRunner:
 
         # 4.1 Wait for all processes to complete
         for i, p in enumerate(processes):
-            p.join(timeout=600)
+            max_wait_time = self.__get_test_time() + 2
+            logging.info(
+                "########################## Oasis process execute ########################## ")
+            logging.info(
+                "Wait for process %s for test %s to complete in %s seconds", i, test_name, max_wait_time)
+            p.join(timeout=max_wait_time)
             if p.is_alive():
                 logging.error(f"Process %s for test %s is stuck.",
                               i, test_name)
@@ -524,3 +529,21 @@ class TestRunner:
         with open(f"{g_root_path}test.failed", 'w', encoding='utf-8') as f_failed:
             f_failed.write(f"{test_name}")
         sys.exit(1)
+
+    def __get_test_time(self):
+        test_tools = self.test_yml_config['test_tools']
+        execution_mode = self.test_yml_config.get(
+            'execution_mode', 'serial')
+        proto_num = len(
+            self.target_protocols) if self.target_protocols is not None else 0
+        max_test_time = 0
+        sum_test_time = 0
+        for tool in test_tools.values():
+            # interval or interval_num is not set, use default value 1
+            interval = tool.get('interval', 1)
+            interval_num = tool.get('interval_num', 10)
+            max_test_time = max(max_test_time, interval * interval_num)
+            sum_test_time += interval * interval_num
+        if execution_mode == 'serial':
+            return sum_test_time * proto_num
+        return max_test_time * proto_num
