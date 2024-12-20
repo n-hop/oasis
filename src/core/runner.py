@@ -400,7 +400,7 @@ class TestRunner:
 
         # 4.1 Wait for all processes to complete
         for i, p in enumerate(processes):
-            max_wait_time = self.__get_test_time() + 2
+            max_wait_time = self.__get_test_time()
             logging.info(
                 "########################## Oasis process execute ########################## ")
             logging.info(
@@ -545,5 +545,6 @@ class TestRunner:
             max_test_time = max(max_test_time, interval * interval_num)
             sum_test_time += interval * interval_num
         if execution_mode == 'serial':
-            return sum_test_time * proto_num
-        return max_test_time * proto_num
+            #  additional "proto_num * 2" is for initialization and cleanup
+            return sum_test_time * proto_num + proto_num * 2
+        return max_test_time * proto_num + proto_num * 2
