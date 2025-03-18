@@ -26,6 +26,8 @@ For Linux platform, uses the instructions in [Build docker image](#build-docker-
 
 For Windows platform, WSL with traffic control (tc) support is required. Please follow the instructions in [WSL kernel recompile](#wsl-kernel-recompile) to recompile the WSL kernel with tc support.
 
+> Note: Highly recommend to use Oasis with Ubuntu 22.04.
+
 ### Build docker image
 
  When using `--containernet=default`, build the Docker image with the following commands:
@@ -37,7 +39,7 @@ cd src/config/protocol-docker-azure && docker build -t ubuntu:22.04 .
 
 ### WSL kernel recompile
 
-When using WSL in windows, tc is not defaultly compiled to WSL kernel, so WSL kernel recompilation with tc support is needed, script is provided in {project_dir}/bin/wsl_kernel_support/kernel_tc.sh
+When using WSL in windows, tc is not default compiled to WSL kernel, so WSL kernel recompilation with tc support is needed, script is provided in {project_dir}/bin/wsl_kernel_support/kernel_tc.sh
 
 First open Windows PowerShell
 
