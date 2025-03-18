@@ -1,33 +1,89 @@
-## Get Started
+# Get Started
 
 This guide provides simple steps to getting started with Oasis.
 
 - [Get Started](#get-started)
-  - [1. Run test](#1-run-test)
-    - [1.1 Change the network topology and its parameters](#11-change-the-network-topology-and-its-parameters)
-    - [1.2 Change the configuration of the test tools](#12-change-the-configuration-of-the-test-tools)
-    - [1.3 Change the evaluation targets(protocol)](#13-change-the-evaluation-targetsprotocol)
-  - [2. Test results](#2-test-results)
-- [Build docker image](#build-docker-image)
-- [WSL kernel recompile](#wsl-kernel-recompile)
+  - [1. Prerequisites](#1-prerequisites)
+    - [Build docker image](#build-docker-image)
+    - [WSL kernel recompile](#wsl-kernel-recompile)
+  - [2. Run test](#2-run-test)
+    - [2.1 Change the network topology and its parameters](#21-change-the-network-topology-and-its-parameters)
+    - [2.2 Change the configuration of the test tools](#22-change-the-configuration-of-the-test-tools)
+    - [2.3 Change the evaluation targets(protocol)](#23-change-the-evaluation-targetsprotocol)
+  - [3. Test results](#3-test-results)
 
-### 1. Run test
+## 1. Prerequisites
+
+First step is to get the source code of Oasis from GitHub:
+
+```bash
+
+git clone https://github.com/n-hop/oasis.git
+
+```
+
+For Linux platform, uses the instructions in [Build docker image](#build-docker-image) to build the docker image before running the test.
+
+For Windows platform, WSL with traffic control (tc) support is required. Please follow the instructions in [WSL kernel recompile](#wsl-kernel-recompile) to recompile the WSL kernel with tc support.
+
+### Build docker image
+
+ When using `--containernet=default`, build the Docker image with the following commands:
+
+```bash
+cd src/config/containernet-docker-official && docker build -t containernet:latest .
+cd src/config/protocol-docker-azure && docker build -t ubuntu:22.04 .
+```
+
+### WSL kernel recompile
+
+When using WSL in windows, tc is not defaultly compiled to WSL kernel, so WSL kernel recompilation with tc support is needed, script is provided in {project_dir}/bin/wsl_kernel_support/kernel_tc.sh
+
+First open Windows PowerShell
+
+```bash
+
+wsl --unregister Ubuntu-22.04   # unregister any installed wsl
+wsl --install Ubuntu-22.04      # reinstall wsl Ubuntu-22.04
+```
+
+After setup username and password, copy kernel_tc.sh to home directory (~)
+
+```bash
+sudo CUR_USER=$USER ./kernel_tc.sh
+```
+
+After kernel recompiled, open Windows Powershell
+
+```bash
+wsl --shutdown      # reset wsl
+```
+
+Open new wsl terminal and check if wsl support tc
+
+```bash
+sudo tc q                                       # check existing tc rules
+sudo tc qdisc add dev eth0 root netem loss 10%  # add 10% packet drop rate to eth0 interface
+```
+
+## 2. Run test
 
 The following command will run `src/run_test.py` in a nested containernet environment, and `run_test.py` will execute the test case defined in `protocol-performance-comparison.yaml`.
 
 ```bash
-sudo python3 src/start.py -p /home/runner/oasis/src/config \
+# in the root directory of oasis project
+sudo python3 src/start.py -p src/config \
     --containernet=default \
     -t protocol-performance-comparison.yaml
 ```
 
-`/home/runner/oasis/src/config` is the directory containing all the YAML configuration files. Oasis will search for `nested-containernet-config.yaml`, `protocol-single-hop-test.yaml` in this folder. This folder can be customized according to the location of Oasis repository.
+`src/config` is the directory containing all the YAML configuration files. Oasis will search for `nested-containernet-config.yaml`, `protocol-single-hop-test.yaml` in this folder. This folder can be customized according to the location of Oasis repository.
 
 `--containernet=default` specifies the Containernet configuration. `default` means use the default containernet configuration(such as docker images been used, mount points, etc) from `nested-containernet-config.yaml`.
 
 `-t protocol-performance-comparison.yaml` specifies the test case file, which is a YAML file defining the test case. By default, it tries to execute all the test cases in that file. To execute a specific test case, use `-t protocol-performance-comparison.yaml:test_name`.
 
-#### 1.1 Change the network topology and its parameters
+### 2.1 Change the network topology and its parameters
 
 In `protocol-performance-comparison.yaml`, the network topology of the case `test100` is defined in the `topology` section:
 
@@ -90,7 +146,7 @@ Also, we provide the way to define topology in the test case file directly. The 
             init_value: [100]
 ```
 
-#### 1.2 Change the configuration of the test tools
+### 2.2 Change the configuration of the test tools
 
 Details of supported test tools can be found in [Protocols and Tools](protocols_and_tools.md#2-tools).
 
@@ -117,19 +173,19 @@ Other parameters are:
 
 If only care about the RTT of the first message, set `packet_count` to 1.
 
-#### 1.3 Change the evaluation targets(protocol)
+### 2.3 Change the evaluation targets(protocol)
 
 For each test case, we can define the target protocols to be evaluated. The following is an example:
 
 ```yaml
   test3:
     description: "Compare the performance of kcp, tcp-bbr, and QUIC in a linear network"
-    target_protocols: [ kcp, tcp-bbr, quic]
+    target_protocols: [kcp, tcp-bbr, quic]
 ```
 
 Oasis will uses selected test tools to measure the performance of the target protocols one by one.
 
-### 2. Test results
+## 3. Test results
 
 The test results will be saved to `{oasis_workspace}/test_results/{test_case_name}`, where `{test_case_name}` is defined in the test case YAML file. This folder contains following SVG files to show throughput and RTT performance:
 
@@ -138,42 +194,3 @@ The test results will be saved to `{oasis_workspace}/test_results/{test_case_nam
 - `rtt_cdf.svg`
 
 `{oasis_workspace}` is the base directory of Oasis.
-
-## Build docker image
-
- When using `--containernet=default`, build the Docker image with the following commands:
-
-```bash
-cd src/config/containernet-docker-official && docker build -t containernet:latest .
-cd src/config/protocol-docker-azure && docker build -t ubuntu:22.04 .
-```
-
-## WSL kernel recompile
-
-When using WSL in windows, tc is not defaultly compiled to WSL kernel, so WSL kernel recompilation with tc support is needed, script is provided in {project_dir}/bin/wsl_kernel_support/kernel_tc.sh
-
-First open Windows PowerShell
-
-```
-wsl --unregister Ubuntu-22.04   # unregister any installed wsl
-wsl --install Ubuntu-22.04      # reinstall wsl Ubuntu-22.04
-```
-
-After setup username and password, copy kernel_tc.sh to home directory (~)
-
-```
-sudo CUR_USER=$USER ./kernel_tc.sh
-```
-
-After kernel recompiled, open Windows Powershell
-
-```
-wsl --shutdown      # reset wsl
-```
-
-Open new wsl terminal and check if wsl support tc
-
-```
-sudo tc q                                       # check existing tc rules
-sudo tc qdisc add dev eth0 root netem loss 10%  # add 10% packet drop rate to eth0 interface
-```
