@@ -4,14 +4,16 @@ import time
 import re
 from interfaces.network import INetwork
 from interfaces.host import IHost
-from tools.cfg_generator import generate_cfg_files, generate_olsr_cfg_files
-from protosuites.proto import (ProtoConfig, IProtoSuite)
+from protosuites.proto import (ProtoConfig, IProtoSuite, ProtoRole)
 from var.global_var import g_root_path
+from tools.cfg_generator import generate_cfg_files, generate_olsr_cfg_files
 
 
 class BATSProtocol(IProtoSuite):
-    def __init__(self, config: ProtoConfig):
-        super().__init__(config)
+    def __init__(self, config: ProtoConfig, is_distributed: bool = True, role: ProtoRole = ProtoRole.both):
+        super().__init__(config, is_distributed, role)
+        logging.info("#### BATSProtocol config %s",
+                     self.config)
         self.protocol_args: str
         if self.config.path is None:
             logging.error("No protocol path specified.")
@@ -23,6 +25,9 @@ class BATSProtocol(IProtoSuite):
             self.source_path = f'{g_root_path}{self.source_path}'
         self.virtual_ip_prefix = '1.0.0.'
         self.license_path = f'{self.source_path}/licence'
+
+    def is_distributed(self) -> bool:
+        return self.is_distributed_var
 
     def post_run(self, network: INetwork):
         return True
@@ -45,12 +50,22 @@ class BATSProtocol(IProtoSuite):
 
     def pre_run(self, network: INetwork):
         # Init the license file for bats, otherwise it will not run.
-        hosts = network.get_hosts()
-        if hosts is None:
+        all_hosts = network.get_hosts()
+        if all_hosts is None:
             logging.error("No host found in the network")
             return False
+
+        if not self.is_distributed_var:
+            if self.config.hosts is None or len(self.config.hosts) != 1:
+                logging.error(
+                    "Test non-distributed protocols, but bats protocol server/client hosts are not set correctly.")
+                return False
+
         net_id = network.get_id()
-        host_num = len(hosts)
+        all_hosts_num = len(all_hosts)
+        if self.is_distributed_var:
+            # run on all hosts
+            self.config.hosts = [0, all_hosts_num - 1]
         # prepare the bats protocol config files
         hosts_ip_range = network.get_host_ip_range()
         if hosts_ip_range == "":
@@ -65,34 +80,42 @@ class BATSProtocol(IProtoSuite):
             logging.error(
                 "%s Config base path or config file is not set.", net_id)
         # configurations are separated by network
-        logging.info(
+        logging.debug(
             f"########################## BATSProtocol Source path: %s, %s", self.source_path, net_id)
+        extend_path = ""
+        if not self.is_distributed_var and self.proto_role == ProtoRole.client:
+            extend_path = 'client'
+        elif not self.is_distributed_var and self.proto_role == ProtoRole.server:
+            extend_path = 'server'
+        else:
+            extend_path = f'{net_id}'
         routing_type_name = network.get_routing_strategy().routing_type()
         if routing_type_name == 'OLSRRouting':
             self.virtual_ip_prefix = '172.23.1.'
             generate_olsr_cfg_files(
-                host_num, self.virtual_ip_prefix, f'{self.source_path}/{net_id}')
+                all_hosts_num, self.virtual_ip_prefix, f'{self.source_path}/{extend_path}')
         else:
             test_tun_mode = 'BRTP' if self.get_protocol_name() == 'BRTP' else 'BTP'
-            generate_cfg_files(host_num, hosts_ip_range,
-                               self.virtual_ip_prefix, f'{self.source_path}/{net_id}',
+            generate_cfg_files(all_hosts_num, hosts_ip_range,
+                               self.virtual_ip_prefix, f'{self.source_path}/{extend_path}',
                                test_tun_mode,
                                cfg_template_path)
+            os.system(
+                f'cp {self.config.config_base_path}/certs/server.cert {self.source_path}')
+            os.system(
+                f'cp {self.config.config_base_path}/certs/server.key {self.source_path}')
         # generate some error log if the license file is not correct
         self._verify_license()
-        for i in range(host_num):
-            hosts[i].cmd(f'iptables -F -t nat')
-            self._init_tun(hosts[i])
-            self._init_config(hosts[i], net_id)
-            logging.info(
-                f"############### Oasis install bats protocol config files on "
-                "%s ###############",
-                hosts[i].name())
+        for i in self.config.hosts:
+            all_hosts[i].cmd(f'iptables -F -t nat')
+            self._init_tun(all_hosts[i])
+            self._init_config(all_hosts[i], net_id)
         return True
 
     def run(self, network: INetwork):
-        hosts = network.get_hosts()
-        if hosts is None:
+        all_hosts = network.get_hosts()
+        if all_hosts is None:
+            logging.error("No host found in the network")
             return False
         routing_type_name = network.get_routing_strategy().routing_type()
         if routing_type_name == 'OLSRRouting':
@@ -101,26 +124,25 @@ class BATSProtocol(IProtoSuite):
             self.protocol_args += " --use_user_routing_table=false"
             self.protocol_args += " --use_system_link_config=true"
             self.protocol_args += " --use_user_link_config=false"
-
-        host_num = len(hosts)
-        for i in range(host_num):
-            hosts[i].cmd(
+        selected_host_num = len(self.config.hosts)
+        for i in self.config.hosts:
+            all_hosts[i].cmd(
                 f'nohup {g_root_path}{self.config.path} {self.protocol_args} '
                 f' > {self.log_dir}bats_protocol_h{i}.log &')
 
         # check the protocol is running
-        max_sleep_time = host_num + 1
-        not_ready_host_range = list(range(host_num))
+        max_sleep_time = selected_host_num + 1
+        not_ready_host_range = list(range(selected_host_num))
         while max_sleep_time > 0 and len(not_ready_host_range) > 0:
             max_sleep_time -= 1
             time.sleep(1)
             cur_not_ready_idx = []
             for host_idx in not_ready_host_range:
-                if not self.is_ready_on(hosts[host_idx]):
+                if not self.is_ready_on(all_hosts[host_idx]):
                     cur_not_ready_idx.append(host_idx)
                 else:
                     logging.info("Bats protocol is running on %s",
-                                 hosts[host_idx].name())
+                                 all_hosts[host_idx].name())
             logging.info(
                 f"############### checking round %d, not ready hosts: %s ###############",
                 max_sleep_time, cur_not_ready_idx)
@@ -129,7 +151,7 @@ class BATSProtocol(IProtoSuite):
         if len(not_ready_host_range) > 0:
             failed_hosts = ""
             for idx in not_ready_host_range:
-                failed_hosts += f"{hosts[idx].name()} "
+                failed_hosts += f"{all_hosts[idx].name()} "
             logging.error(
                 f"############### Oasis run bats protocol failed on "
                 "%s ###############", failed_hosts)
@@ -138,19 +160,19 @@ class BATSProtocol(IProtoSuite):
         return True
 
     def stop(self, network: INetwork):
-        hosts = network.get_hosts()
-        if hosts is None:
+        all_hosts = network.get_hosts()
+        if all_hosts is None:
             return False
-        host_num = len(hosts)
+        host_num = len(all_hosts)
         for i in range(host_num):
             logging.info(
                 f"############### Oasis stop bats protocol on "
                 "%s ###############",
-                hosts[i].name())
-            hosts[i].cmd(
+                all_hosts[i].name())
+            all_hosts[i].cmd(
                 f'pkill -9 -f {self.process_name}')
-            hosts[i].cmd(f'ip tuntap del mode tap tap')
-            hosts[i].cmd(f'iptables -F -t nat')
+            all_hosts[i].cmd(f'ip tuntap del mode tap tap')
+            all_hosts[i].cmd(f'iptables -F -t nat')
         return True
 
     def _init_tun(self, host: IHost):
@@ -186,7 +208,23 @@ class BATSProtocol(IProtoSuite):
         host.cmd(
             f'mkdir -p /etc/bats-protocol')
         host.cmd(
-            f'cp {self.source_path}/{id}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
+            f'cp {self.source_path}/server.cert /etc/bats-protocol/')
+        host.cmd(
+            f'cp {self.source_path}/server.key /etc/bats-protocol/')
+        if self.is_distributed_var:
+            host.cmd(
+                f'cp {self.source_path}/{id}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
+            logging.info(
+                f"############### Oasis install bats protocol config files on "
+                "%s ###############",
+                host.name())
+        else:
+            if self.proto_role == ProtoRole.client:
+                host.cmd(
+                    f'cp {self.source_path}/client/h0.ini /etc/bats-protocol/bats-protocol-settings.ini')
+            elif self.proto_role == ProtoRole.server:
+                host.cmd(
+                    f'cp {self.source_path}/server/h1.ini /etc/bats-protocol/bats-protocol-settings.ini')
         return True
 
     def _get_ip_from_host(self, host: IHost, dev: str) -> str:

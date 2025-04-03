@@ -1,11 +1,11 @@
 import logging
 from interfaces.network import INetwork
-from protosuites.proto import (ProtoConfig, IProtoSuite)
+from protosuites.proto import (ProtoConfig, IProtoSuite, ProtoRole)
 
 
 class CSProtocol(IProtoSuite):
     def __init__(self, config: ProtoConfig, client: IProtoSuite, server: IProtoSuite):
-        super().__init__(config)
+        super().__init__(config, False, ProtoRole.both)
         self.client = client
         self.server = server
         if self.config.hosts is None or len(self.config.hosts) != 2:
@@ -17,6 +17,8 @@ class CSProtocol(IProtoSuite):
         # rewrite the protocol_args of client and server
         self.client.protocol_args += self.protocol_args
         self.server.protocol_args += self.protocol_args
+        logging.info("CSProtocol config %s",
+                     self.config)
         logging.info("client protocol %s args: %s",
                      self.client.config.name, self.client.protocol_args)
         logging.info("server protocol %s args: %s",

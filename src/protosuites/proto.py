@@ -13,6 +13,12 @@ class ProtoType(IntEnum):
     none_distributed = 1
 
 
+class ProtoRole(IntEnum):
+    server = 0
+    client = 1
+    both = 2
+
+
 proto_type_str_mapping = {
     "distributed": ProtoType.distributed,
     "none_distributed": ProtoType.none_distributed
@@ -39,7 +45,9 @@ SupportedBATSProto = ['btp', 'brtp', 'brtp_proxy']
 
 
 class IProtoSuite(IProtoInfo, ABC):
-    def __init__(self, config: ProtoConfig):
+    def __init__(self, config: ProtoConfig, is_distributed: bool = True, role: ProtoRole = ProtoRole.both):
+        self.is_distributed_var = is_distributed
+        self.proto_role = role
         self.is_success = False
         self.config = config
         self.log_dir = f"{g_root_path}test_results/{self.config.test_name}/{self.config.name}/log/"
@@ -96,4 +104,8 @@ class IProtoSuite(IProtoInfo, ABC):
 
     @abstractmethod
     def stop(self, network: 'INetwork'):  # type: ignore
+        pass
+
+    @abstractmethod
+    def is_distributed(self) -> bool:
         pass

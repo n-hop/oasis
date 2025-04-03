@@ -15,7 +15,7 @@ from testsuites.test_ping import PingTest
 from testsuites.test_rtt import RTTTest
 from testsuites.test_sshping import SSHPingTest
 from testsuites.test_scp import ScpTest
-from protosuites.proto import (ProtoConfig, SupportedProto)
+from protosuites.proto import (ProtoConfig, SupportedProto, ProtoRole)
 from protosuites.std_protocol import StdProtocol
 from protosuites.cs_protocol import CSProtocol
 from protosuites.bats.bats_btp import BTP
@@ -181,6 +181,10 @@ def load_predefined_protocols(config_base_path):
                 ProtoConfig(**sub_proto))
             logging.info("load predefined sub-protocol: %s",
                          sub_proto)
+
+        # save the config_base_path for sub-protocol
+        for sub_proto in predefined_proto_conf_dict[protocol['name']].protocols:
+            sub_proto.config_base_path = config_base_path
     return predefined_proto_conf_dict
 
 
@@ -287,10 +291,19 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
             client_conf.test_name = test_case_name
             server_conf.test_name = test_case_name
             # wrapper of client-server protocol
-            cs = CSProtocol(config=proto_config,
-                            client=StdProtocol(client_conf),
-                            server=StdProtocol(server_conf))
-            network.add_protocol_suite(cs)
+            if 'bats_' in proto_config.name:
+                cs = CSProtocol(config=proto_config,
+                                client=BRTPProxy(
+                                    client_conf, False, ProtoRole.client),
+                                server=BRTPProxy(
+                                    server_conf, False, ProtoRole.server)
+                                )
+                network.add_protocol_suite(cs)
+            else:
+                cs = CSProtocol(config=proto_config,
+                                client=StdProtocol(client_conf),
+                                server=StdProtocol(server_conf))
+                network.add_protocol_suite(cs)
             continue
         logging.error("Error: unsupported protocol type %s.%s",
                       proto_config.type, proto_config.name)

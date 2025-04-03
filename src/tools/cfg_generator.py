@@ -11,9 +11,12 @@ class ConfigGenerator:
         self.template = ""
         self.tun_mode = tun_mode
         if config_file_template is not None:
+            logging.info(
+                "################# Reading config template from %s", config_file_template)
             with open(config_file_template, "r", encoding="utf-8") as f:
                 self.template = f.read()
         else:
+            logging.info("################# Using default config template.")
             self.template += "[protocol]\n"
             self.template += "core.link_seq_set_num_bit = 5\n"
             self.template += "core.link_gap_threshold_set_num = 32\n"
@@ -184,14 +187,15 @@ class ConfigGenerator:
                 # generate port forward from h0 to the last node in the chain.
                 port_forward = self._generate_port_forward_item(
                     node_ips[-1][0])
+            ini_content = self.template.format(link_cnt=link_cnt, links=links,
+                                               route_cnt=route_cnt, routes=routes,
+                                               tcp_proxy_cnt=tcp_proxy_cnt, tcp_proxies=tcp_proxies,
+                                               port_forward=port_forward,
+                                               tun_ip=f"{virtual_ip_prefix}{i+1}", tun_mapping_cnt=num_nodes,
+                                               tun_mode=self.tun_mode,
+                                               tun_mappings=tun_mappings)
             with open(f"{self.path}/h{i}.ini", "w", encoding="utf-8") as f:
-                f.write(self.template.format(link_cnt=link_cnt, links=links,
-                                             route_cnt=route_cnt, routes=routes,
-                                             tcp_proxy_cnt=tcp_proxy_cnt, tcp_proxies=tcp_proxies,
-                                             port_forward=port_forward,
-                                             tun_ip=f"{virtual_ip_prefix}{i+1}", tun_mapping_cnt=num_nodes,
-                                             tun_mode=self.tun_mode,
-                                             tun_mappings=tun_mappings))
+                f.write(ini_content)
                 logging.info("Generated %s/h%d.ini", self.path, i)
 
     def generate_oslr_cfg(self, num_nodes, virtual_ip_prefix):
