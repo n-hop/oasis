@@ -19,7 +19,7 @@ tests:
         packet_type: tcp
         client_host: 0
         server_host: 1
-    execution_mode: parallel # parallel or serial  
+    execution_mode: parallel # parallel or serial
   test2:
     description: "Test protocol throughput/rtt on single hop"
     topology:
@@ -35,3 +35,16 @@ tests:
         client_host: 0
         server_host: 1
     execution_mode: parallel # parallel or serial
+  test3:
+    description: "Test quic throughput on single hop"
+    topology:
+      config_name: linear_network_1 # loss 5% 10ms
+      config_file: predefined.topology.yaml
+    target_protocols: [msquic]
+    route: static_route
+    test_tools:
+      secnetperf:
+        args:
+          - "-target:%s -exec:maxtput -down:10s -ptput:1"
+        client_host: 0
+        server_host: 1 # test flow from 0 to 1

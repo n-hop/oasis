@@ -4,7 +4,6 @@ import os
 
 from interfaces.network import INetwork
 from protosuites.proto_info import IProtoInfo
-from var.global_var import g_root_path
 from .test import (ITestSuite, TestConfig)
 
 

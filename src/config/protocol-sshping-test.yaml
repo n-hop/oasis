@@ -13,6 +13,10 @@ tests:
     target_protocols: [tcp-bbr]
     route: static_route
     test_tools:
-      sshping:
+      sshping: # SSHPingTest https://github.com/spook/sshping
+        args:
+          - "-i /root/.ssh/id_rsa -H root@%s"
         client_host: 0
-        server_host: 1
+        server_host: 1 # test flow from 0 to 1
+        interval: 1
+        interval_num: 10

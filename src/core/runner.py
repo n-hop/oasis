@@ -13,8 +13,8 @@ from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_ping import PingTest
 from testsuites.test_rtt import RTTTest
-from testsuites.test_sshping import SSHPingTest
 from testsuites.test_scp import ScpTest
+from testsuites.test_regular import RegularTest
 from protosuites.proto import (ProtoConfig, SupportedProto, ProtoRole)
 from protosuites.std_protocol import StdProtocol
 from protosuites.cs_protocol import CSProtocol
@@ -112,7 +112,8 @@ def add_test_to_network(network, tool, test_name):
         interval_num=tool['interval_num'] if 'interval_num' in tool else 10,
         packet_type=tool['packet_type'] if 'packet_type' in tool else 'tcp',
         bitrate=tool['bitrate'] if 'bitrate' in tool else 0,
-        client_host=tool['client_host'], server_host=tool['server_host'])
+        client_host=tool['client_host'], server_host=tool['server_host'],
+        args=tool['args'] if 'args' in tool else '')
     if 'iperf' in tool['name']:
         test_conf.test_type = TestType.throughput
         network.add_test_suite(IperfTest(test_conf))
@@ -127,17 +128,13 @@ def add_test_to_network(network, tool, test_name):
         test_conf.test_type = TestType.rtt
         network.add_test_suite(RTTTest(test_conf))
         logging.info("Added rtt test to %s.", test_name)
-    elif tool['name'] == 'sshping':
-        test_conf.test_type = TestType.sshping
-        network.add_test_suite(SSHPingTest(test_conf))
-        logging.info("Added sshping test to %s.", test_name)
     elif tool['name'] == 'scp':
         test_conf.test_type = TestType.scp
         network.add_test_suite(ScpTest(test_conf))
         logging.info("Added scp test to %s.", test_name)
     else:
-        logging.error(
-            f"Error: unsupported test tool %s", tool['name'])
+        network.add_test_suite(RegularTest(test_conf))
+        logging.info("Added Regular test to %s.", test_name)
 
 
 def load_predefined_protocols(config_base_path):
@@ -269,8 +266,10 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
             if 'tcp' in proto_config.name:
                 network.add_protocol_suite(StdProtocol(proto_config))
                 continue
-            logging.warning("Error: unsupported distributed protocol %s",
+            network.add_protocol_suite(StdProtocol(proto_config))
+            logging.warning("apply StdProtocol for %s protocol",
                             proto_config.name)
+            continue
         if proto_config.type == 'none_distributed':
             # none distributed protocol
             if len(proto_config.protocols) != 2:
