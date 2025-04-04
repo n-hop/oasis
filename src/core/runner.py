@@ -290,15 +290,17 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
             client_conf.test_name = test_case_name
             server_conf.test_name = test_case_name
             # wrapper of client-server protocol
-            if 'bats_' in proto_config.name:
+            if 'brtp_' in proto_config.name:
                 cs = CSProtocol(config=proto_config,
-                                client=BRTPProxy(
+                                client=BRTP(
                                     client_conf, False, ProtoRole.client),
-                                server=BRTPProxy(
+                                server=BRTP(
                                     server_conf, False, ProtoRole.server)
                                 )
                 network.add_protocol_suite(cs)
             else:
+                logging.warning("apply StdProtocol for %s protocol",
+                                proto_config.name)
                 cs = CSProtocol(config=proto_config,
                                 client=StdProtocol(client_conf),
                                 server=StdProtocol(server_conf))
