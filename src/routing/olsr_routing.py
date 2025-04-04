@@ -1,7 +1,6 @@
 import logging
 import time
 from interfaces.routing import IRoutingStrategy
-from var.global_var import g_root_path
 
 
 class OLSRRouting(IRoutingStrategy):
@@ -10,7 +9,7 @@ class OLSRRouting(IRoutingStrategy):
     """
 
     def __init__(self):
-        self.binary_path = f"{g_root_path}bin/olsr/olsrd2_static"
+        self.binary_path = "olsrd2_static"
         self.cfg_path = "/etc/olsr/olsr.config"
 
     def setup_routes(self, network: 'INetwork'):

@@ -1,6 +1,5 @@
 import time
 import logging
-import os
 
 from interfaces.network import INetwork
 from protosuites.proto_info import IProtoInfo
@@ -17,10 +16,7 @@ class RTTTest(ITestSuite):
         super().__init__(config)
         self.run_times = 0
         self.first_rtt_repeats = 15
-        self.binary_path = "bin/tcp_message/tcp_endpoint"
-        if not os.path.isfile(f"{g_root_path}{self.binary_path}"):
-            logging.error("test tool binary %s is not found.",
-                          self.binary_path)
+        self.binary_path = "tcp_endpoint"
 
     def post_process(self):
         return True
@@ -30,8 +26,8 @@ class RTTTest(ITestSuite):
 
     def _run_tcp_endpoint(self, client, server, port, recv_ip):
         loop_cnt = 1
-        server.cmd(f'{g_root_path}{self.binary_path} -p {port} &')
-        tcp_client_cmd = f'{g_root_path}{self.binary_path} -c {recv_ip} -p {port}'
+        server.cmd(f'{self.binary_path} -p {port} &')
+        tcp_client_cmd = f'{self.binary_path} -c {recv_ip} -p {port}'
         tcp_client_cmd += f' -i {self.config.interval}' \
             f' -w {self.config.packet_count} -l {self.config.packet_size}'
         if self.config.packet_count == 1:

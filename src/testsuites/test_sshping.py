@@ -1,8 +1,6 @@
 import logging
-import os
 from interfaces.network import INetwork
 from protosuites.proto_info import IProtoInfo
-from var.global_var import g_root_path
 from .test import (ITestSuite, TestConfig)
 
 
@@ -13,10 +11,7 @@ class SSHPingTest(ITestSuite):
 
     def __init__(self, config: TestConfig) -> None:
         super().__init__(config)
-        self.binary_path = f"{g_root_path}bin/ssh/sshping"
-        if not os.path.isfile(f"{self.binary_path}"):
-            logging.error("test tool binary %s is not found.",
-                          self.binary_path)
+        self.binary_path = "sshping"
 
     def post_process(self):
         return True

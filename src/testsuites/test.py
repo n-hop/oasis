@@ -58,6 +58,7 @@ class TestConfig:
     client_host: Optional[int] = field(default=None)
     server_host: Optional[int] = field(default=None)
     allow_fail: Optional[bool] = field(default=False)
+    args: Optional[str] = field(default="")  # args for test tool
 
 
 @dataclass
