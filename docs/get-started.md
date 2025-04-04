@@ -11,6 +11,7 @@ This guide provides simple steps to getting started with Oasis.
     - [2.2 Change the configuration of the test tools](#22-change-the-configuration-of-the-test-tools)
     - [2.3 Change the evaluation targets(protocol)](#23-change-the-evaluation-targetsprotocol)
   - [3. Test results](#3-test-results)
+  - [4. Customize protocol definition](#4-customize-protocol-definition)
 
 ## 1. Prerequisites
 
@@ -196,3 +197,11 @@ The test results will be saved to `{oasis_workspace}/test_results/{test_case_nam
 - `rtt_cdf.svg`
 
 `{oasis_workspace}` is the base directory of Oasis.
+
+## 4. Customize protocol definition
+
+- 4.1 protocol yaml description
+
+```yaml
+TODO
+```

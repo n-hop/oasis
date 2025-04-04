@@ -28,7 +28,7 @@ proto_type_str_mapping = {
 @dataclass
 class ProtoConfig:
     name: str = field(default="")
-    path: Optional[str] = field(default=None)
+    bin: Optional[str] = field(default=None)  # binary name of the protocol
     args: Optional[List[str]] = field(default=None)
     config_file: Optional[str] = field(default=None)
     version: Optional[str] = field(default="")
@@ -60,17 +60,7 @@ class IProtoSuite(IProtoInfo, ABC):
                 self.protocol_args += arg + ' '
             logging.info("protocol %s args: %s",
                          self.config.name, self.protocol_args)
-        self.process_name = None
-        if self.config.path:
-            self.process_name = os.path.basename(self.config.path)
-            if self.process_name == self.config.path:
-                logging.info("protocol %s path is a process name.",
-                             self.config.path)
-            else:
-                if not os.path.isfile(f"{g_root_path}{self.config.path}"):
-                    # it is in protocol docker image.
-                    logging.warning("protocol %s binary %s is not found.",
-                                    self.config.name, self.config.path)
+        self.process_name = self.config.bin
 
     def get_config(self) -> ProtoConfig:
         return self.config

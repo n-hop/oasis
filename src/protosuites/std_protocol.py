@@ -45,7 +45,7 @@ class StdProtocol(IProtoSuite):
         for host_id in self.config.hosts:
             cur_protocol_args = self.get_protocol_args(network)
             hosts[host_id].cmd(
-                f'{g_root_path}{self.config.path} {cur_protocol_args} > '
+                f'{self.config.bin} {cur_protocol_args} > '
                 f'{self.log_dir}{self.config.name}_h{host_id}.log &')
         time.sleep(2)
         for host_id in self.config.hosts:

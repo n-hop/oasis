@@ -6,7 +6,6 @@ import re
 from interfaces.network import INetwork
 from interfaces.host import IHost
 from protosuites.proto import (ProtoConfig, IProtoSuite, ProtoRole)
-from var.global_var import g_root_path
 from tools.cfg_generator import generate_cfg_files, generate_olsr_cfg_files
 
 
@@ -16,14 +15,9 @@ class BATSProtocol(IProtoSuite):
         logging.info("#### BATSProtocol config %s",
                      self.config)
         self.protocol_args: str
-        if self.config.path is None:
-            logging.error("No protocol path specified.")
+        if self.config.bin is None:
+            logging.error("No protocol binary specified.")
             return
-        self.source_path = '/'.join(self.config.path.split('/')[:-1])
-        if self.source_path == '':
-            self.source_path = '.'
-        else:
-            self.source_path = f'{g_root_path}{self.source_path}'
         self.virtual_ip_prefix = '1.0.0.'
         self.license_path = None
 
@@ -35,7 +29,7 @@ class BATSProtocol(IProtoSuite):
 
     def is_ready_on(self, host: IHost) -> bool:
         pf = host.popen(
-            f"{self.source_path}/bats_cli api main_node")
+            f"bats_cli api main_node")
         if pf is None:
             logging.error("Failed to run bats_cli on %s", host.name())
             return False
@@ -90,8 +84,6 @@ class BATSProtocol(IProtoSuite):
             cfg_template_path = os.path.join(
                 self.config.config_base_path, self.config.config_file)
         # configurations are separated by network
-        logging.debug(
-            f"########################## BATSProtocol Source path: %s, %s", self.source_path, net_id)
         extend_path = ""
         if not self.is_distributed_var and self.proto_role == ProtoRole.client:
             extend_path = 'client'
@@ -103,11 +95,11 @@ class BATSProtocol(IProtoSuite):
         if routing_type_name == 'OLSRRouting':
             self.virtual_ip_prefix = '172.23.1.'
             generate_olsr_cfg_files(
-                all_hosts_num, self.virtual_ip_prefix, f'{self.source_path}/{extend_path}')
+                all_hosts_num, self.virtual_ip_prefix, f'/tmp/{extend_path}')
         else:
             test_tun_mode = 'BRTP' if self.get_protocol_name() == 'BRTP' else 'BTP'
             generate_cfg_files(all_hosts_num, hosts_ip_range,
-                               self.virtual_ip_prefix, f'{self.source_path}/{extend_path}',
+                               self.virtual_ip_prefix, f'/tmp/{extend_path}',
                                test_tun_mode,
                                cfg_template_path)
         # generate some error log if the license file is not correct
@@ -140,7 +132,7 @@ class BATSProtocol(IProtoSuite):
             selected_host_num)
         for i in self.config.hosts:
             all_hosts[i].cmd(
-                f'nohup {g_root_path}{self.config.path} {self.protocol_args} '
+                f'nohup {self.config.bin} {self.protocol_args} '
                 f' > {self.log_dir}bats_protocol_h{i}.log &')
 
         # check the protocol is running
@@ -221,7 +213,7 @@ class BATSProtocol(IProtoSuite):
             f'mkdir -p /etc/bats-protocol')
         if self.is_distributed_var:
             host.cmd(
-                f'cp {self.source_path}/{id}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
+                f'cp /tmp/{id}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
             logging.info(
                 f"############### Oasis install bats protocol config files on "
                 "%s ###############",
@@ -229,10 +221,10 @@ class BATSProtocol(IProtoSuite):
         else:
             if self.proto_role == ProtoRole.client:
                 host.cmd(
-                    f'cp {self.source_path}/client/h0.ini /etc/bats-protocol/bats-protocol-settings.ini')
+                    f'cp /tmp/client/h0.ini /etc/bats-protocol/bats-protocol-settings.ini')
             elif self.proto_role == ProtoRole.server:
                 host.cmd(
-                    f'cp {self.source_path}/server/h1.ini /etc/bats-protocol/bats-protocol-settings.ini')
+                    f'cp /tmp/server/h1.ini /etc/bats-protocol/bats-protocol-settings.ini')
         return True
 
     def _get_ip_from_host(self, host: IHost, dev: str) -> str:

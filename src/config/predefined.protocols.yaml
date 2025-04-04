@@ -10,7 +10,7 @@ protocols:
     type: distributed
   - name: btp
     type: distributed
-    path: bats/bats_protocol
+    bin: bats_protocol
     args:
       - "--daemon_enabled=true"
       - "--api_enabled=true"
@@ -18,7 +18,7 @@ protocols:
     version: latest
   - name: brtp
     type: distributed
-    path: bats/bats_protocol
+    bin: bats_protocol
     args:
       - "--daemon_enabled=true"
       - "--api_enabled=true"
@@ -26,7 +26,7 @@ protocols:
     version: latest
   - name: brtp_proxy
     type: distributed
-    path: bats/bats_protocol
+    bin: bats_protocol
     args:
       - "--daemon_enabled=true"
       - "--api_enabled=true"
@@ -40,11 +40,11 @@ protocols:
     port: 10100 # kcp protocol forward port
     protocols: # iterative
       - name: kcp_client
-        path: bin/kcp/client_linux_amd64
+        bin: client_linux_amd64
         args:
           - "-r %s:4000 -l :10100" # %s is the ip of kcp_server
       - name: kcp_server
-        path: bin/kcp/server_linux_amd64
+        bin: server_linux_amd64
         args:
           - "-l :4000 -t 127.0.0.1:10100" # by default, it forwards the traffic to localhost:10100
   - name: quic
@@ -53,11 +53,11 @@ protocols:
     port: 8006
     protocols: # iterative
       - name: quic_client
-        path: /go/bin/gost
+        bin: /go/bin/gost
         args:
           - "-L tcp://:8006/%s:8006"
           - "-F http+quic://%s:8443"
       - name: quic_server
-        path: /go/bin/gost
+        bin: /go/bin/gost
         args:
           - "-L http+quic://:8443"
