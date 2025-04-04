@@ -25,6 +25,7 @@ RUN apt-get install --yes \
 
 RUN pip3 install \
         PyYAML==6.0.1 \
+        psutil>=7.0.0 \
         matplotlib>=3.9.2
 
 # install Perf tools for Azure
