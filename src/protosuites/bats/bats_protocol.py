@@ -2,6 +2,7 @@ import logging
 import os
 import time
 import re
+
 from interfaces.network import INetwork
 from interfaces.host import IHost
 from protosuites.proto import (ProtoConfig, IProtoSuite, ProtoRole)
@@ -24,7 +25,7 @@ class BATSProtocol(IProtoSuite):
         else:
             self.source_path = f'{g_root_path}{self.source_path}'
         self.virtual_ip_prefix = '1.0.0.'
-        self.license_path = f'{self.source_path}/licence'
+        self.license_path = None
 
     def is_distributed(self) -> bool:
         return self.is_distributed_var
@@ -60,12 +61,21 @@ class BATSProtocol(IProtoSuite):
                 logging.error(
                     "Test non-distributed protocols, but bats protocol server/client hosts are not set correctly.")
                 return False
-
         net_id = network.get_id()
         all_hosts_num = len(all_hosts)
         if self.is_distributed_var:
-            # run on all hosts
-            self.config.hosts = [0, all_hosts_num - 1]
+            self.config.hosts = list(range(all_hosts_num))
+            logging.info(
+                "############### Oasis start bats protocol on all hosts %d###############",
+                all_hosts_num)
+        else:
+            logging.info(
+                "############### Oasis start bats protocol on specified hosts %d ###############",
+                len(self.config.hosts) if self.config.hosts is not None else 0)
+        if self.config.hosts is None:
+            logging.error(
+                "config.hosts is None, unable to start the protocol.")
+            return False
         # prepare the bats protocol config files
         hosts_ip_range = network.get_host_ip_range()
         if hosts_ip_range == "":
@@ -73,12 +83,12 @@ class BATSProtocol(IProtoSuite):
             return False
         # {g_root_path}src/config/cfg-template/ or {g_root_path}config/cfg-template/
         cfg_template_path = self.config.config_file
+        if self.config.config_base_path is None:
+            logging.error(
+                "Config base path or config file is not set.")
         if self.config.config_base_path and self.config.config_file:
             cfg_template_path = os.path.join(
                 self.config.config_base_path, self.config.config_file)
-        else:
-            logging.error(
-                "%s Config base path or config file is not set.", net_id)
         # configurations are separated by network
         logging.debug(
             f"########################## BATSProtocol Source path: %s, %s", self.source_path, net_id)
@@ -100,10 +110,6 @@ class BATSProtocol(IProtoSuite):
                                self.virtual_ip_prefix, f'{self.source_path}/{extend_path}',
                                test_tun_mode,
                                cfg_template_path)
-            os.system(
-                f'cp {self.config.config_base_path}/certs/server.cert {self.source_path}')
-            os.system(
-                f'cp {self.config.config_base_path}/certs/server.key {self.source_path}')
         # generate some error log if the license file is not correct
         self._verify_license()
         for i in self.config.hosts:
@@ -113,6 +119,10 @@ class BATSProtocol(IProtoSuite):
         return True
 
     def run(self, network: INetwork):
+        if self.config.hosts is None:
+            logging.error(
+                "config.hosts is None, unable to start the protocol.")
+            return False
         all_hosts = network.get_hosts()
         if all_hosts is None:
             logging.error("No host found in the network")
@@ -125,6 +135,9 @@ class BATSProtocol(IProtoSuite):
             self.protocol_args += " --use_system_link_config=true"
             self.protocol_args += " --use_user_link_config=false"
         selected_host_num = len(self.config.hosts)
+        logging.info(
+            f"############### Oasis start bats protocol on %s ###############",
+            selected_host_num)
         for i in self.config.hosts:
             all_hosts[i].cmd(
                 f'nohup {g_root_path}{self.config.path} {self.protocol_args} '
@@ -182,10 +195,11 @@ class BATSProtocol(IProtoSuite):
         return True
 
     def _verify_license(self) -> bool:
-        if not self.license_path:
+        if not self.config.config_base_path:
             logging.error(
-                "############### License file path is not set ###############")
+                "############### Config base path is not set ###############")
             return False
+        self.license_path = f'{self.config.config_base_path}rootfs/etc/cfg/licence'
         if not os.path.exists(self.license_path):
             logging.error(
                 "############### License file not found ###############")
@@ -204,13 +218,7 @@ class BATSProtocol(IProtoSuite):
         host.cmd(
             f'mkdir -p /etc/cfg')
         host.cmd(
-            f'cp {self.license_path} /etc/cfg/')
-        host.cmd(
             f'mkdir -p /etc/bats-protocol')
-        host.cmd(
-            f'cp {self.source_path}/server.cert /etc/bats-protocol/')
-        host.cmd(
-            f'cp {self.source_path}/server.key /etc/bats-protocol/')
         if self.is_distributed_var:
             host.cmd(
                 f'cp {self.source_path}/{id}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')

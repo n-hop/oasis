@@ -1,5 +1,6 @@
 import logging
 import copy
+import os
 from abc import ABC, abstractmethod
 from typing import List
 from core.topology import (ITopology)
@@ -17,6 +18,7 @@ class INetwork(ABC):
         self.test_results = {}
         self.is_started_flag = False
         self.is_accessible_flag = True
+        self.config_base_path = None
 
     def is_accessible(self):
         return self.is_accessible_flag
@@ -64,6 +66,7 @@ class INetwork(ABC):
 
     def add_protocol_suite(self, proto_suite: IProtoSuite):
         self.proto_suites.append(proto_suite)
+        self._load_config_base_path(proto_suite)
 
     def add_test_suite(self, test_suite: ITestSuite):
         self.test_suites.append(test_suite)
@@ -77,6 +80,7 @@ class INetwork(ABC):
         if self.test_suites is None or len(self.test_suites) == 0:
             logging.error("No test suite set")
             return False
+        self._install_root_fs()
         # Combination of protocol and test
         for proto in self.proto_suites:
             # start the protocol
@@ -118,6 +122,26 @@ class INetwork(ABC):
         self.proto_suites = []
         self.test_suites = []
         self.test_results = {}
+
+    def _load_config_base_path(self, proto_suite: IProtoSuite):
+        if self.config_base_path is None:
+            self.config_base_path = proto_suite.get_config().config_base_path
+
+    def _install_root_fs(self) -> bool:
+        """Install root fs on all hosts in the network.
+        """
+        all_hosts = self.get_hosts()
+        if all_hosts is None:
+            return False
+        root_fs_path = f"{self.config_base_path}rootfs"
+        if not os.path.exists(root_fs_path):
+            logging.error("Root fs not found at %s", root_fs_path)
+            return False
+        for host in all_hosts:
+            host.cmd("cp -r %s/* /" % root_fs_path)
+            logging.info(
+                "############### Oasis Root fs %s installed on %s", root_fs_path, host.name())
+        return True
 
     def _check_test_config(self, proto: IProtoSuite, test: ITestSuite):
         if not proto.is_distributed():
