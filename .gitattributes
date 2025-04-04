@@ -20,3 +20,4 @@ src/config/rootfs/usr/bin/olsrd2_static filter=lfs diff=lfs merge=lfs -text
 src/config/rootfs/usr/bin/server_linux_amd64 filter=lfs diff=lfs merge=lfs -text
 src/config/rootfs/usr/bin/sshping filter=lfs diff=lfs merge=lfs -text
 src/config/rootfs/usr/bin/tcp_endpoint filter=lfs diff=lfs merge=lfs -text
+src/config/rootfs/usr/bin/secnetperf filter=lfs diff=lfs merge=lfs -text
