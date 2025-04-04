@@ -8,6 +8,8 @@ from protosuites.proto import IProtoSuite
 from interfaces.routing import IRoutingStrategy
 from interfaces.host import IHost
 from testsuites.test import (ITestSuite)
+from var.global_var import g_oasis_root_fs
+from tools.util import (is_same_path)
 
 
 class INetwork(ABC):
@@ -133,14 +135,31 @@ class INetwork(ABC):
         all_hosts = self.get_hosts()
         if all_hosts is None:
             return False
-        root_fs_path = f"{self.config_base_path}rootfs"
-        if not os.path.exists(root_fs_path):
-            logging.error("Root fs not found at %s", root_fs_path)
+        # from oasis means it is mapped with oasis workspace
+        root_fs_from_oasis = g_oasis_root_fs
+        # from user means it is mapped by `-p config_folder`
+        root_fs_from_user = f"{self.config_base_path}rootfs"
+        # root_fs_from_user and root_fs_from_oasis may be the same
+        is_same_root_fs = is_same_path(
+            root_fs_from_oasis, root_fs_from_user)
+        if not os.path.exists(root_fs_from_oasis):
+            logging.error("Oasis Root fs not found at %s", root_fs_from_user)
+            return False
+        if not os.path.exists(root_fs_from_user):
+            logging.error("User Root fs not found at %s", root_fs_from_user)
             return False
         for host in all_hosts:
-            host.cmd("cp -r %s/* /" % root_fs_path)
-            logging.info(
-                "############### Oasis Root fs %s installed on %s", root_fs_path, host.name())
+            # user's root fs can overwrite oasis's root fs
+            host.cmd("cp -r %s/* /" % root_fs_from_oasis)
+            if is_same_root_fs is False:
+                host.cmd("cp -r %s/* /" % root_fs_from_user)
+                logging.info(
+                    "############### Oasis Root fs %s %s installed on %s",
+                    root_fs_from_oasis, root_fs_from_user, host.name())
+            else:
+                logging.info(
+                    "############### Oasis Root fs %s installed on %s",
+                    root_fs_from_oasis, host.name())
         return True
 
     def _check_test_config(self, proto: IProtoSuite, test: ITestSuite):
