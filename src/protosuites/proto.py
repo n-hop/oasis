@@ -50,6 +50,11 @@ class IProtoSuite(IProtoInfo, ABC):
         self.proto_role = role
         self.is_success = False
         self.config = config
+        # save configs
+        self.log_config_dir = f"{g_root_path}test_results/{self.config.test_name}/{self.config.name}/config/"
+        if not os.path.exists(f"{self.log_config_dir}"):
+            os.makedirs(f"{self.log_config_dir}")
+        # save logs
         self.log_dir = f"{g_root_path}test_results/{self.config.test_name}/{self.config.name}/log/"
         if not os.path.exists(f"{self.log_dir}"):
             os.makedirs(f"{self.log_dir}")

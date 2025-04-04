@@ -95,11 +95,11 @@ class BATSProtocol(IProtoSuite):
         if routing_type_name == 'OLSRRouting':
             self.virtual_ip_prefix = '172.23.1.'
             generate_olsr_cfg_files(
-                all_hosts_num, self.virtual_ip_prefix, f'/tmp/{extend_path}')
+                all_hosts_num, self.virtual_ip_prefix, f'{self.log_config_dir}{extend_path}')
         else:
             test_tun_mode = 'BRTP' if self.get_protocol_name() == 'BRTP' else 'BTP'
             generate_cfg_files(all_hosts_num, hosts_ip_range,
-                               self.virtual_ip_prefix, f'/tmp/{extend_path}',
+                               self.virtual_ip_prefix, f'{self.log_config_dir}{extend_path}',
                                test_tun_mode,
                                cfg_template_path)
         # generate some error log if the license file is not correct
@@ -213,7 +213,7 @@ class BATSProtocol(IProtoSuite):
             f'mkdir -p /etc/bats-protocol')
         if self.is_distributed_var:
             host.cmd(
-                f'cp /tmp/{id}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
+                f'cp {self.log_config_dir}{id}/h{host_idx}.ini /etc/bats-protocol/bats-protocol-settings.ini')
             logging.info(
                 f"############### Oasis install bats protocol config files on "
                 "%s ###############",
@@ -221,10 +221,10 @@ class BATSProtocol(IProtoSuite):
         else:
             if self.proto_role == ProtoRole.client:
                 host.cmd(
-                    f'cp /tmp/client/h0.ini /etc/bats-protocol/bats-protocol-settings.ini')
+                    f'cp {self.log_config_dir}client/h0.ini /etc/bats-protocol/bats-protocol-settings.ini')
             elif self.proto_role == ProtoRole.server:
                 host.cmd(
-                    f'cp /tmp/server/h1.ini /etc/bats-protocol/bats-protocol-settings.ini')
+                    f'cp {self.log_config_dir}server/h1.ini /etc/bats-protocol/bats-protocol-settings.ini')
         return True
 
     def _get_ip_from_host(self, host: IHost, dev: str) -> str:
