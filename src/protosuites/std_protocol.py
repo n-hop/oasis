@@ -3,7 +3,6 @@ import time
 import re
 from protosuites.proto import (ProtoConfig, IProtoSuite, ProtoRole)
 from interfaces.network import INetwork
-from var.global_var import g_root_path
 
 
 class StdProtocol(IProtoSuite):
