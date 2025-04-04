@@ -1,5 +1,6 @@
 import logging
 import copy
+import os
 from abc import ABC, abstractmethod
 from typing import List
 from core.topology import (ITopology)
@@ -7,6 +8,8 @@ from protosuites.proto import IProtoSuite
 from interfaces.routing import IRoutingStrategy
 from interfaces.host import IHost
 from testsuites.test import (ITestSuite)
+from var.global_var import g_oasis_root_fs
+from tools.util import (is_same_path)
 
 
 class INetwork(ABC):
@@ -17,6 +20,7 @@ class INetwork(ABC):
         self.test_results = {}
         self.is_started_flag = False
         self.is_accessible_flag = True
+        self.config_base_path = None
 
     def is_accessible(self):
         return self.is_accessible_flag
@@ -64,6 +68,7 @@ class INetwork(ABC):
 
     def add_protocol_suite(self, proto_suite: IProtoSuite):
         self.proto_suites.append(proto_suite)
+        self._load_config_base_path(proto_suite)
 
     def add_test_suite(self, test_suite: ITestSuite):
         self.test_suites.append(test_suite)
@@ -77,6 +82,7 @@ class INetwork(ABC):
         if self.test_suites is None or len(self.test_suites) == 0:
             logging.error("No test suite set")
             return False
+        self._install_root_fs()
         # Combination of protocol and test
         for proto in self.proto_suites:
             # start the protocol
@@ -118,6 +124,43 @@ class INetwork(ABC):
         self.proto_suites = []
         self.test_suites = []
         self.test_results = {}
+
+    def _load_config_base_path(self, proto_suite: IProtoSuite):
+        if self.config_base_path is None:
+            self.config_base_path = proto_suite.get_config().config_base_path
+
+    def _install_root_fs(self) -> bool:
+        """Install root fs on all hosts in the network.
+        """
+        all_hosts = self.get_hosts()
+        if all_hosts is None:
+            return False
+        # from oasis means it is mapped with oasis workspace
+        root_fs_from_oasis = g_oasis_root_fs
+        # from user means it is mapped by `-p config_folder`
+        root_fs_from_user = f"{self.config_base_path}rootfs"
+        # root_fs_from_user and root_fs_from_oasis may be the same
+        is_same_root_fs = is_same_path(
+            root_fs_from_oasis, root_fs_from_user)
+        if not os.path.exists(root_fs_from_oasis):
+            logging.error("Oasis Root fs not found at %s", root_fs_from_user)
+            return False
+        if not os.path.exists(root_fs_from_user):
+            logging.error("User Root fs not found at %s", root_fs_from_user)
+            return False
+        for host in all_hosts:
+            # user's root fs can overwrite oasis's root fs
+            host.cmd("cp -r %s/* /" % root_fs_from_oasis)
+            if is_same_root_fs is False:
+                host.cmd("cp -r %s/* /" % root_fs_from_user)
+                logging.info(
+                    "############### Oasis Root fs %s %s installed on %s",
+                    root_fs_from_oasis, root_fs_from_user, host.name())
+            else:
+                logging.info(
+                    "############### Oasis Root fs %s installed on %s",
+                    root_fs_from_oasis, host.name())
+        return True
 
     def _check_test_config(self, proto: IProtoSuite, test: ITestSuite):
         if not proto.is_distributed():

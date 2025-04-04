@@ -13,6 +13,12 @@ class ProtoType(IntEnum):
     none_distributed = 1
 
 
+class ProtoRole(IntEnum):
+    server = 0
+    client = 1
+    both = 2
+
+
 proto_type_str_mapping = {
     "distributed": ProtoType.distributed,
     "none_distributed": ProtoType.none_distributed
@@ -22,7 +28,7 @@ proto_type_str_mapping = {
 @dataclass
 class ProtoConfig:
     name: str = field(default="")
-    path: Optional[str] = field(default=None)
+    bin: Optional[str] = field(default=None)  # binary name of the protocol
     args: Optional[List[str]] = field(default=None)
     config_file: Optional[str] = field(default=None)
     version: Optional[str] = field(default="")
@@ -39,9 +45,16 @@ SupportedBATSProto = ['btp', 'brtp', 'brtp_proxy']
 
 
 class IProtoSuite(IProtoInfo, ABC):
-    def __init__(self, config: ProtoConfig):
+    def __init__(self, config: ProtoConfig, is_distributed: bool = True, role: ProtoRole = ProtoRole.both):
+        self.is_distributed_var = is_distributed
+        self.proto_role = role
         self.is_success = False
         self.config = config
+        # save configs
+        self.log_config_dir = f"{g_root_path}test_results/{self.config.test_name}/{self.config.name}/config/"
+        if not os.path.exists(f"{self.log_config_dir}"):
+            os.makedirs(f"{self.log_config_dir}")
+        # save logs
         self.log_dir = f"{g_root_path}test_results/{self.config.test_name}/{self.config.name}/log/"
         if not os.path.exists(f"{self.log_dir}"):
             os.makedirs(f"{self.log_dir}")
@@ -52,17 +65,7 @@ class IProtoSuite(IProtoInfo, ABC):
                 self.protocol_args += arg + ' '
             logging.info("protocol %s args: %s",
                          self.config.name, self.protocol_args)
-        self.process_name = None
-        if self.config.path:
-            self.process_name = os.path.basename(self.config.path)
-            if self.process_name == self.config.path:
-                logging.info("protocol %s path is a process name.",
-                             self.config.path)
-            else:
-                if not os.path.isfile(f"{g_root_path}{self.config.path}"):
-                    # it is in protocol docker image.
-                    logging.warning("protocol %s binary %s is not found.",
-                                    self.config.name, self.config.path)
+        self.process_name = self.config.bin
 
     def get_config(self) -> ProtoConfig:
         return self.config
@@ -96,4 +99,8 @@ class IProtoSuite(IProtoInfo, ABC):
 
     @abstractmethod
     def stop(self, network: 'INetwork'):  # type: ignore
+        pass
+
+    @abstractmethod
+    def is_distributed(self) -> bool:
         pass

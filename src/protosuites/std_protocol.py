@@ -1,19 +1,21 @@
 import logging
 import time
 import re
-from protosuites.proto import (ProtoConfig, IProtoSuite)
+from protosuites.proto import (ProtoConfig, IProtoSuite, ProtoRole)
 from interfaces.network import INetwork
-from var.global_var import g_root_path
 
 
 class StdProtocol(IProtoSuite):
     """StdProtocol is used to load the protocol which be described by YAML.
     """
 
-    def __init__(self, config: ProtoConfig):
-        super().__init__(config)
+    def __init__(self, config: ProtoConfig, is_distributed: bool = True, role: ProtoRole = ProtoRole.both):
+        super().__init__(config, is_distributed, role)
         self.forward_port = self.config.port
         self.default_version_dict = {}
+
+    def is_distributed(self) -> bool:
+        return self.is_distributed_var
 
     def post_run(self, network: INetwork):
         return True
@@ -42,7 +44,7 @@ class StdProtocol(IProtoSuite):
         for host_id in self.config.hosts:
             cur_protocol_args = self.get_protocol_args(network)
             hosts[host_id].cmd(
-                f'{g_root_path}{self.config.path} {cur_protocol_args} > '
+                f'{self.config.bin} {cur_protocol_args} > '
                 f'{self.log_dir}{self.config.name}_h{host_id}.log &')
         time.sleep(2)
         for host_id in self.config.hosts:
