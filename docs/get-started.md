@@ -12,6 +12,9 @@ This guide provides simple steps to getting started with Oasis.
     - [2.3 Change the evaluation targets(protocol)](#23-change-the-evaluation-targetsprotocol)
   - [3. Test results](#3-test-results)
   - [4. Customize protocol definition](#4-customize-protocol-definition)
+    - [4.1 protocol yaml description](#41-protocol-yaml-description)
+    - [4.2 iteration description](#42-iteration-description)
+    - [4.3 Root files](#43-root-files)
 
 ## 1. Prerequisites
 
@@ -200,8 +203,55 @@ The test results will be saved to `{oasis_workspace}/test_results/{test_case_nam
 
 ## 4. Customize protocol definition
 
-- 4.1 protocol yaml description
+### 4.1 protocol yaml description
+
+For a distributed protocol, it can be defined in the `predefined.protocols.yaml` file as follows:
 
 ```yaml
-TODO
+  - name: btp
+    type: distributed
+    bin: bats_protocol
+    args:
+      - "--daemon_enabled=true"
+      - "--tun_protocol=BTP"
+    version: latest
 ```
+
+- type: 
+  - `distributed` means the protocol instance should be run in every host of the network;
+  - `none_distributed` means the protocol instance should be run in only specified hosts, such as client and server;
+- bin: the name of the protocol binary, which should be in the `src/config/rootfs/usr/bin/` folder; or in the folder `{config_folder}/rootfs/usr/bin/` specified by `-p {config_folder}` in the `src/run_test.py` command;
+- args: run-time arguments of the protocol binary;
+- version: the version of the protocol binary;
+
+### 4.2 iteration description
+
+Iteration description is used to define the usage of one protocol binary which will play different roles(client/server) in different hosts. The following is an example:
+
+```yaml
+  - name: btp
+    type: none_distributed
+    args:
+      - "--daemon_enabled=true"
+    protocols: # iterative
+      - name: btp_client
+        bin: bats_protocol
+        args:
+          - "--tun_protocol=BTP"
+        config_file: cfg-template/bats-quic-client.ini
+        version: latest
+      - name: btp_server
+        bin: bats_protocol
+        args:
+          - "--tun_protocol=BRTP"
+        config_file: cfg-template/bats-quic-server.ini
+        version: latest
+```
+
+The protocol `btp` has two iterations: `btp_client` and `btp_server`. Those two iterations share the same `type` and `args` parameters in top-level.
+
+### 4.3 Root files
+
+Either `src/config/rootfs/usr/bin/` or `{config_folder}/rootfs/usr/bin/`(specified by `-p {config_folder}` in the `src/run_test.py` command) folder contains the necessary files which will be mounted into containernet(if it is in containernet mode).
+
+In order to run the protocol binary or test tools successfully, necessary files should be copied to the `src/config/rootfs/usr/bin/` or `{config_folder}/rootfs/usr/bin/` folder.
