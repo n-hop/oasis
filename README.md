@@ -35,6 +35,17 @@ Oasis is built on [Containernet](https://github.com/containernet/containernet/),
 
 A simple guide to getting started with Oasis can be found in [Get Started](docs/get-started.md).
 
+## Workflow of Testing
+
+A typical workflow of a Oasis test is as follows:
+
+  1. construct a `INetwork` with a given yaml configuration which describes the network topology.
+  2. load `ITestSuite`(the test tool) from yaml configuration.
+  3. load `IProtoSuite`(the target test protocol) from yaml configuration.
+  4. run `IProtoSuite` on `INetwork`.
+  5. perform the test with `ITestSuite` on `INetwork`.
+  6. read/generate test results by `IDataAnalyzer`.
+
 ## Protocols and Tools
 
 Detailed information can be found in [Protocols and Tools](docs/protocols_and_tools.md).
