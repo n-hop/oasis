@@ -32,6 +32,9 @@ class IHost(ABC):
         """Delete all interfaces.
         """
 
+    def getIntfs(self):
+        pass
+
     def cleanup(self):
         """Cleanup the host.
         """
