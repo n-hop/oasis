@@ -40,7 +40,7 @@ class ProtoConfig:
     config_base_path: Optional[str] = field(default=None)
 
 
-SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp', 'quic']
+SupportedProto = ['btp', 'brtp', 'brtp_proxy', 'tcp', 'kcp']
 SupportedBATSProto = ['btp', 'brtp', 'brtp_proxy']
 
 
