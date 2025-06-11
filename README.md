@@ -22,7 +22,7 @@ Oasis is built on [Containernet](https://github.com/containernet/containernet/),
   - Visualize the packet rtt over time
   - Visualize the rtt distribution
 - **Flexible Architecture**: Oasis can be used for pure software emulation or as a front-end for a series of real testbeds.
-- **Built-in Protocol Support**: Oasis includes extensive built-in protocol support, such as TCP, KCP, QUIC, and more.
+- **Built-in Protocol Support**: Oasis includes extensive built-in protocol support, such as TCP, KCP, and more.
 - **Built-in Dynamic Routing Support**: For complex mesh networks, Oasis offers built-in dynamic routing support.
 
 ## Features in development
