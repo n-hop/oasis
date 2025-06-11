@@ -11,6 +11,7 @@ from interfaces.network import INetwork
 from core.topology import ITopology
 from testsuites.test import (TestType, TestConfig)
 from testsuites.test_iperf import IperfTest
+from testsuites.test_iperf_bats import IperfBatsTest
 from testsuites.test_ping import PingTest
 from testsuites.test_rtt import RTTTest
 from testsuites.test_scp import ScpTest
@@ -18,6 +19,7 @@ from testsuites.test_regular import RegularTest
 from protosuites.proto import (ProtoConfig, SupportedProto, ProtoRole)
 from protosuites.std_protocol import StdProtocol
 from protosuites.cs_protocol import CSProtocol
+from protosuites.noop_protocol import (NoOpProtocol, is_no_op_protocol)
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
@@ -47,12 +49,15 @@ def diagnostic_test_results(test_results, top_des):
         for result in test_result['results']:
             result_files.append(result.record)
         # analyze those results files according to the test type
+        # bats_iperf
         if test_type == TestType.throughput:
             output_svg = ""
+            if 'bats_iperf' in test_config.name:
+                test_config.packet_type = 'bats'
             if test_config.packet_type == 'tcp':
                 output_svg = f"{test_result['results'][0].result_dir}iperf3_throughput.svg"
             else:
-                output_svg = f"{test_result['results'][0].result_dir}iperf3_udp_statistics.svg"
+                output_svg = f"{test_result['results'][0].result_dir}iperf3_{test_config.packet_type}_statistics.svg"
             config = AnalyzerConfig(
                 input=result_files,
                 output=f"{output_svg}",
@@ -114,7 +119,11 @@ def add_test_to_network(network, tool, test_name):
         bitrate=tool['bitrate'] if 'bitrate' in tool else 0,
         client_host=tool['client_host'], server_host=tool['server_host'],
         args=tool['args'] if 'args' in tool else '')
-    if 'iperf' in tool['name']:
+    if tool['name'] == 'bats_iperf':
+        test_conf.test_type = TestType.throughput
+        network.add_test_suite(IperfBatsTest(test_conf))
+        logging.info("Added bats_iperf test to %s.", test_name)
+    elif 'iperf' in tool['name']:
         test_conf.test_type = TestType.throughput
         network.add_test_suite(IperfTest(test_conf))
         logging.info("Added iperf test to %s.", test_name)
@@ -246,14 +255,13 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
         proto_config.test_name = test_case_name
         logging.info("Added %s protocol, version %s.",
                      proto_config.name, proto_config.version)
-        if proto_config.name not in ('brtp', 'btp'):
+        if proto_config.name not in ('brtp', 'btp', 'udp'):
             if any(tool.get('packet_type') == 'udp' for tool in test_tools.values()):
                 logging.error(
                     "Error: iperf udp only works with protocol btp, brtp. but target protocol is %s",
                     proto_config.name)
                 return False
         if proto_config.type == 'distributed':
-            # distributed protocol
             if 'brtp_proxy' in proto_config.name:
                 network.add_protocol_suite(BRTPProxy(proto_config))
                 continue
@@ -263,15 +271,14 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
             if 'btp' in proto_config.name:
                 network.add_protocol_suite(BTP(proto_config))
                 continue
-            if 'tcp' in proto_config.name:
-                network.add_protocol_suite(StdProtocol(proto_config))
+            if is_no_op_protocol(proto_config.name):
+                network.add_protocol_suite(NoOpProtocol(proto_config))
                 continue
             network.add_protocol_suite(StdProtocol(proto_config))
             logging.warning("apply StdProtocol for %s protocol",
                             proto_config.name)
             continue
         if proto_config.type == 'none_distributed':
-            # none distributed protocol
             if len(proto_config.protocols) != 2:
                 logging.error(
                     "Error: none distributed protocol invalid setup.")
@@ -289,22 +296,22 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
             proto_config.test_name = test_case_name
             client_conf.test_name = test_case_name
             server_conf.test_name = test_case_name
+            client_proto_suite = StdProtocol(client_conf)
+            server_proto_suite = StdProtocol(server_conf)
+            if is_no_op_protocol(proto_config.name):
+                logging.info("apply NoOpProtocol for %s protocol",
+                             proto_config.name)
+                client_proto_suite = NoOpProtocol(client_conf)
+                server_proto_suite = NoOpProtocol(server_conf)
+            if 'brtp_quic' in proto_config.name:
+                client_proto_suite = BRTP(
+                    client_conf, False, ProtoRole.client)
+                server_proto_suite = BRTP(
+                    server_conf, False, ProtoRole.server)
             # wrapper of client-server protocol
-            if 'brtp_' in proto_config.name:
-                cs = CSProtocol(config=proto_config,
-                                client=BRTP(
-                                    client_conf, False, ProtoRole.client),
-                                server=BRTP(
-                                    server_conf, False, ProtoRole.server)
-                                )
-                network.add_protocol_suite(cs)
-            else:
-                logging.warning("apply StdProtocol for %s protocol",
-                                proto_config.name)
-                cs = CSProtocol(config=proto_config,
-                                client=StdProtocol(client_conf),
-                                server=StdProtocol(server_conf))
-                network.add_protocol_suite(cs)
+            cs = CSProtocol(config=proto_config,
+                            client=client_proto_suite, server=server_proto_suite)
+            network.add_protocol_suite(cs)
             continue
         logging.error("Error: unsupported protocol type %s.%s",
                       proto_config.type, proto_config.name)
