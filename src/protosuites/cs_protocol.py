@@ -50,3 +50,6 @@ class CSProtocol(IProtoSuite):
 
     def get_protocol_name(self) -> str:
         return self.config.name
+
+    def get_protocol_args(self, network: INetwork) -> str:
+        return self.protocol_args

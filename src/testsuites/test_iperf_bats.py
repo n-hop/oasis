@@ -12,19 +12,21 @@ class IperfBatsTest(ITestSuite):
     def pre_process(self):
         return True
 
-    def _run_iperf(self, client, server, recv_port, recv_ip):
+    def _run_iperf(self, client, server, args_from_proto: str):
         if self.config is None:
             logging.error("IperfBatsTest config is None.")
             return False
+        receiver_ip = server.IP()
+        receiver_port = 5201
         interval_num = self.config.interval_num or 10
         interval = self.config.interval or 1
         for intf in server.getIntfs():
-            bats_iperf_server_cmd = f'bats_iperf -s -p {recv_port} -I {intf}' \
+            bats_iperf_server_cmd = f'bats_iperf -s {args_from_proto} -p {receiver_port} -I {intf}' \
                 f' -l {self.result.record} &'
             logging.info(
                 'bats_iperf server cmd: %s', bats_iperf_server_cmd)
             server.cmd(f'{bats_iperf_server_cmd}')
-        bats_iperf_client_cmd = f'bats_iperf -c {recv_ip} -p {recv_port} -i {int(interval)}' \
+        bats_iperf_client_cmd = f'bats_iperf -c {receiver_ip} {args_from_proto} -p {receiver_port} -i {int(interval)}' \
             f' -t {int(interval_num * interval)}'
         logging.info('bats_iperf client cmd: %s', bats_iperf_client_cmd)
         res = client.popen(
@@ -43,11 +45,8 @@ class IperfBatsTest(ITestSuite):
         if self.config.client_host is None or self.config.server_host is None:
             self.config.client_host = 0
             self.config.server_host = len(hosts) - 1
-
         client = hosts[self.config.client_host]
         server = hosts[self.config.server_host]
-        receiver_ip = server.IP()
-        receiver_port = 5201
         logging.info(
             "############### Oasis IperfBatsTest from %s to %s ###############", client.name(), server.name())
-        return self._run_iperf(client, server, receiver_port, receiver_ip)
+        return self._run_iperf(client, server, proto_info.get_protocol_args(network))

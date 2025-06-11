@@ -21,6 +21,12 @@ class IProtoInfo(ABC):
         """
 
     @abstractmethod
+    def get_protocol_args(self, network: 'INetwork') -> str:  # type: ignore
+        """The arguments for the protocol binary.
+        The arguments should be a string that can be passed to the protocol binary.
+        """
+
+    @abstractmethod
     def get_protocol_name(self) -> str:
         """The name of the protocol
         """

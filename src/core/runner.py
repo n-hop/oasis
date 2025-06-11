@@ -19,7 +19,8 @@ from testsuites.test_regular import RegularTest
 from protosuites.proto import (ProtoConfig, SupportedProto, ProtoRole)
 from protosuites.std_protocol import StdProtocol
 from protosuites.cs_protocol import CSProtocol
-from protosuites.noop_protocol import (NoOpProtocol, is_no_op_protocol)
+from protosuites.noop_protocol import (
+    NoOpProtocol, is_next_protocol, is_no_op_protocol)
 from protosuites.bats.bats_btp import BTP
 from protosuites.bats.bats_brtp import BRTP
 from protosuites.bats.bats_brtp_proxy import BRTPProxy
@@ -261,6 +262,11 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
                     "Error: iperf udp only works with protocol btp, brtp. but target protocol is %s",
                     proto_config.name)
                 return False
+        if is_next_protocol(proto_config.name):
+            if 'bats_iperf' not in test_tools:
+                logging.error(
+                    "Error: bats_iperf test is required for next protocol %s", proto_config.name)
+                return False
         if proto_config.type == 'distributed':
             if 'brtp_proxy' in proto_config.name:
                 network.add_protocol_suite(BRTPProxy(proto_config))
@@ -279,12 +285,21 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
                             proto_config.name)
             continue
         if proto_config.type == 'none_distributed':
-            if len(proto_config.protocols) != 2:
+            sub_proto_num = len(
+                proto_config.protocols) if proto_config.protocols else 0
+            if sub_proto_num not in (2, 0):
                 logging.error(
                     "Error: none distributed protocol invalid setup.")
                 continue
-            client_conf = proto_config.protocols[0]
-            server_conf = proto_config.protocols[1]
+            if sub_proto_num == 0:
+                # copy the proto_config
+                client_conf = copy.deepcopy(proto_config)
+                server_conf = copy.deepcopy(proto_config)
+                client_conf.name = f"{proto_config.name}_client"
+                server_conf.name = f"{proto_config.name}_server"
+            else:
+                client_conf = proto_config.protocols[0]
+                server_conf = proto_config.protocols[1]
             client_conf.port = proto_config.port
             server_conf.port = proto_config.port
             # by default, client-server hosts are [0, -1]

@@ -4,15 +4,19 @@ from interfaces.network import INetwork
 from protosuites.proto import (ProtoConfig, IProtoSuite, ProtoRole)
 
 
+def is_next_protocol(proto_name: str) -> bool:
+    """Check if the protocol is a bats next protocol."""
+    if '-next' in proto_name or '-NEXT' in proto_name:
+        return True
+    return False
+
+
 def is_no_op_protocol(proto_name: str) -> bool:
     if 'tcp' in proto_name or 'TCP' in proto_name:
         return True
     if 'udp' in proto_name or 'UDP' in proto_name:
         return True
-    # bats next.
-    if '-next' in proto_name or '-NEXT' in proto_name:
-        return True
-    return False
+    return is_next_protocol(proto_name)
 
 
 class ProtocolConfigInf(ABC):

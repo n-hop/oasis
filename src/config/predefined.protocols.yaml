@@ -53,3 +53,15 @@ protocols:
     bin: secnetperf
     args:
       - "-exec:maxtput"
+  - name: btp-next
+    type: none_distributed
+    args:
+      - "-m 0"
+  - name: brtp-next
+    type: none_distributed
+    args:
+      - "-m 1"
+  - name: quic-next
+    type: none_distributed
+    args:
+      - "-m 12"
