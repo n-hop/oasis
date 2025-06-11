@@ -44,7 +44,7 @@ class Iperf3Analyzer(IDataAnalyzer):
     def visualize(self):
         if self.config.data_type == "tcp":
             self.plot_stream_data()
-        elif self.config.data_type == "udp" or self.config.data_type == "bats":
+        elif self.config.data_type in ('udp', 'bats'):
             self.plot_datagram_data()
         else:
             logging.error("Unsupported data type: %s", self.config.data_type)
