@@ -18,6 +18,7 @@ class TestbedNetwork (INetwork):
                  routing_strategy: IRoutingStrategy,
                  ** params) -> None:
         super().__init__(**params)
+        self.enabled_halt = False
         self.is_started_flag = False
         self.routing_strategy = routing_strategy
         self.hosts = []
@@ -183,3 +184,6 @@ class TestbedNetwork (INetwork):
             f"tc qdisc add dev {ifb_interface} root netem{shaping_parameters} limit 30000000")
 
         return True
+
+    def enable_halt(self):
+        self.enabled_halt = True

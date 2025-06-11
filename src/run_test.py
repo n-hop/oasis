@@ -81,9 +81,12 @@ def load_testbed_config(name, yaml_base_path_input):
 
 
 if __name__ == '__main__':
+    to_halt = 'False'
     debug_log = 'False'
     if len(sys.argv) == 5:
         debug_log = sys.argv[4]
+    if len(sys.argv) == 6:
+        to_halt = sys.argv[5]
     if debug_log == 'True':
         setLogLevel('info')
         logging.basicConfig(level=logging.DEBUG)
@@ -149,6 +152,10 @@ if __name__ == '__main__':
     if network_manager is None:
         logging.error("Error: failed to load proper network manager")
         sys.exit(1)
+    if to_halt == 'True':
+        logging.info(
+            "Halt mode is enabled. The script will halt after the test is done.")
+        network_manager.enable_halt()
     # 1. execute all the tests on all constructed networks
     loaded_tests = load_all_tests(yaml_test_file_path, cur_selected_test)
     if loaded_tests is None or len(loaded_tests) == 0:

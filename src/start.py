@@ -45,6 +45,11 @@ def parse_args():
                         dest='debug_log',
                         type=str,
                         default='False')
+    parser.add_argument('--halt',
+                        help='halt when test is done',
+                        dest='halt',
+                        type=str,
+                        default="False")
     return parser
 
 
@@ -76,6 +81,7 @@ if __name__ == '__main__':
     baremetal_testbed = ns.testbed
     yaml_base_path = ns.yaml_base_path
     debug_log = ns.debug_log
+    halt = ns.halt
     if debug_log == 'True':
         logging.basicConfig(level=logging.DEBUG)
         logging.info("Debug mode is enabled.")
@@ -129,5 +135,5 @@ if __name__ == '__main__':
     nested_env.start()
     nested_env.execute(
         f"python3 {g_root_path}src/run_test.py {yaml_base_path} {oasis_workspace} "
-        f"{ns.tests_config_file} {debug_log}")
+        f"{ns.tests_config_file} {debug_log} {halt}")
     nested_env.stop()

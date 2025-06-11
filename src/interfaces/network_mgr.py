@@ -51,3 +51,7 @@ class INetworkManager(ABC):
     @abstractmethod
     def reset_networks(self):
         pass
+
+    @abstractmethod
+    def enable_halt(self):
+        pass

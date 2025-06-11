@@ -1,4 +1,5 @@
 import logging
+import time
 
 from core.config import NodeConfig
 from core.topology import ITopology
@@ -20,6 +21,7 @@ class NetworkManager(INetworkManager):
         self.networks = []
         self.net_num = 0
         self.cur_top = None
+        self.enabled_halt = False
         self.type = NetworkType.containernet
 
     def get_top_description(self):
@@ -106,14 +108,25 @@ class NetworkManager(INetworkManager):
 
     def stop_networks(self):
         # Stop all networks
+        if self.enabled_halt:
+            while True:
+                time.sleep(10)
+                logging.info("########## Oasis halt the destroy of networks.")
         for i in range(self.net_num):
-            self.networks[i].stop()
             logging.info("########## Oasis stop the network %s.", i)
+            self.networks[i].stop()
         self.networks = []
         self.net_num = 0
 
     def reset_networks(self):
+        if self.enabled_halt:
+            while True:
+                time.sleep(10)
+                logging.info("########## Oasis halt the reset of networks.")
         # Reset all networks, mainly for routes/tc rules/ip config.
         for i in range(self.net_num):
             self.networks[i].reset()
             logging.info("########## Oasis reset the network %s.", i)
+
+    def enable_halt(self):
+        self.enabled_halt = True
