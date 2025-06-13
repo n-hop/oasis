@@ -171,7 +171,7 @@ class INetwork(ABC):
             hosts = proto_conf.hosts
             if hosts is None or len(hosts) != 2:
                 logging.error(
-                    "Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
+                    "INetwork Test non-distributed protocols, but protocol server/client hosts are not set correctly.")
                 return False
             if hosts[0] != test.config.client_host or \
                     hosts[1] != test.config.server_host:

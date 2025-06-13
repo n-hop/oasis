@@ -185,8 +185,8 @@ For each test case, we can define the target protocols to be evaluated. The foll
 
 ```yaml
   test3:
-    description: "Compare the performance of kcp, tcp-bbr, and QUIC in a linear network"
-    target_protocols: [kcp, tcp-bbr, quic]
+    description: "Compare the performance of kcp, tcp-bbr with a linear network"
+    target_protocols: [kcp, tcp-bbr]
 ```
 
 Oasis will uses selected test tools to measure the performance of the target protocols one by one.

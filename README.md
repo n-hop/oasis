@@ -22,7 +22,7 @@ Oasis is built on [Containernet](https://github.com/containernet/containernet/),
   - Visualize the packet rtt over time
   - Visualize the rtt distribution
 - **Flexible Architecture**: Oasis can be used for pure software emulation or as a front-end for a series of real testbeds.
-- **Built-in Protocol Support**: Oasis includes extensive built-in protocol support, such as TCP, KCP, QUIC, and more.
+- **Built-in Protocol Support**: Oasis includes extensive built-in protocol support, such as TCP, KCP, and more.
 - **Built-in Dynamic Routing Support**: For complex mesh networks, Oasis offers built-in dynamic routing support.
 
 ## Features in development
@@ -34,6 +34,17 @@ Oasis is built on [Containernet](https://github.com/containernet/containernet/),
 ## Get started
 
 A simple guide to getting started with Oasis can be found in [Get Started](docs/get-started.md).
+
+## Workflow of Testing
+
+A typical workflow of a Oasis test is as follows:
+
+  1. construct a `INetwork` with a given yaml configuration which describes the network topology.
+  2. load `ITestSuite`(the test tool) from yaml configuration.
+  3. load `IProtoSuite`(the target test protocol) from yaml configuration.
+  4. run `IProtoSuite` on `INetwork`.
+  5. perform the test with `ITestSuite` on `INetwork`.
+  6. read/generate test results by `IDataAnalyzer`.
 
 ## Protocols and Tools
 

@@ -13,7 +13,7 @@ class IperfTest(ITestSuite):
         if self.config.packet_type == "udp":
             self.is_udp_mode = True
             if self.config.bitrate == 0:
-                self.config.bitrate = 1
+                self.config.bitrate = 10
             logging.info("IperfTest is in UDP mode, bitrate: %d Mbps",
                          self.config.bitrate)
 

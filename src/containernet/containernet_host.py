@@ -36,6 +36,9 @@ class ContainernetHostAdapter(IHost):
         """
         return self.containernet_host.deleteIntfs()
 
+    def getIntfs(self):
+        return self.containernet_host.intfList()
+
     def cleanup(self):
         """Cleanup the host.
         """

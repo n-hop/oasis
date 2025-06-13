@@ -249,3 +249,6 @@ class BATSProtocol(IProtoSuite):
     def get_protocol_name(self) -> str:
         # name can be 'btp' or 'btp_xxx_feature'
         return self.config.name.replace('_', '-').upper()
+
+    def get_protocol_args(self, network: INetwork) -> str:
+        return self.protocol_args

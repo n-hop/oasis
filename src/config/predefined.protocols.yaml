@@ -47,23 +47,21 @@ protocols:
         bin: server_linux_amd64
         args:
           - "-l :4000 -t 127.0.0.1:10100" # by default, it forwards the traffic to localhost:10100
-  - name: quic
-    type: none_distributed
-    args: {} # global args for quic
-    port: 8006
-    protocols: # iterative
-      - name: quic_client
-        bin: /go/bin/gost
-        args:
-          - "-L tcp://:8006/%s:8006"
-          - "-F http+quic://%s:8443"
-      - name: quic_server
-        bin: /go/bin/gost
-        args:
-          - "-L http+quic://:8443"
   - name: msquic
     type: distributed
     version: bbr
     bin: secnetperf
     args:
       - "-exec:maxtput"
+  - name: btp-next
+    type: none_distributed
+    args:
+      - "-m 0"
+  - name: brtp-next
+    type: none_distributed
+    args:
+      - "-m 1"
+  - name: quic-next
+    type: none_distributed
+    args:
+      - "-m 12"

@@ -73,6 +73,9 @@ class LinuxHost(IHost):
         """
         return True
 
+    def getIntfs(self):
+        return self.intf_list
+
     def cleanup(self):
         """Cleanup the host.
         """
