@@ -57,6 +57,9 @@ class TCPConfigInf(ProtocolConfigInf):
             res = pf.stdout.read().decode('utf-8')
             default_version = res.split('=')[-1].strip()
             if default_version == self.version:
+                logging.info(
+                    "tcp default version on %s is already %s, skip the setup.",
+                    host.name(), default_version)
                 continue
             self.default_version_dict[host.name()] = default_version
             logging.debug("tcp default version on %s is %s",
@@ -70,9 +73,19 @@ class TCPConfigInf(ProtocolConfigInf):
         return True
 
     def restore(self, network: 'INetwork') -> bool:  # type: ignore
+        # skip restore when the default_version_dict is empty
+        if not self.default_version_dict:
+            logging.info(
+                "############### Oasis TCPConfigInf restore skipped ###############")
+            return True
         hosts = network.get_hosts()
         for host in hosts:
-            default_ver = self.default_version_dict[host.name()]
+            default_ver = None
+            if host.name() in self.default_version_dict:
+                default_ver = self.default_version_dict[host.name()]
+            else:
+                logging.warning(
+                    f"Host %s not found in default_version_dict during restore.", host.name())
             if default_ver is None:
                 continue
             host.cmd(
