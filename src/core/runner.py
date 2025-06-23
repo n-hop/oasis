@@ -9,7 +9,7 @@ import yaml
 from interfaces.network_mgr import INetworkManager
 from interfaces.network import INetwork
 from core.topology import ITopology
-from testsuites.test import (TestType, TestConfig)
+from testsuites.test import (TestType, TestConfig, test_type_str_mapping)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_iperf_bats import IperfBatsTest
 from testsuites.test_ping import PingTest
@@ -50,63 +50,29 @@ def diagnostic_test_results(test_results, top_des):
         for result in test_result['results']:
             result_files.append(result.record)
         # analyze those results files according to the test type
-        # bats_iperf
+        analyzer_name = test_type_str_mapping[test_type]
+        config = AnalyzerConfig(
+            input=result_files,
+            output=f"{test_result['results'][0].result_dir}",
+            subtitle=top_des)
         if test_type == TestType.throughput:
-            output_svg = ""
             if 'bats_iperf' in test_config.name:
                 test_config.packet_type = 'bats'
             if test_config.packet_type == 'tcp':
-                output_svg = f"{test_result['results'][0].result_dir}iperf3_throughput.svg"
+                config.output = f"{test_result['results'][0].result_dir}iperf3_throughput.svg"
             else:
-                output_svg = f"{test_result['results'][0].result_dir}iperf3_{test_config.packet_type}_statistics.svg"
-            config = AnalyzerConfig(
-                input=result_files,
-                output=f"{output_svg}",
-                data_type=f"{test_config.packet_type}",
-                subtitle=top_des)
-            analyzer = AnalyzerFactory.get_analyzer("iperf3", config)
-            analyzer.visualize()
-            if analyzer.analyze() is False:
-                logging.error(
-                    "Test %s failed at throughput test", test_config.name)
-                return False
+                config.output = f"{test_result['results'][0].result_dir}iperf3_{test_config.packet_type}_statistics.svg"
+            config.data_type = f"{test_config.packet_type}"
         if test_type == TestType.rtt:
-            if test_config.packet_count > 1:
-                config = AnalyzerConfig(
-                    input=result_files,
-                    output=f"{test_result['results'][0].result_dir}",
-                    subtitle=top_des)
-                analyzer = AnalyzerFactory.get_analyzer("rtt", config)
-                analyzer.visualize()
-                if analyzer.analyze() is False:
-                    logging.error(
-                        "Test %s failed at rtt test", test_config.name)
-                    return False
             if test_config.packet_count == 1:
-                config = AnalyzerConfig(
-                    input=result_files,
-                    output=f"{test_result['results'][0].result_dir}first_rtt.svg",
-                    subtitle=top_des)
-                analyzer = AnalyzerFactory.get_analyzer(
-                    "first_rtt", config)
-                analyzer.visualize()
-                if analyzer.analyze() is False:
-                    logging.error(
-                        "Test %s failed at first_rtt test", test_config.name)
-                    return False
-        if test_type == TestType.sshping:
-            config = AnalyzerConfig(
-                input=result_files,
-                output=f"{test_result['results'][0].result_dir}",
-                subtitle=top_des)
-            analyzer = AnalyzerFactory.get_analyzer("sshping", config)
-            analyzer.visualize()
-            if analyzer.analyze() is False:
-                logging.error(
-                    "Test %s failed at sshping test", test_config.name)
-                return False
-        if test_type == TestType.scp:
-            logging.error("scp test results: %s", result_files)
+                analyzer_name = "first_rtt"
+                config.output = f"{test_result['results'][0].result_dir}first_rtt.svg"
+        analyzer = AnalyzerFactory.get_analyzer(analyzer_name, config)
+        analyzer.visualize()
+        if analyzer.analyze() is False:
+            logging.error(
+                "Test %s failed at %s test", test_config.name, analyzer_name)
+            return False
     return True
 
 
@@ -140,6 +106,7 @@ def add_test_to_network(network, tool, test_name):
         network.add_test_suite(RTTTest(test_conf))
         logging.info("Added rtt test to %s.", test_name)
     elif tool['name'] == 'scp':
+        test_conf.file_size = tool['file_size'] if 'file_size' in tool else 1
         test_conf.test_type = TestType.scp
         network.add_test_suite(ScpTest(test_conf))
         logging.info("Added scp test to %s.", test_name)

@@ -53,6 +53,7 @@ class TestConfig:
     packet_size: Optional[int] = field(default=1024)
     packet_count: Optional[int] = field(default=10)
     packet_type: Optional[str] = field(default="tcp")  # udp or tcp
+    file_size: Optional[int] = field(default=1)  # for scp, default 1 MB
     bitrate: Optional[int] = field(default=0)
     # target bitrate in #[KMG][/sec (0 for unlimited)(default 1 Mbit/sec for UDP, unlimited for TCP)
     test_type: Optional[TestType] = field(default=TestType.throughput)
@@ -72,7 +73,7 @@ class TestResult:
     """
     is_success: bool = field(default=False)
     pattern: str = field(default="")
-    record: str = field(default="")
+    record: str = field(default="")  # log file
     result_dir: str = field(default=f"{g_root_path}")
 
 
