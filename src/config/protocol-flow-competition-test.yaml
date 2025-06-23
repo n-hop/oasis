@@ -11,14 +11,14 @@ tests:
       config_name: complex_mesh_net
       config_file: predefined.topology.yaml
     target_protocols: [tcp-bbr]
-    route: static_route
+    route: static_bfs
     test_tools:
       iperf:
         interval: 1
         interval_num: 10
         packet_type: tcp
-        client_host: 2
-        server_host: 4
+        client_host: 1
+        server_host: 6
     flow_generator:
         - flow_type: tcp
           client_host: 0

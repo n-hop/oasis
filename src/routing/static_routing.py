@@ -1,9 +1,11 @@
 from interfaces.routing import IRoutingStrategy
 
+
 class StaticRouting(IRoutingStrategy):
     """Summary:
-    Configure static routing for the network.
+    Configure static routing for the chain network.
     """
+
     def __init__(self):
         self.pair_to_link_ip = {}
         self.net_routes = []
@@ -19,7 +21,7 @@ class StaticRouting(IRoutingStrategy):
             route = [hosts[i] for i in route]
             self._add_route(route)
 
-    @ staticmethod
+    @staticmethod
     def _add_ip_gateway(host, gateway_ip, dst_ip):
         host.cmd(f'ip r a {dst_ip} via {gateway_ip}')
 

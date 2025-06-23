@@ -8,17 +8,17 @@ tests:
   test1:
     description: "Test protocol throughput/rtt on single hop"
     topology:
-      config_name: linear_network_3
+      config_name: linear_network_1 
       config_file: predefined.topology.yaml
-    target_protocols: [tcp-bbr]
-    route: static_route
+    target_protocols: [btp, tcp-bbr, kcp]
+    route: static_bfs
     test_tools:
       iperf:
         interval: 1
         interval_num: 10
         packet_type: tcp
         client_host: 0
-        server_host: 3
+        server_host: 1
     execution_mode: parallel # parallel or serial
   test2:
     description: "Test protocol throughput/rtt on single hop"
