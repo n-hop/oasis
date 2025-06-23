@@ -19,7 +19,7 @@ tests:
         packet_type: tcp
         client_host: 1
         server_host: 6
-    flow_generator:
+      competition_flow:
         - flow_type: tcp
           client_host: 0
           server_host: 5
