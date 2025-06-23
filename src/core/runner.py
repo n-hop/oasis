@@ -418,8 +418,13 @@ class TestRunner:
                 logging.info(f"Process %s for test %s is terminated.",
                              i, test_name)
             else:
-                logging.info(f"Process %s for test %s is completed successfully.",
-                             i, test_name)
+                if i in process_shared_dict and isinstance(process_shared_dict[i], dict) \
+                        and process_shared_dict[i].get("error"):
+                    logging.error(
+                        f"Process %d for test %s failed", i, test_name)
+                else:
+                    logging.info(f"Process %s for test %s is completed successfully.",
+                                 i, test_name)
         # save results from different process.
         self.results_dict = copy.deepcopy(process_shared_dict)
         if process_manager:
@@ -440,6 +445,10 @@ class TestRunner:
         for i in range(self.net_num):
             if i not in self.results_dict:
                 logging.error(f"No results found for process %s.", i)
+                return False
+            if self.results_dict[i].get("error"):
+                logging.error(
+                    f"Process %d failed with error: %s", i, self.results_dict[i]['error'])
                 return False
             for shared_test_type, shared_test_result in self.results_dict[i].items():
                 if shared_test_type not in merged_results:
@@ -519,11 +528,11 @@ class TestRunner:
         id = network.get_id()
         logging.info(
             "########## Oasis process %d Performing the test for %s", id, test_name)
-        network.perform_test()
-        result_dict[id] = network.get_test_results()
-        logging.debug(
-            "########## Oasis process %d finished the test for %s, results %s",
-            id, test_name, result_dict[id])
+        success = network.perform_test()
+        if not success:
+            result_dict[id] = {"error": "perform_test_failed"}
+        else:
+            result_dict[id] = network.get_test_results()
 
     def handle_failure(self):
         self.cleanup()
