@@ -11,6 +11,7 @@ import yaml
 
 from .topology import (ITopology, TopologyConfig)
 from .linear_topology import LinearTopology
+from .mesh_topology import MeshTopology
 
 
 @dataclass
@@ -156,14 +157,13 @@ class Test:
         loaded_conf = IConfig.load_yaml_config(config_base_path,
                                                local_yaml,
                                                'topology')
-        if loaded_conf is None:
-            logging.error("Error: loaded_conf of topology is None.")
-            return None
-        if not isinstance(loaded_conf, TopologyConfig):
+        if loaded_conf is None or not isinstance(loaded_conf, TopologyConfig):
             logging.error("Error: loaded_conf of topology is None.")
             return None
         if loaded_conf.topology_type == "linear":
-            return LinearTopology(loaded_conf)
+            return LinearTopology(config_base_path, loaded_conf)
+        if loaded_conf.topology_type == "mesh":
+            return MeshTopology(config_base_path, loaded_conf, True)
         logging.error("Error: unsupported topology type.")
         return None
 

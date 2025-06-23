@@ -65,3 +65,6 @@ class TestbedManager(INetworkManager):
 
     def reset_networks(self):
         logging.info("########## Oasis reset access to testbed network.")
+
+    def enable_halt(self):
+        logging.info("########## Oasis enable halt for testbed network.")

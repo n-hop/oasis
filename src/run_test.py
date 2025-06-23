@@ -164,6 +164,8 @@ if __name__ == '__main__':
     for test in loaded_tests:
         cur_topology = test.load_topology(config_path)
         if not cur_topology:
+            logging.error(
+                "Error: failed to load topology for test %s", test.name)
             continue
         # 1.1 The topology in one case can be composed of multiple topologies:
         #      Traverse all the topologies in the test case.

@@ -8,6 +8,8 @@ max_link_latency = 150
 
 
 class LinearTopology(ITopology):
+    def __init__(self, base_path: str, top_config, init_all_mats=True):
+        super().__init__(base_path, top_config, init_all_mats)
 
     def generate_adj_matrix(self, num_of_nodes: int):
         """
@@ -47,8 +49,8 @@ class LinearTopology(ITopology):
             for latency_mat in temp_all_mats[MatrixType.LATENCY_MATRIX]:
                 for jitter_mat in temp_all_mats[MatrixType.JITTER_MATRIX]:
                     for bandw_mat in temp_all_mats[MatrixType.BANDW_MATRIX]:
-                        new_topology = LinearTopology(
-                            self.top_config, False)  # don't init all mats
+                        new_topology = LinearTopology(self.conf_base_path,
+                                                      self.top_config, False)  # don't init all mats
                         new_topology.all_mats[MatrixType.ADJACENCY_MATRIX] = copy.deepcopy(
                             self.adj_matrix)
                         new_topology.all_mats[MatrixType.LOSS_MATRIX] = copy.deepcopy(
