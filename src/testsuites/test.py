@@ -49,6 +49,7 @@ class TestConfig:
     test_name: str = field(default="")  # name of test
     interval: Optional[float] = field(default=1.0)
     interval_num: Optional[int] = field(default=10)
+    parallel: Optional[int] = field(default=1)  # Number of parallel streams
     packet_size: Optional[int] = field(default=1024)
     packet_count: Optional[int] = field(default=10)
     packet_type: Optional[str] = field(default="tcp")  # udp or tcp

@@ -27,9 +27,13 @@ class IperfTest(ITestSuite):
         if self.config is None:
             logging.error("IperfTest config is None.")
             return False
+        parallel = self.config.parallel or 1
+        if parallel > 1:
+            logging.info(
+                "IperfTest is running with parallel streams: %d", parallel)
         interval_num = self.config.interval_num or 10
         interval = self.config.interval or 1
-        server.cmd(f'iperf3 -s -p {recv_port} -i {int(interval)} -V --forceflush'
+        server.cmd(f'iperf3 -s -p {recv_port} -P {parallel} -i {int(interval)} -V --forceflush'
                    f' --logfile {self.result.record} &')
         iperf3_client_cmd = f'iperf3 -c {recv_ip} -p {recv_port} -i {int(interval)}' \
             f' -t {int(interval_num * interval)}'

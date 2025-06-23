@@ -116,6 +116,7 @@ def add_test_to_network(network, tool, test_name):
         test_name=test_name,
         interval=tool['interval'] if 'interval' in tool else 1.0,
         interval_num=tool['interval_num'] if 'interval_num' in tool else 10,
+        parallel=tool['parallel'] if 'parallel' in tool else 1,
         packet_type=tool['packet_type'] if 'packet_type' in tool else 'tcp',
         bitrate=tool['bitrate'] if 'bitrate' in tool else 0,
         client_host=tool['client_host'], server_host=tool['server_host'],

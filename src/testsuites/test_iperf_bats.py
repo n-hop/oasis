@@ -18,16 +18,20 @@ class IperfBatsTest(ITestSuite):
             return False
         receiver_ip = server.IP()
         receiver_port = 5201
+        parallel = self.config.parallel or 1
+        if parallel > 1:
+            logging.info(
+                "IperfBatsTest is running with parallel streams: %d", parallel)
         interval_num = self.config.interval_num or 10
         interval = self.config.interval or 1
         for intf in server.getIntfs():
-            bats_iperf_server_cmd = f'bats_iperf -s {args_from_proto} -p {receiver_port} -I {intf}' \
+            bats_iperf_server_cmd = f'bats_iperf -s -p {receiver_port} -I {intf}' \
                 f' -l {self.result.record} &'
             logging.info(
                 'bats_iperf server cmd: %s', bats_iperf_server_cmd)
             server.cmd(f'{bats_iperf_server_cmd}')
-        bats_iperf_client_cmd = f'bats_iperf -c {receiver_ip} {args_from_proto} -p {receiver_port} -i {int(interval)}' \
-            f' -t {int(interval_num * interval)}'
+        bats_iperf_client_cmd = f'bats_iperf -c {receiver_ip} {args_from_proto} -p {receiver_port} -P {parallel}' \
+            f' -i {int(interval)} -t {int(interval_num * interval)}'
         logging.info('bats_iperf client cmd: %s', bats_iperf_client_cmd)
         res = client.popen(
             f'{bats_iperf_client_cmd}').stdout.read().decode('utf-8')
