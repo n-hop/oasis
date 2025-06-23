@@ -19,7 +19,7 @@ class TestType(IntEnum):
 
 # add mapping for the test type
 test_type_str_mapping = {
-    TestType.throughput: "throughput",
+    TestType.throughput: "iperf3",
     TestType.latency: "latency",
     TestType.jitter: "jitter",
     TestType.rtt: "rtt",
