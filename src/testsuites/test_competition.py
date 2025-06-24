@@ -21,7 +21,7 @@ class FlowCompetitionConfig:
     competition_flow: Optional[List[FlowParameter]] = field(default=None)
 
 
-class CompetitionFlowTest(ITestSuite):
+class FlowCompetitionTest(ITestSuite):
     '''
     Decorator of ITestSuite to run competition flows between hosts in the network.
     '''

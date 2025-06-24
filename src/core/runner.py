@@ -18,7 +18,7 @@ from testsuites.test_rtt import RTTTest
 from testsuites.test_scp import ScpTest
 from testsuites.test_regular import RegularTest
 from testsuites.test_competition import (
-    CompetitionFlowTest, FlowCompetitionConfig, FlowParameter)
+    FlowCompetitionTest, FlowCompetitionConfig, FlowParameter)
 from protosuites.proto import (ProtoConfig, SupportedProto, ProtoRole)
 from protosuites.std_protocol import StdProtocol
 from protosuites.cs_protocol import CSProtocol
@@ -304,7 +304,7 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
         test_tools[name]['name'] = name
         loaded_test_tool = load_test_tool(test_tools[name], test_case_name)
         if flow_competition_config and 'iperf' in loaded_test_tool.name():
-            competition_test = CompetitionFlowTest(
+            competition_test = FlowCompetitionTest(
                 config=flow_competition_config,
                 test=loaded_test_tool)
             network.add_test_suite(competition_test)
