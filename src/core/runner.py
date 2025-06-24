@@ -9,13 +9,16 @@ import yaml
 from interfaces.network_mgr import INetworkManager
 from interfaces.network import INetwork
 from core.topology import ITopology
-from testsuites.test import (TestType, TestConfig, test_type_str_mapping)
+from testsuites.test import (
+    ITestSuite, TestType, TestConfig, test_type_str_mapping)
 from testsuites.test_iperf import IperfTest
 from testsuites.test_iperf_bats import IperfBatsTest
 from testsuites.test_ping import PingTest
 from testsuites.test_rtt import RTTTest
 from testsuites.test_scp import ScpTest
 from testsuites.test_regular import RegularTest
+from testsuites.test_competition import (
+    CompetitionFlowTest, FlowCompetitionConfig, FlowParameter)
 from protosuites.proto import (ProtoConfig, SupportedProto, ProtoRole)
 from protosuites.std_protocol import StdProtocol
 from protosuites.cs_protocol import CSProtocol
@@ -76,7 +79,7 @@ def diagnostic_test_results(test_results, top_des):
     return True
 
 
-def add_test_to_network(network, tool, test_name):
+def load_test_tool(tool, test_name) -> ITestSuite:
     test_conf = TestConfig(
         name=tool['name'],
         test_name=test_name,
@@ -89,30 +92,23 @@ def add_test_to_network(network, tool, test_name):
         args=tool['args'] if 'args' in tool else '')
     if tool['name'] == 'bats_iperf':
         test_conf.test_type = TestType.throughput
-        network.add_test_suite(IperfBatsTest(test_conf))
-        logging.info("Added bats_iperf test to %s.", test_name)
-    elif 'iperf' in tool['name']:
+        return IperfBatsTest(test_conf)
+    if 'iperf' in tool['name']:
         test_conf.test_type = TestType.throughput
-        network.add_test_suite(IperfTest(test_conf))
-        logging.info("Added iperf test to %s.", test_name)
-    elif tool['name'] == 'ping':
+        return IperfTest(test_conf)
+    if tool['name'] == 'ping':
         test_conf.test_type = TestType.latency
-        network.add_test_suite(PingTest(test_conf))
-        logging.info("Added ping test to %s.", test_name)
-    elif tool['name'] == 'rtt':
+        return PingTest(test_conf)
+    if tool['name'] == 'rtt':
         test_conf.packet_count = tool['packet_count']
         test_conf.packet_size = tool['packet_size']
         test_conf.test_type = TestType.rtt
-        network.add_test_suite(RTTTest(test_conf))
-        logging.info("Added rtt test to %s.", test_name)
-    elif tool['name'] == 'scp':
+        return RTTTest(test_conf)
+    if tool['name'] == 'scp':
         test_conf.file_size = tool['file_size'] if 'file_size' in tool else 1
         test_conf.test_type = TestType.scp
-        network.add_test_suite(ScpTest(test_conf))
-        logging.info("Added scp test to %s.", test_name)
-    else:
-        network.add_test_suite(RegularTest(test_conf))
-        logging.info("Added Regular test to %s.", test_name)
+        return ScpTest(test_conf)
+    return RegularTest(test_conf)
 
 
 def load_predefined_protocols(config_base_path):
@@ -219,6 +215,7 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
     """
     # read the strategy matrix
     test_case_name = test_case_yaml['name']
+    competition_flows = test_case_yaml.get('competition_flows', None)
     test_tools = test_case_yaml['test_tools']
     for proto_config in internal_target_protocols:
         proto_config.test_name = test_case_name
@@ -298,9 +295,25 @@ def setup_test(test_case_yaml, internal_target_protocols, network: INetwork):
             continue
         logging.error("Error: unsupported protocol type %s.%s",
                       proto_config.type, proto_config.name)
+    flow_competition_config = None
+    if competition_flows:
+        flow_params = [FlowParameter(**flow) for flow in competition_flows]
+        flow_competition_config = FlowCompetitionConfig(
+            competition_flow=flow_params)
     for name in test_tools.keys():
         test_tools[name]['name'] = name
-        add_test_to_network(network, test_tools[name], test_case_name)
+        loaded_test_tool = load_test_tool(test_tools[name], test_case_name)
+        if flow_competition_config and 'iperf' in loaded_test_tool.name():
+            competition_test = CompetitionFlowTest(
+                config=flow_competition_config,
+                test=loaded_test_tool)
+            network.add_test_suite(competition_test)
+            logging.info("Added %s test with flow competition to %s.",
+                         loaded_test_tool.name(), test_case_name)
+            continue
+        network.add_test_suite(loaded_test_tool)
+        logging.info("Added %s test to %s.",
+                     loaded_test_tool.name(), test_case_name)
     return True
 
 

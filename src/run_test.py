@@ -89,11 +89,13 @@ if __name__ == '__main__':
         to_halt = sys.argv[5]
     if debug_log == 'True':
         setLogLevel('info')
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
         logging.info("Debug mode is enabled.")
     else:
         setLogLevel('warning')
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
         logging.info("Debug mode is disabled.")
     yaml_config_base_path = sys.argv[1]
     oasis_workspace = sys.argv[2]

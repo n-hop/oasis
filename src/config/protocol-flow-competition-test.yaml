@@ -15,14 +15,14 @@ tests:
     test_tools:
       iperf:
         interval: 1
-        interval_num: 10
+        interval_num: 30
         packet_type: tcp
+        client_host: 2
+        server_host: 4
+    competition_flows:
+      - flow_type: tcp
+        client_host: 0
+        server_host: 5
+      - flow_type: tcp
         client_host: 1
         server_host: 6
-      competition_flow:
-        - flow_type: tcp
-          client_host: 0
-          server_host: 5
-        - flow_type: tcp
-          client_host: 1
-          server_host: 6

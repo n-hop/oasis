@@ -108,7 +108,11 @@ topology:
         init_value: [100]
       - link_bandwidth_backward:
         init_value: [100]
-  - name: complex_mesh_net
+  - name: complex_mesh_net_l3
     topology_type: mesh
     nodes: 7
     json_description: mesh-network.json
+  - name: complex_mesh_net
+    topology_type: mesh
+    nodes: 7
+    json_description: mesh-network-no-loss.json

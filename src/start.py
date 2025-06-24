@@ -83,10 +83,12 @@ if __name__ == '__main__':
     debug_log = ns.debug_log
     halt = ns.halt
     if debug_log == 'True':
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
         logging.info("Debug mode is enabled.")
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
         logging.info("Debug mode is disabled.")
     current_process_dir = os.getcwd()
     logging.info(f"Current directory the process: %s", current_process_dir)

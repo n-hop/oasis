@@ -94,6 +94,9 @@ class ITestSuite(ABC):
             logging.error("Test type is not set. %s", self.config.test_type)
             self.result = TestResult(False, pattern="", record="")
 
+    def name(self) -> str:
+        return self.config.name
+
     @abstractmethod
     def post_process(self) -> bool:
         pass
