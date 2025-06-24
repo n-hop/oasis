@@ -13,16 +13,16 @@ tests:
     target_protocols: [tcp-bbr]
     route: static_bfs
     test_tools:
-      iperf:
+      bats_iperf:
         interval: 1
         interval_num: 30
         packet_type: tcp
         client_host: 2
-        server_host: 4
+        server_host: 5
     competition_flows:
       - flow_type: tcp
         client_host: 0
-        server_host: 5
+        server_host: 6
       - flow_type: tcp
         client_host: 1
-        server_host: 6
+        server_host: 7
