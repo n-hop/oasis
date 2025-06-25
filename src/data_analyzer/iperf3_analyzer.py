@@ -101,7 +101,10 @@ class Iperf3Analyzer(IDataAnalyzer):
             x = np.arange(0, len(data_array))
             plt.plot(x, data_array[0: len(x)],
                      'o-', markersize=3, label=f"{log_label}")
-            plt.ylim(0, max_data_value + 10)
+            if max_data_value > 500:
+                plt.ylim(0, max_data_value + 100)
+            else:
+                plt.ylim(0, max_data_value + 10)
             plt.legend(loc="lower right", fontsize=8)
         if not self.config.output:
             self.config.output = "iperf3_throughput.svg"
