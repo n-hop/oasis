@@ -61,7 +61,7 @@ protocols:
     type: none_distributed
     args:
       - "-m 1"
-  - name: quic-next
+  - name: tcp-next # TCP over TCP.
     type: none_distributed
     args:
-      - "-m 12"
+      - "-m 10"

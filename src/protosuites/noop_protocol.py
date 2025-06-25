@@ -113,6 +113,9 @@ class NoOpProtocol(IProtoSuite):
     def is_distributed(self) -> bool:
         return self.is_distributed_var
 
+    def is_noop(self) -> bool:
+        return True
+
     def post_run(self, network: INetwork):
         return True
 

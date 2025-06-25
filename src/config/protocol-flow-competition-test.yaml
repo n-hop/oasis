@@ -13,16 +13,45 @@ tests:
     target_protocols: [tcp-bbr]
     route: static_bfs
     test_tools:
-      bats_iperf:
+      iperf:
         interval: 1
-        interval_num: 30
+        interval_num: 60
         packet_type: tcp
         client_host: 2
         server_host: 5
     competition_flows:
-      - flow_type: tcp
+      - flow_type: tcp-bbr
         client_host: 0
         server_host: 6
-      - flow_type: tcp
+        delay: 10
+        duration: 10
+      - flow_type: tcp-bbr
         client_host: 1
         server_host: 7
+        delay: 30
+        duration: 15
+  test2:
+    description: "Flow competition test with multiple protocols"
+    topology:
+      config_name: complex_mesh_net
+      config_file: predefined.topology.yaml
+    target_protocols: [tcp-bbr]
+    route: static_bfs
+    test_tools:
+      iperf:
+        interval: 1
+        interval_num: 60
+        packet_type: tcp
+        client_host: 2
+        server_host: 5
+    competition_flows:
+      - flow_type: btp
+        client_host: 0
+        server_host: 6
+        delay: 10
+        duration: 10
+      - flow_type: brtp
+        client_host: 1
+        server_host: 7
+        delay: 30
+        duration: 15

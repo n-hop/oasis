@@ -79,9 +79,9 @@ class NestedContainernet():
     def tearDown(self) -> None:
         logging.info(
             "NestedContainernet tearDown the Containernet.")
-        os.system(
-            "docker stop $(docker ps -a -q "
-            f"-fname=mn) || true")
+        # os.system(
+        #    "docker stop $(docker ps -a -q "
+        #    f"-fname=mn) || true")
         os.system(
             "docker stop $(docker ps -a -q "
             f"-fname={self.test_container_name}) || true")

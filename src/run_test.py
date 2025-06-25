@@ -83,12 +83,12 @@ def load_testbed_config(name, yaml_base_path_input):
 if __name__ == '__main__':
     to_halt = 'False'
     debug_log = 'False'
-    if len(sys.argv) == 5:
+    if len(sys.argv) >= 5:
         debug_log = sys.argv[4]
-    if len(sys.argv) == 6:
+    if len(sys.argv) >= 6:
         to_halt = sys.argv[5]
     if debug_log == 'True':
-        setLogLevel('info')
+        setLogLevel('debug')
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S')
         logging.info("Debug mode is enabled.")

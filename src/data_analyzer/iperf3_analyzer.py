@@ -72,23 +72,36 @@ class Iperf3Analyzer(IDataAnalyzer):
                     logging.error(f"no visualize data in %s", log_base_name)
                     continue
             log_label = log_base_name.split("_")[0]
-            for key, data_array in visualize_data.items():
-                logging.debug(f"Added %s data: %s  %s",
-                              key, data_array, log_base_name)
-                if len(data_array) == 0:
-                    # plot empty data
-                    data_array = [0] * data_len
-                    x = np.arange(1, data_len)
-                    plt.plot(x, data_array[0: len(x)],
-                             'o-', markersize=3, linewidth=1.5, label=f"{log_label}")
-                else:
-                    cur_max_data_value = max(data_array)
-                    max_data_value = max(max_data_value, cur_max_data_value)
-                    data_len = max(data_len, len(data_array))
-                    x = np.arange(1, len(data_array))
-                    plt.plot(x, data_array[0: len(x)],
-                             'o-', markersize=3, linewidth=1.5, label=f"{log_label}")
-                plt.ylim(0, max_data_value + 10)
+            delay = visualize_data.get("delay", None)
+            duration = visualize_data.get("duration", None)
+            data_array = visualize_data.get("throughput", [])
+            if len(data_array) == 0:
+                # plot empty data
+                data_array = [0] * data_len
+            else:
+                cur_max_data_value = max(data_array)
+                max_data_value = max(max_data_value, cur_max_data_value)
+                data_len = max(data_len, len(data_array))
+                # for competition flows which have defined the `delay` and `duration`
+                # from 0 to `delay` seconds, the throughput is 0
+                # from `delay` to `delay + duration` seconds, the throughput is defined in the data_array
+                # from `delay + duration` seconds to the end, the throughput is 0
+                if delay is not None and duration is not None:
+                    delay_seconds = int(delay)
+                    duration_seconds = int(duration)
+                    tail = max(data_len - delay_seconds - duration_seconds, 1)
+                    data_array = [0] * delay_seconds + \
+                        data_array + [0] * (tail)
+                    protocol = visualize_data.get("protocol", "")
+                    cc = visualize_data.get("cc", None)
+                    log_label = f"flow({protocol},{cc}): "
+                    log_label += visualize_data.get("flow", "")
+            logging.debug(f"Added throughput data: %d %s %s",
+                          len(data_array), data_array, log_label)
+            x = np.arange(0, len(data_array))
+            plt.plot(x, data_array[0: len(x)],
+                     'o-', markersize=3, label=f"{log_label}")
+            plt.ylim(0, max_data_value + 10)
             plt.legend(loc="lower right", fontsize=8)
         if not self.config.output:
             self.config.output = "iperf3_throughput.svg"
@@ -105,6 +118,7 @@ class Iperf3Analyzer(IDataAnalyzer):
                      self.config.subtitle, fontsize=12, fontweight="bold")
         max_loss_rate = 10  # %
         max_throughput = 0  # Mbps
+        data_len = 0
         for input_log in self.config.input:
             if not os.path.exists(input_log):
                 continue
@@ -112,10 +126,17 @@ class Iperf3Analyzer(IDataAnalyzer):
             log_base_name = os.path.basename(input_log)
             with open(f"{input_log}", "r", encoding='utf-8') as f:
                 content = f.read()
-                visualize_data = self.get_datagram_visualize_data(content)
-                if len(visualize_data) == {}:
-                    logging.error(f"no visualize data in %s", log_base_name)
-                    continue
+                if 'FlowCompetitionTest' in log_base_name:
+                    # FIXME(.): competition flow uses bats.
+                    visualize_data = self.get_stream_visualize_data(content)
+                else:
+                    visualize_data = self.get_datagram_visualize_data(content)
+                    if len(visualize_data) == {}:
+                        logging.error(
+                            f"no visualize data in %s", log_base_name)
+                        continue
+            delay = visualize_data.get("delay", None)
+            duration = visualize_data.get("duration", None)
             log_label = log_base_name.split("_")[0]
             loss_rate_array = visualize_data.get("loss_rate", [])
             cur_max = max(loss_rate_array, default=0)
@@ -125,10 +146,24 @@ class Iperf3Analyzer(IDataAnalyzer):
             cur_max = max(throughput_array, default=0)
             max_throughput = max(max_throughput, cur_max)
 
+            data_len = max(data_len, len(throughput_array))
+            # for competition flows which have defined the `delay` and `duration`
+            if delay is not None and duration is not None:
+                delay_seconds = int(delay)
+                duration_seconds = int(duration)
+                tail = max(data_len - delay_seconds - duration_seconds, 1)
+                throughput_array = [0] * delay_seconds + \
+                    throughput_array + [0] * (tail)
+                protocol = visualize_data.get("protocol", "")
+                cc = visualize_data.get("cc", None)
+                log_label = f"flow({protocol},{cc}): "
+                log_label += visualize_data.get("flow", "")
+                loss_rate_array = [0] * data_len
+
             x = np.arange(1, len(loss_rate_array))
             # Plot loss rate
             axs[0].plot(x, loss_rate_array[0: len(x)], '<--',
-                        markersize=4, label=f"{log_label}", color='green')
+                        markersize=4, label=f"{log_label}")
             axs[0].set_title('Loss Rate', fontsize=10)
             axs[0].set_xlabel('Time (s)', fontsize=9)
             axs[0].set_ylabel('Loss Rate (%)', fontsize=9)
@@ -149,9 +184,9 @@ class Iperf3Analyzer(IDataAnalyzer):
             axs[1].grid(True)  # Add grid lines for better readability'''
 
             # Plot throughput
-            x = np.arange(1, len(throughput_array))
+            x = np.arange(0, len(throughput_array))
             axs[1].plot(x, throughput_array[0: len(x)], 'o-',
-                        markersize=4, label=f"{log_label}", color='blue')
+                        markersize=4, label=f"{log_label}")
             axs[1].set_title('Throughput', fontsize=10)
             axs[1].set_xlabel('Time (s)', fontsize=9)
             axs[1].set_ylabel('Throughput (Mbps)', fontsize=9)
@@ -172,7 +207,27 @@ class Iperf3Analyzer(IDataAnalyzer):
         matches2 = re.findall(throughput_pattern, content)
         throughput_array = [str_to_mbps(
             match[3], match[5]) for match in matches2]
+        visualize_data["flow"] = None
+        visualize_data["delay"] = None
+        visualize_data["duration"] = None
+        visualize_data["protocol"] = None
+        visualize_data["cc"] = None
         visualize_data["throughput"] = throughput_array
+        # delay:10, duration:10, protocol:tcp, cc:bbr
+        flow_meta_pattern = r"Competition flow: (.+)?, delay:(\d+)?, duration:(\d+)?, protocol:(.+)?, cc:(.+)?"
+        matches = re.findall(flow_meta_pattern, content)
+        if matches:
+            logging.info(f"flow_meta_pattern: %s", matches)
+            visualize_data["flow"] = str(
+                matches[0][0]) if matches[0][0] else None
+            visualize_data["delay"] = int(
+                matches[0][1]) if matches[0][1] else None
+            visualize_data["duration"] = int(
+                matches[0][2]) if matches[0][2] else None
+            visualize_data["protocol"] = str(
+                matches[0][3]) if matches[0][3] else None
+            visualize_data["cc"] = str(
+                matches[0][4]) if matches[0][4] else None
         return visualize_data
 
     def get_datagram_visualize_data(self, content):

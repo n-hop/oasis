@@ -19,6 +19,9 @@ class StdProtocol(IProtoSuite):
     def is_distributed(self) -> bool:
         return self.is_distributed_var
 
+    def is_noop(self) -> bool:
+        return False
+
     def post_run(self, network: INetwork):
         return True
 

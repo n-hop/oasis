@@ -38,6 +38,18 @@ def is_parallel_execution(execution_mode: str):
     return execution_mode == "parallel"
 
 
+def add_all_competition_flow_logs(test_results, log_path):
+    # list all the logs files which match the pattern under folder log_path
+    if not os.path.exists(log_path):
+        logging.error("Log path %s does not exist.", log_path)
+        return
+    for file in os.listdir(log_path):
+        if 'FlowCompetitionTest' in file and file.endswith('.log'):
+            full_path = os.path.join(log_path, file)
+            logging.info("Adding competition flow log: %s", full_path)
+            test_results.append(full_path)
+
+
 def diagnostic_test_results(test_results, top_des):
     if len(test_results) == 0:
         logging.error("Error: no test results. %s", top_des)
@@ -48,9 +60,11 @@ def diagnostic_test_results(test_results, top_des):
             "##########################", test_type, test_result)
         test_config = test_result['config']
         result_files = []
-        logging.debug("test_result['results'] len %s", len(
-            test_result['results']))
+        logging.info("############ test_result['results'] len %s %s", len(
+            test_result['results']), test_result)
         for result in test_result['results']:
+            if result.is_competition_test:
+                add_all_competition_flow_logs(result_files, result.result_dir)
             result_files.append(result.record)
         # analyze those results files according to the test type
         analyzer_name = test_type_str_mapping[test_type]
@@ -438,6 +452,7 @@ class TestRunner:
                 else:
                     logging.info(f"Process %s for test %s is completed successfully.",
                                  i, test_name)
+
         # save results from different process.
         self.results_dict = copy.deepcopy(process_shared_dict)
         if process_manager:
@@ -546,6 +561,7 @@ class TestRunner:
             result_dict[id] = {"error": "perform_test_failed"}
         else:
             result_dict[id] = network.get_test_results()
+            logging.info("Process %s results: %s", id, result_dict[id])
 
     def handle_failure(self):
         self.cleanup()

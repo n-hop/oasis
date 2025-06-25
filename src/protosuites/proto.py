@@ -71,6 +71,10 @@ class IProtoSuite(IProtoInfo, ABC):
         return self.config
 
     @abstractmethod
+    def is_noop(self) -> bool:
+        pass
+
+    @abstractmethod
     def post_run(self, network: 'INetwork') -> bool:  # type: ignore
         pass
 
