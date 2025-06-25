@@ -28,6 +28,7 @@ class PlotColors(IntEnum):
             return "black"
         if self == PlotColors.orange:
             return "orange"
+        return "unknown_color"
 
 
 PlotColorAndMarkerMap = {
