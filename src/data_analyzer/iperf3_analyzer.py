@@ -1,10 +1,42 @@
 import logging
 import re
 import os
+from enum import IntEnum
 import matplotlib.pyplot as plt
 import numpy as np
 from tools.util import str_to_mbps
 from .analyzer import IDataAnalyzer
+
+
+class PlotColors(IntEnum):
+    min_value = 0
+    red = 1
+    blue = 2
+    black = 3
+    green = 4
+    orange = 5
+    max_value = 6
+
+    def __str__(self) -> str:
+        if self == PlotColors.red:
+            return "red"
+        if self == PlotColors.blue:
+            return "blue"
+        if self == PlotColors.black:
+            return "green"
+        if self == PlotColors.green:
+            return "black"
+        if self == PlotColors.orange:
+            return "orange"
+
+
+PlotColorAndMarkerMap = {
+    PlotColors.red: 'o--',
+    PlotColors.blue: '^:',
+    PlotColors.black: 'x-',
+    PlotColors.green: '<--',
+    PlotColors.orange: 's-'
+}
 
 
 class Iperf3Analyzer(IDataAnalyzer):
@@ -59,6 +91,7 @@ class Iperf3Analyzer(IDataAnalyzer):
         plt.title(default_title, fontsize=10, fontweight="bold")
         max_data_value = 0
         data_len = 0
+        index = PlotColors.min_value + 1
         for input_log in self.config.input:
             if not os.path.exists(input_log):
                 continue
@@ -99,13 +132,21 @@ class Iperf3Analyzer(IDataAnalyzer):
             logging.debug(f"Added throughput data: %d %s %s",
                           len(data_array), data_array, log_label)
             x = np.arange(0, len(data_array))
-            plt.plot(x, data_array[0: len(x)],
-                     'o-', markersize=3, label=f"{log_label}")
-            if max_data_value > 500:
+            if index < PlotColors.max_value:
+                plot_color = PlotColors(index)
+                plt.plot(x, data_array[0: len(x)],
+                         PlotColorAndMarkerMap[plot_color],
+                         markersize=3, linewidth=2, label=f"{log_label}", color=str(plot_color))
+            else:
+                plt.plot(x, data_array[0: len(x)],
+                         '-o',
+                         markersize=3, linewidth=2, label=f"{log_label}")
+            if max_data_value >= 500:
                 plt.ylim(0, max_data_value + 100)
             else:
                 plt.ylim(0, max_data_value + 10)
             plt.legend(loc="lower right", fontsize=8)
+            index += 1
         if not self.config.output:
             self.config.output = "iperf3_throughput.svg"
         plt.savefig(f"{self.config.output}")
