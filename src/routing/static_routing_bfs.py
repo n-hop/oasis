@@ -39,7 +39,7 @@ class StaticRoutingBfs(IRoutingStrategy):
                 dst_ip = hosts[dst].IP()
                 if gateway_ip:
                     self._add_ip_gateway(hosts[src], gateway_ip, dst_ip)
-                    logging.info(
+                    logging.debug(
                         "Static route: %s -> %s via %s (%s)",
                         hosts[src].name(), hosts[dst].name(), hosts[next_hop].name(), gateway_ip)
                 else:

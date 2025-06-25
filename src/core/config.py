@@ -34,6 +34,8 @@ class NestedConfig:
     """
     image: str
     privileged: Optional[bool] = field(default=True)
+    containernet_repo_from_user: Optional[bool] = field(default=False)
+    containernet_repo_path: Optional[str] = field(default="/containernet")
     network_mode: Optional[str] = field(default="host")
     dns_server: Optional[List[str]] = field(default=None)
     dns_resolve: Optional[List[str]] = field(default=None)
