@@ -142,10 +142,10 @@ class Iperf3Analyzer(IDataAnalyzer):
                 plt.plot(x, data_array[0: len(x)],
                          '-o',
                          markersize=3, linewidth=2, label=f"{log_label}")
-            if max_data_value >= 500:
-                plt.ylim(0, max_data_value + 100)
+            if max_data_value > 0:
+                plt.ylim(0, int(max_data_value * 1.4))  # 40% headroom
             else:
-                plt.ylim(0, max_data_value + 10)
+                plt.ylim(0, 1)
             plt.legend(loc="lower right", fontsize=8)
             index += 1
         if not self.config.output:
@@ -237,7 +237,10 @@ class Iperf3Analyzer(IDataAnalyzer):
             axs[1].set_ylabel('Throughput (Mbps)', fontsize=9)
             axs[1].legend(loc="upper right", fontsize=8)
             axs[1].grid(True)  # Add grid lines for better readability
-            axs[1].set_ylim(0, max_throughput + 100)
+            if max_throughput > 0:
+                axs[1].set_ylim(0, int(max_throughput * 1.4))  # 40% headroom
+            else:
+                axs[1].set_ylim(0, 1)
         # Adjust layout
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         if not self.config.output:
