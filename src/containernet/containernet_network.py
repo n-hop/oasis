@@ -328,10 +328,20 @@ class ContainerizedNetwork (INetwork):
         shaping_parameters = ""
         if self.net_loss_mat is not None:
             shaping_parameters += f" loss {self.net_loss_mat[id1][id2]}%"
+        current_bdp = 250000  # default BDP,  delay 10, bw 200
+        scaling_factor = 1.25
         if self.net_latency_mat is not None:
             delay = self.net_latency_mat[id1][id2]
             if delay > 0:
                 shaping_parameters += f" delay {delay}ms"
+                if self.net_bw_mat is not None:
+                    current_bdp = int(
+                        scaling_factor * delay * self.net_bw_mat[id1][id2] * 1000 / 8)
+                    logging.info("delay %d, bw %d, limits %d", delay,
+                                 self.net_bw_mat[id1][id2], current_bdp)
+                else:
+                    logging.warning(
+                        "self.net_bw_mat is None, using default BDP value.")
                 if self.net_jitter_mat is not None:
                     jitter = self.net_jitter_mat[id1][id2]
                     if jitter > 0:
@@ -346,9 +356,12 @@ class ContainerizedNetwork (INetwork):
             f"tc qdisc add dev {attached_inf} ingress")
         self.hosts[id2].cmd(f"tc filter add dev {attached_inf} parent ffff: protocol ip u32 "
                             f"match u32 0 0 action mirred egress redirect dev {ifb_interface}")
+        # @note: Limit is the number of bytes that can be queued waiting for tokens to become available.
+        # The proper value for limit might be at least the **bandwidth-delay product (BDP)**,
+        # which is the amount of data "in flight" on the link.
+        # for a link with 4000Mbps, 100ms delay, the BDP is about 50,000,000 bytes.
         self.hosts[id2].cmd(
-            f"tc qdisc add dev {ifb_interface} root netem{shaping_parameters} limit 30000000")
-
+            f"tc qdisc add dev {ifb_interface} root netem{shaping_parameters} limit {current_bdp}")
         return True
 
     def _check_node_vols(self):

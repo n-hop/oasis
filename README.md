@@ -56,7 +56,7 @@ The flow competition test is a test case that evaluates the fairness and the con
 
 ## Limitations
 
-- **Link latency**: The valid range is 0-110ms; 0ms means no additional latency is added. And the maximum latency of each link is 110ms.
+- **Link latency**: The valid range is 0-200ms; 0ms means no additional latency is added. And the maximum latency of each link is 200ms.
   The link latency is simulated by the Linux `tc` module, which requires sufficient queuing buffer capacity. If the queuing buffer is not large enough, `tc` module will drop packets under heavy traffic, affecting the accuracy of simulating the link loss rate.
   
-- **Link bandwidth**: The valid range is 1-100Mbps. The maximum bandwidth for each link is limited because the processing rate of the BATS™ protocol binary in this repository is capped at 100Mbps. For rates higher than 100Mbps, a software license from n-hop is required.
+- **Link bandwidth**: The valid range is 1-4000Mbps. 
