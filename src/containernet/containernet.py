@@ -56,6 +56,9 @@ class NestedContainernet():
         self.test_name = test_name
         self.test_container_name = ""
         self.start_time = time.time()
+        self.user_name = oasis_workspace.split("/")[2]
+        logging.info(
+            "NestedContainernet user_name: %s", self.user_name)
         self.setUp()
 
     def __check_leaked_mounts(self):
@@ -76,6 +79,9 @@ class NestedContainernet():
     def tearDown(self) -> None:
         logging.info(
             "NestedContainernet tearDown the Containernet.")
+        # os.system(
+        #    "docker stop $(docker ps -a -q "
+        #    f"-fname=mn) || true")
         os.system(
             "docker stop $(docker ps -a -q "
             f"-fname={self.test_container_name}) || true")
@@ -121,17 +127,17 @@ class NestedContainernet():
             f"Nested Containernet start_cmd: %s", start_cmd)
         ret = os.system(start_cmd)
         if ret == 0:
-            self.install_dependencies()
+            self.__install_dependencies()
         return ret == 0
 
-    def install_dependencies(self):
+    def __install_dependencies(self):
         if not os.path.exists(f"{self.oasis_workspace}/src/containernet/requirements.txt"):
             return
         install_cmd = f"docker exec {self.test_container_name} "\
             f"/bin/bash -c \"python3 -m pip install -r {g_root_path}src/containernet/requirements.txt"\
             f" -i https://pypi.tuna.tsinghua.edu.cn/simple\""
         logging.info(
-            f"Oasis execute install command \" %s \"", install_cmd)
+            f"Oasis install containernet dependencies \" %s \"", install_cmd)
         os.system(install_cmd)
 
     def patch(self):
@@ -165,6 +171,14 @@ class NestedContainernet():
         self.formatted_mounts = f" --mount "\
             f"type=bind,source={self.oasis_workspace},"\
             f"target={g_root_path},bind-propagation=shared "
+        # 2. use the repo from `self.config.containernet_repo_path`
+        if self.config.containernet_repo_from_user and self.config.containernet_repo_path:
+            repo_path = self.config.containernet_repo_path.replace(
+                "{user_name}", self.user_name)
+            if os.path.exists(f"{repo_path}"):
+                self.formatted_mounts += f" --mount "\
+                    f"type=bind,source={repo_path}/,"\
+                    f"target=/containernet/,readonly,bind-propagation=shared "
         # don't mount if {yaml_base_path} == {oasis_workspace}/src/config/
         logging.info("Yaml config path: %s", self.yaml_base_path)
         logging.info("Oasis workspace: %s", self.oasis_workspace)
@@ -173,7 +187,7 @@ class NestedContainernet():
                 "NestedContainernet:: No config path mapping is needed.")
         else:
             # 2. mount yaml_base_path directory to {g_root_path}config/
-            self.formatted_mounts += f" --mount "\
+            self.formatted_mounts += f"--mount "\
                 f"type=bind,source={self.yaml_base_path},"\
                 f"target={g_root_path}config/,bind-propagation=shared "
             logging.info(

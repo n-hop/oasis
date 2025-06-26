@@ -10,6 +10,7 @@ This guide provides simple steps to getting started with Oasis.
     - [2.1 Change the network topology and its parameters](#21-change-the-network-topology-and-its-parameters)
     - [2.2 Change the configuration of the test tools](#22-change-the-configuration-of-the-test-tools)
     - [2.3 Change the evaluation targets(protocol)](#23-change-the-evaluation-targetsprotocol)
+    - [2.4 Built-in routing strategies](#24-built-in-routing-strategies)
   - [3. Test results](#3-test-results)
   - [4. Customize protocol definition](#4-customize-protocol-definition)
     - [4.1 protocol yaml description](#41-protocol-yaml-description)
@@ -190,6 +191,21 @@ For each test case, we can define the target protocols to be evaluated. The foll
 ```
 
 Oasis will uses selected test tools to measure the performance of the target protocols one by one.
+
+### 2.4 Built-in routing strategies
+
+In the test case, the applied routing strategy of current test is specified by `route`:
+
+```yaml
+  - name: test001
+    route: static_route
+```
+
+Currently supported route strategies are:
+
+- `static_route`, static routing which are configured with `ip route add` command. This works for the chain network.
+- `static_bfs`, static routing which are configured with `ip route add` command. This works for the mesh network, including the chain one.
+- `olsr`, dynamic routing configuration which are done by `OSLR` protocol daemon. This works for the chain network.
 
 ## 3. Test results
 

@@ -50,6 +50,10 @@ A typical workflow of a Oasis test is as follows:
 
 Detailed information can be found in [Protocols and Tools](docs/protocols_and_tools.md).
 
+## Flow competition test
+
+The flow competition test is a test case that evaluates the fairness and the convergence of the target protocol. Detailed information can be found in [Flow Competition Test](docs/flow_competition_test.md).
+
 ## Limitations
 
 - **Link latency**: The valid range is 0-110ms; 0ms means no additional latency is added. And the maximum latency of each link is 110ms.

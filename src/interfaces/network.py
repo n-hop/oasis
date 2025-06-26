@@ -105,6 +105,9 @@ class INetwork(ABC):
                         "Test %s failed, please check the log file %s",
                         test.config.test_name, result.record)
                     return False
+                # mark competition test
+                if test.is_competition_test():
+                    result.is_competition_test = True
                 if test.type() not in self.test_results:
                     self.test_results[test.type()] = {}
                     self.test_results[test.type()]['results'] = []
@@ -112,6 +115,7 @@ class INetwork(ABC):
                     test.get_config())
                 self.test_results[test.type()]['results'].append(
                     copy.deepcopy(result))
+                # set is_competition_test to true if the test is a competition test
                 logging.debug("Added Test result for %s", result.record)
             # stop the protocol
             proto.stop(self)
@@ -163,6 +167,8 @@ class INetwork(ABC):
         return True
 
     def _check_test_config(self, proto: IProtoSuite, test: ITestSuite):
+        if proto.is_noop():
+            return True
         if not proto.is_distributed():
             proto_conf = proto.get_config()
             if proto_conf is None:

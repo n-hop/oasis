@@ -66,7 +66,8 @@ class TopologyConfig:
 
 
 class ITopology(ABC):
-    def __init__(self, top: TopologyConfig, init_all_mat: bool = True):
+    def __init__(self, base_path: str, top: TopologyConfig, init_all_mat: bool = True):
+        self.conf_base_path = base_path
         self.all_mats = {}
         self.adj_matrix = None
         self.top_config = top
@@ -83,8 +84,10 @@ class ITopology(ABC):
 
     def get_next_top(self):
         if not self.is_compound():
+            logging.error("get_next_top() called on a non-compound topology.")
             return None
         if self._current_top_index >= len(self.topologies):
+            logging.info("No more compound topologies available.")
             return None
         top = self.topologies[self._current_top_index]
         logging.info("########## Use Oasis compound topology %s.",
@@ -134,9 +137,12 @@ class ITopology(ABC):
             json_file_path (string): The path of the Json file 
             which save the matrix.
             An example: 
-                test_framework/template_topology/4-child-star-network.json
+                src/config/mesh-network.json
         """
-        if json_file_path is None or not os.path.exists(json_file_path):
+        if json_file_path and not os.path.isabs(json_file_path):
+            json_file_path = os.path.join(self.conf_base_path, json_file_path)
+        logging.info(f"Loading matrix from Json file: %s", json_file_path)
+        if not os.path.exists(json_file_path):
             raise ValueError(f"Json File {json_file_path} does not exist.")
         with open(json_file_path, 'r', encoding='utf-8') as f:
             json_content = json.load(f)
@@ -145,5 +151,5 @@ class ITopology(ABC):
         for mat_desc in json_content['data']:
             if 'matrix_type' not in mat_desc or 'matrix_data' not in mat_desc:
                 continue
-            # logging.info(f"Matrix data: {mat_desc['matrix_data']}")
+            logging.info(f"Matrix data: %s", mat_desc['matrix_data'])
             self.all_mats[mat_desc['matrix_type']] = mat_desc['matrix_data']

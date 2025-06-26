@@ -75,6 +75,7 @@ class TestResult:
     pattern: str = field(default="")
     record: str = field(default="")  # log file
     result_dir: str = field(default=f"{g_root_path}")
+    is_competition_test: bool = field(default=False)
 
 
 class ITestSuite(ABC):
@@ -93,6 +94,9 @@ class ITestSuite(ABC):
         else:
             logging.error("Test type is not set. %s", self.config.test_type)
             self.result = TestResult(False, pattern="", record="")
+
+    def name(self) -> str:
+        return self.config.name
 
     @abstractmethod
     def post_process(self) -> bool:
@@ -143,6 +147,9 @@ class ITestSuite(ABC):
         if not self.result.is_success:
             return self.result
         return self.result
+
+    def is_competition_test(self) -> bool:
+        return False
 
     def is_succeed(self) -> bool:
         return self.result.is_success

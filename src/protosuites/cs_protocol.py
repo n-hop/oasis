@@ -27,6 +27,9 @@ class CSProtocol(IProtoSuite):
     def is_distributed(self) -> bool:
         return False
 
+    def is_noop(self) -> bool:
+        return self.client.is_noop() and self.server.is_noop()
+
     def post_run(self, network: INetwork):
         return self.client.post_run(network) and self.server.post_run(network)
 

@@ -83,17 +83,19 @@ def load_testbed_config(name, yaml_base_path_input):
 if __name__ == '__main__':
     to_halt = 'False'
     debug_log = 'False'
-    if len(sys.argv) == 5:
+    if len(sys.argv) >= 5:
         debug_log = sys.argv[4]
-    if len(sys.argv) == 6:
+    if len(sys.argv) >= 6:
         to_halt = sys.argv[5]
     if debug_log == 'True':
-        setLogLevel('info')
-        logging.basicConfig(level=logging.DEBUG)
+        setLogLevel('debug')
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
         logging.info("Debug mode is enabled.")
     else:
         setLogLevel('warning')
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
         logging.info("Debug mode is disabled.")
     yaml_config_base_path = sys.argv[1]
     oasis_workspace = sys.argv[2]
@@ -164,6 +166,8 @@ if __name__ == '__main__':
     for test in loaded_tests:
         cur_topology = test.load_topology(config_path)
         if not cur_topology:
+            logging.error(
+                "Error: failed to load topology for test %s", test.name)
             continue
         # 1.1 The topology in one case can be composed of multiple topologies:
         #      Traverse all the topologies in the test case.

@@ -106,6 +106,19 @@ class ContainerizedNetwork (INetwork):
             else:
                 description += f"bandwidth {bandwidth}Mbps."
             return description
+        if self.topology_type == 'mesh':
+            description = f"Mesh {self.num_of_hosts - 1} nodes \n"
+            latency = self.net_latency_mat[0][1]
+            bandwidth = self.net_bw_mat[0][1]
+            for i in range(self.num_of_hosts):
+                for j in range(self.num_of_hosts):
+                    if self.net_bw_mat[i][j] > 0:
+                        latency = self.net_latency_mat[i][j]
+                        bandwidth = self.net_bw_mat[i][j]
+                        break
+            description += f"latency {latency}ms,"
+            description += f"bandwidth {bandwidth}Mbps."
+            return description
         logging.warning(
             "The topology type %s is not supported.", self.topology_type)
         return ""
