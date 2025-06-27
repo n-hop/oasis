@@ -14,8 +14,8 @@ class MeshTopology(ITopology):
         description = f"Mesh {nodes_num} nodes \n"
         latency = self.all_mats[MatrixType.LATENCY_MATRIX][0][1]
         bandwidth = self.all_mats[MatrixType.BW_MATRIX][0][1]
-        for i in range(self.nodes_num):
-            for j in range(self.nodes_num):
+        for i in range(nodes_num):
+            for j in range(nodes_num):
                 if self.all_mats[MatrixType.BW_MATRIX][i][j] > 0:
                     latency = self.all_mats[MatrixType.LATENCY_MATRIX][i][j]
                     bandwidth = self.all_mats[MatrixType.BW_MATRIX][i][j]
