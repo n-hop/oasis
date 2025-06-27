@@ -90,7 +90,7 @@ class Iperf3Analyzer(IDataAnalyzer):
         default_title = "Iperf3 throughput \n"
         default_title += self.config.subtitle
         plt.title(default_title, fontsize=10, fontweight="bold")
-        max_data_value = 0
+        max_throughput = 0
         data_len = 0
         index = PlotColors.min_value + 1
         for input_log in self.config.input:
@@ -114,7 +114,7 @@ class Iperf3Analyzer(IDataAnalyzer):
                 data_array = [0] * data_len
             else:
                 cur_max_data_value = max(data_array)
-                max_data_value = max(max_data_value, cur_max_data_value)
+                max_throughput = max(max_throughput, cur_max_data_value)
                 data_len = max(data_len, len(data_array))
                 # for competition flows which have defined the `delay` and `duration`
                 # from 0 to `delay` seconds, the throughput is 0
@@ -142,12 +142,12 @@ class Iperf3Analyzer(IDataAnalyzer):
                 plt.plot(x, data_array[0: len(x)],
                          '-o',
                          markersize=3, linewidth=2, label=f"{log_label}")
-            if max_data_value > 0:
-                plt.ylim(0, int(max_data_value * 1.4))  # 40% headroom
-            else:
-                plt.ylim(0, 1)
             plt.legend(loc="lower right", fontsize=8)
             index += 1
+        if max_throughput > 100:
+            plt.ylim(0, int(max_throughput * 1.4))  # 40% headroom
+        else:
+            plt.ylim(0, 100)
         if not self.config.output:
             self.config.output = "iperf3_throughput.svg"
         plt.savefig(f"{self.config.output}")
@@ -209,13 +209,6 @@ class Iperf3Analyzer(IDataAnalyzer):
             # Plot loss rate
             axs[0].plot(x, loss_rate_array[0: len(x)], '<--',
                         markersize=4, label=f"{log_label}")
-            axs[0].set_title('Loss Rate', fontsize=10)
-            axs[0].set_xlabel('Time (s)', fontsize=9)
-            axs[0].set_ylabel('Loss Rate (%)', fontsize=9)
-            axs[0].legend(loc="upper right", fontsize=8)
-            axs[0].grid(True)  # Add grid lines for better readability
-            axs[0].set_ylim(-10, max_loss_rate + 10)
-
             # Plot Jitter rate
             '''
             jitter_array = visualize_data.get("jitter", [])
@@ -232,15 +225,23 @@ class Iperf3Analyzer(IDataAnalyzer):
             x = np.arange(0, len(throughput_array))
             axs[1].plot(x, throughput_array[0: len(x)], 'o-',
                         markersize=4, label=f"{log_label}")
-            axs[1].set_title('Throughput', fontsize=10)
-            axs[1].set_xlabel('Time (s)', fontsize=9)
-            axs[1].set_ylabel('Throughput (Mbps)', fontsize=9)
-            axs[1].legend(loc="upper right", fontsize=8)
-            axs[1].grid(True)  # Add grid lines for better readability
-            if max_throughput > 0:
-                axs[1].set_ylim(0, int(max_throughput * 1.4))  # 40% headroom
-            else:
-                axs[1].set_ylim(0, 1)
+
+        axs[0].set_title('Loss Rate', fontsize=10)
+        axs[0].set_xlabel('Time (s)', fontsize=9)
+        axs[0].set_ylabel('Loss Rate (%)', fontsize=9)
+        axs[0].legend(loc="upper right", fontsize=8)
+        axs[0].grid(True)  # Add grid lines for better readability
+        axs[0].set_ylim(-10, max_loss_rate + 10)
+
+        axs[1].set_title('Throughput', fontsize=10)
+        axs[1].set_xlabel('Time (s)', fontsize=9)
+        axs[1].set_ylabel('Throughput (Mbps)', fontsize=9)
+        axs[1].legend(loc="upper right", fontsize=8)
+        axs[1].grid(True)  # Add grid lines for better readability
+        if max_throughput > 100:
+            axs[1].set_ylim(0, int(max_throughput * 1.4))  # 40% headroom
+        else:
+            axs[1].set_ylim(0, 100)
         # Adjust layout
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         if not self.config.output:
