@@ -2,21 +2,16 @@
 
 Oasis currently supports the following protocols:
 
-| Protocol      | Description                                                           |
-| ------------- | --------------------------------------------------------------------- |
-| BTP           | BATS™ Protocol                                                        |
-| BRTP          | BATS™ Reliable Transport Protocol                                     |
-| BRTP_PROXY    | BATS™ Reliable Transport Protocol in Proxy mode                       |
-| Protocol Name | Description                                                           |
-| ------------- | --------------------------------------------------------------------- |
-| btp           | BATS protocol (the framework, multi-hop version)                      |
-| brtp          | BATS protocol (the framework, multi-hop version)                      |
-| brtp_proxy    | BATS protocol (the framework, multi-hop version)                      |
-| tcp-bbr       | TCP with bbr congestion control algorithm                             |
-| btp-next      | BATS protocol (the API/SDK, end-to-end version)                       |
-| brtp-next     | BATS protocol (the API/SDK, end-to-end version)                       |
-| tcp-next      | The tcp protocol integrated in bats-protocol-next, it's TCP over TCP. |
-| KCP           | KCP Protocol       (uses KCP-TUN)                                     |
+| Protocol   | Description                                                                        |
+| ---------- | ---------------------------------------------------------------------------------- |
+| btp        | BATS™ Transport Protocol (the framework, multi-hop version)                        |
+| brtp       | BATS™ Reliable Transport Protocol (the framework, multi-hop version)               |
+| brtp_proxy | BATS™ Reliable Transport Protocol in Proxy mode (the framework, multi-hop version) |
+| tcp-bbr    | TCP with bbr congestion control algorithm                                          |
+| btp-next   | BATS™ protocol (the API/SDK, end-to-end version)                                   |
+| brtp-next  | BATS™ protocol (the API/SDK, end-to-end version)                                   |
+| tcp-next   | The tcp protocol integrated in bats protocol API/SDK, it's a TCP over TCP.         |
+| KCP        | KCP Protocol       (uses KCP-TUN)                                                  |
 
 ### 1.1 BATS Protocol
 
