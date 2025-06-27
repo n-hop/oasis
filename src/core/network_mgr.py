@@ -52,8 +52,6 @@ class NetworkManager(INetworkManager):
             return False
         org_name_prefix = node_config.name_prefix
         cur_net_num = len(self.networks)
-        logging.info(
-            "########## Oasis request network number %s.", net_num)
         if cur_net_num < net_num:
             for i in range(cur_net_num, net_num):
                 if net_num > 1:
@@ -81,8 +79,8 @@ class NetworkManager(INetworkManager):
             self.networks = self.networks[:net_num]
         logging.info(
             "######################################################")
-        logging.info("########## Oasis traverse the topologies: \n %s .",
-                     self.get_top_description())
+        logging.info("########## Oasis build %d network with top: \n %s .", net_num,
+                     topology.description())
         logging.info(
             "######################################################")
         self.net_num = len(self.networks)

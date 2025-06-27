@@ -9,6 +9,21 @@ class MeshTopology(ITopology):
         if init_all_mats is True:
             self.__init_topologies()
 
+    def description(self) -> str:
+        self.nodes_num = len(self.all_mats[MatrixType.ADJACENCY_MATRIX][0])
+        description = f"Mesh {self.nodes_num - 1} nodes \n"
+        latency = self.all_mats[MatrixType.LATENCY_MATRIX][0][1]
+        bandwidth = self.all_mats[MatrixType.BW_MATRIX][0][1]
+        for i in range(self.nodes_num):
+            for j in range(self.nodes_num):
+                if self.all_mats[MatrixType.BW_MATRIX][i][j] > 0:
+                    latency = self.all_mats[MatrixType.LATENCY_MATRIX][i][j]
+                    bandwidth = self.all_mats[MatrixType.BW_MATRIX][i][j]
+                    break
+        description += f"latency {latency}ms,"
+        description += f"bandwidth {bandwidth}Mbps."
+        return description
+
     def generate_adj_matrix(self, num_of_nodes: int):
         pass
 
@@ -28,8 +43,8 @@ class MeshTopology(ITopology):
             self.all_mats[MatrixType.LATENCY_MATRIX])
         the_unique_topology.all_mats[MatrixType.JITTER_MATRIX] = copy.deepcopy(
             self.all_mats[MatrixType.JITTER_MATRIX])
-        the_unique_topology.all_mats[MatrixType.BANDW_MATRIX] = copy.deepcopy(
-            self.all_mats[MatrixType.BANDW_MATRIX])
+        the_unique_topology.all_mats[MatrixType.BW_MATRIX] = copy.deepcopy(
+            self.all_mats[MatrixType.BW_MATRIX])
         logging.info(
             "Added MeshTopology %s", the_unique_topology.all_mats)
         self.topologies.append(the_unique_topology)

@@ -43,13 +43,13 @@ class ContainerizedNetwork (INetwork):
         self.node_bind_port = node_config.bind_port
         self.node_name_prefix = node_config.name_prefix
         self.node_ip_range = node_config.ip_range or ""
-        self.topology_type = net_topology.get_topology_type()
         logging.info('ContainerizedNetwork uses node_img %s', self.node_img)
         # `node_ip_start` init from node_ip_range
         base, _ = netParse(self.node_ip_range)
         self.node_ip_prefix = 24
         self.node_ip_start = ipStr(base) + f'/{self.node_ip_prefix}'
         # Topology related
+        self.net_top_description = net_topology.description()
         self._init_matrix(net_topology)
         self._check_node_vols()
         logging.info('self.node_vols %s', self.node_vols)
@@ -81,47 +81,7 @@ class ContainerizedNetwork (INetwork):
             logging.warning(
                 "The network matrices are not initialized; and traffic shaping will not be applied.")
             return ""
-        if self.topology_type == 'linear':
-            description = f"Linear {self.num_of_hosts - 1} hops \n"
-            loss_rate = self.net_loss_mat[0][1]
-            latency = self.net_latency_mat[0][1]
-            jitter = self.net_jitter_mat[0][1]
-            bandwidth = self.net_bw_mat[0][1]
-            description += f"loss {loss_rate}%,"
-            description += f"latency {latency}ms,"
-            description += f"jitter {jitter}ms,"
-            if self.num_of_hosts > 2:
-                bandwidth2 = self.net_bw_mat[1][0]
-                if bandwidth2 == bandwidth:
-                    description += f"bandwidth {bandwidth}Mbps."
-                else:
-                    forward_bw = ""
-                    backward_bw = ""
-                    for i in range(0, self.num_of_hosts - 1):
-                        forward_bw += f"{self.net_bw_mat[i][i+1]}Mbps,"
-                        backward_bw += f"{self.net_bw_mat[i+1][i]}Mbps,"
-                    description += f"\nforward path: {forward_bw}"
-                    description += f"\nreverse path: {backward_bw}"
-                    logging.error("description %s", description)
-            else:
-                description += f"bandwidth {bandwidth}Mbps."
-            return description
-        if self.topology_type == 'mesh':
-            description = f"Mesh {self.num_of_hosts - 1} nodes \n"
-            latency = self.net_latency_mat[0][1]
-            bandwidth = self.net_bw_mat[0][1]
-            for i in range(self.num_of_hosts):
-                for j in range(self.num_of_hosts):
-                    if self.net_bw_mat[i][j] > 0:
-                        latency = self.net_latency_mat[i][j]
-                        bandwidth = self.net_bw_mat[i][j]
-                        break
-            description += f"latency {latency}ms,"
-            description += f"bandwidth {bandwidth}Mbps."
-            return description
-        logging.warning(
-            "The topology type %s is not supported.", self.topology_type)
-        return ""
+        return self.net_top_description
 
     def start(self):
         logging.info("Oasis starts the ContainerizedNetwork.")
@@ -165,7 +125,7 @@ class ContainerizedNetwork (INetwork):
         if self.net_loss_mat != top.get_matrix(MatrixType.LOSS_MATRIX):
             is_changed = True
             logging.info("Oasis detected the loss matrix change.")
-        if self.net_bw_mat != top.get_matrix(MatrixType.BANDW_MATRIX):
+        if self.net_bw_mat != top.get_matrix(MatrixType.BW_MATRIX):
             is_changed = True
             logging.info("Oasis detected the bandwidth matrix change.")
         if self.net_latency_mat != top.get_matrix(MatrixType.LATENCY_MATRIX):
@@ -183,7 +143,7 @@ class ContainerizedNetwork (INetwork):
         self.net_loss_mat = net_topology.get_matrix(
             MatrixType.LOSS_MATRIX)
         self.net_bw_mat = net_topology.get_matrix(
-            MatrixType.BANDW_MATRIX)
+            MatrixType.BW_MATRIX)
         self.net_latency_mat = net_topology.get_matrix(
             MatrixType.LATENCY_MATRIX)
         self.net_jitter_mat = net_topology.get_matrix(

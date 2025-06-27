@@ -20,7 +20,7 @@ class MatrixType(IntEnum):
     # Adjacency matrix to describe the network topology
     ADJACENCY_MATRIX = 0
     # Bandwidth matrix to describe the network bandwidth link-by-link
-    BANDW_MATRIX = 1
+    BW_MATRIX = 1
     # Loss matrix to describe the network loss link-by-link
     LOSS_MATRIX = 2
     # Latency matrix to describe the network latency link-by-link
@@ -34,7 +34,7 @@ MatType2LinkAttr = {
     MatrixType.LOSS_MATRIX: LinkAttr.link_loss,
     MatrixType.LATENCY_MATRIX: LinkAttr.link_latency,
     MatrixType.JITTER_MATRIX: LinkAttr.link_jitter,
-    MatrixType.BANDW_MATRIX: LinkAttr.link_bandwidth_forward
+    MatrixType.BW_MATRIX: LinkAttr.link_bandwidth_forward
 }
 
 
@@ -81,6 +81,10 @@ class ITopology(ABC):
 
     def __iter__(self):
         return iter(self.topologies)
+
+    @abstractmethod
+    def description(self) -> str:
+        pass
 
     def get_next_top(self):
         if not self.is_compound():

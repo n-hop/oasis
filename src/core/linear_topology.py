@@ -11,6 +11,34 @@ class LinearTopology(ITopology):
     def __init__(self, base_path: str, top_config, init_all_mats=True):
         super().__init__(base_path, top_config, init_all_mats)
 
+    def description(self) -> str:
+        # self.all_mats is initialized in construction.
+        self.nodes_num = len(self.all_mats[MatrixType.ADJACENCY_MATRIX][0])
+        description = f"Linear {self.nodes_num - 1} hops \n"
+        loss_rate = self.all_mats[MatrixType.LOSS_MATRIX][0][1]
+        latency = self.all_mats[MatrixType.LATENCY_MATRIX][0][1]
+        jitter = self.all_mats[MatrixType.JITTER_MATRIX][0][1]
+        bandwidth = self.all_mats[MatrixType.BW_MATRIX][0][1]
+        description += f"loss {loss_rate}%,"
+        description += f"latency {latency}ms,"
+        description += f"jitter {jitter}ms,"
+        if self.nodes_num > 2:
+            bandwidth2 = self.all_mats[MatrixType.BW_MATRIX][1][0]
+            if bandwidth2 == bandwidth:
+                description += f"bandwidth {bandwidth}Mbps."
+            else:
+                forward_bw = ""
+                backward_bw = ""
+                for i in range(0, self.nodes_num - 1):
+                    forward_bw += f"{self.all_mats[MatrixType.BW_MATRIX][i][i+1]}Mbps,"
+                    backward_bw += f"{self.all_mats[MatrixType.BW_MATRIX][i+1][i]}Mbps,"
+                description += f"\nforward path: {forward_bw}"
+                description += f"\nreverse path: {backward_bw}"
+                logging.error("description %s", description)
+        else:
+            description += f"bandwidth {bandwidth}Mbps."
+        return description
+
     def generate_adj_matrix(self, num_of_nodes: int):
         """
         Generate the adjacency matrix to describe a linear chain topology.
@@ -48,7 +76,7 @@ class LinearTopology(ITopology):
         for loss_mat in temp_all_mats[MatrixType.LOSS_MATRIX]:
             for latency_mat in temp_all_mats[MatrixType.LATENCY_MATRIX]:
                 for jitter_mat in temp_all_mats[MatrixType.JITTER_MATRIX]:
-                    for bandw_mat in temp_all_mats[MatrixType.BANDW_MATRIX]:
+                    for bw_mat in temp_all_mats[MatrixType.BW_MATRIX]:
                         new_topology = LinearTopology(self.conf_base_path,
                                                       self.top_config, False)  # don't init all mats
                         new_topology.all_mats[MatrixType.ADJACENCY_MATRIX] = copy.deepcopy(
@@ -59,8 +87,8 @@ class LinearTopology(ITopology):
                             latency_mat)
                         new_topology.all_mats[MatrixType.JITTER_MATRIX] = copy.deepcopy(
                             jitter_mat)
-                        new_topology.all_mats[MatrixType.BANDW_MATRIX] = copy.deepcopy(
-                            bandw_mat)
+                        new_topology.all_mats[MatrixType.BW_MATRIX] = copy.deepcopy(
+                            bw_mat)
                         logging.debug(
                             "Added new_topology %s", new_topology.all_mats)
                         self.topologies.append(new_topology)

@@ -77,7 +77,7 @@ class TestbedNetwork (INetwork):
         if self.net_loss_mat != top.get_matrix(MatrixType.LOSS_MATRIX):
             is_changed = True
             logging.info("Oasis detected the loss matrix change.")
-        if self.net_bw_mat != top.get_matrix(MatrixType.BANDW_MATRIX):
+        if self.net_bw_mat != top.get_matrix(MatrixType.BW_MATRIX):
             is_changed = True
             logging.info("Oasis detected the bandwidth matrix change.")
         if self.net_latency_mat != top.get_matrix(MatrixType.LATENCY_MATRIX):
@@ -95,7 +95,7 @@ class TestbedNetwork (INetwork):
         self.net_loss_mat = net_topology.get_matrix(
             MatrixType.LOSS_MATRIX)
         self.net_bw_mat = net_topology.get_matrix(
-            MatrixType.BANDW_MATRIX)
+            MatrixType.BW_MATRIX)
         self.net_latency_mat = net_topology.get_matrix(
             MatrixType.LATENCY_MATRIX)
         self.net_jitter_mat = net_topology.get_matrix(
