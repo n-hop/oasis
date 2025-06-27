@@ -10,8 +10,8 @@ class MeshTopology(ITopology):
             self.__init_topologies()
 
     def description(self) -> str:
-        self.nodes_num = len(self.all_mats[MatrixType.ADJACENCY_MATRIX][0])
-        description = f"Mesh {self.nodes_num - 1} nodes \n"
+        nodes_num = len(self.all_mats[MatrixType.ADJACENCY_MATRIX][0])
+        description = f"Mesh {nodes_num} nodes \n"
         latency = self.all_mats[MatrixType.LATENCY_MATRIX][0][1]
         bandwidth = self.all_mats[MatrixType.BW_MATRIX][0][1]
         for i in range(self.nodes_num):

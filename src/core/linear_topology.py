@@ -13,8 +13,8 @@ class LinearTopology(ITopology):
 
     def description(self) -> str:
         # self.all_mats is initialized in construction.
-        self.nodes_num = len(self.all_mats[MatrixType.ADJACENCY_MATRIX][0])
-        description = f"Linear {self.nodes_num - 1} hops \n"
+        nodes_num = len(self.all_mats[MatrixType.ADJACENCY_MATRIX][0])
+        description = f"Linear {nodes_num - 1} hops \n"
         loss_rate = self.all_mats[MatrixType.LOSS_MATRIX][0][1]
         latency = self.all_mats[MatrixType.LATENCY_MATRIX][0][1]
         jitter = self.all_mats[MatrixType.JITTER_MATRIX][0][1]
@@ -22,14 +22,14 @@ class LinearTopology(ITopology):
         description += f"loss {loss_rate}%,"
         description += f"latency {latency}ms,"
         description += f"jitter {jitter}ms,"
-        if self.nodes_num > 2:
+        if nodes_num > 2:
             bandwidth2 = self.all_mats[MatrixType.BW_MATRIX][1][0]
             if bandwidth2 == bandwidth:
                 description += f"bandwidth {bandwidth}Mbps."
             else:
                 forward_bw = ""
                 backward_bw = ""
-                for i in range(0, self.nodes_num - 1):
+                for i in range(0, nodes_num - 1):
                     forward_bw += f"{self.all_mats[MatrixType.BW_MATRIX][i][i+1]}Mbps,"
                     backward_bw += f"{self.all_mats[MatrixType.BW_MATRIX][i+1][i]}Mbps,"
                 description += f"\nforward path: {forward_bw}"
