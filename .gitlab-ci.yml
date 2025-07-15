@@ -1,4 +1,4 @@
-image: gitlab.app.n-hop.com:5005/infra/ci-images/docker-cli
+image: gitlab.app.n-hop.com:5005/infra/ci-images/docker-cli:latest
 
 workflow:
   auto_cancel:
