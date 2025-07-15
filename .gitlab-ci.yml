@@ -1,12 +1,4 @@
-# This file is a template, and might need editing before it works on your project.
-# You can copy and paste this template into a new `.gitlab-ci.yml` file.
-# You should not add this template to an existing `.gitlab-ci.yml` file by using the `include:` keyword.
-#
-# To contribute improvements to CI/CD templates, please follow the Development guide at:
-# https://docs.gitlab.com/ee/development/cicd/templates.html
-# This specific template is located at:
-# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/C++.gitlab-ci.yml
-image: gitlab.app.n-hop.com:5005/n-hop/bats-protocol-framework/ubuntu-cisa:dev
+image: gitlab.app.n-hop.com:5005/infra/ci-images/docker-cli
 
 workflow:
   auto_cancel:
@@ -29,9 +21,7 @@ workflow:
 # define stages
 stages:
   - style_check
-
-.prepare_env_template: &prepare_env_definition
-  - configure-ssh-key.sh "$CISA_SSH_KEY"
+  - build
 
 .prepare_pylint_template: &prepare_pylint_definition
   - . /etc/profile
@@ -45,8 +35,53 @@ pylint:
   tags:
     - performance
   before_script:
-    - *prepare_env_definition
     - *prepare_pylint_definition
   script:
     - |
       pylint $(git ls-files '*.py') --rcfile=${CI_PROJECT_DIR}/.pylintrc --ignore-patterns=".*_unittest.py" --disable=unused-argument
+
+build-generic-container:
+  stage: build
+  interruptible: true
+  allow_failure: false
+  tags:
+    - docker
+  rules:
+    - changes:
+        - "Dockerfile.ubuntu-generic"
+  variables:
+    IMAGE_NAME: $CI_REGISTRY/$CI_PROJECT_PATH/ubuntu-generic
+    DOCKERFILE: Dockerfile.ubuntu-generic
+  script:
+    - >
+      docker build
+      --pull
+      --push
+      --provenance false
+      --tag $IMAGE_NAME:dev
+      --tag $IMAGE_NAME:latest
+      --tag $IMAGE_NAME:$CI_COMMIT_SHA
+      --file $DOCKERFILE .
+
+build-modified-containernet:
+  stage: build
+  interruptible: true
+  allow_failure: false
+  tags:
+    - docker
+  rules:
+    - changes:
+        - "Dockerfile.containernet"
+  variables:
+    IMAGE_NAME: $CI_REGISTRY/$CI_PROJECT_PATH/containernet
+    DOCKERFILE: Dockerfile.containernet
+  script:
+    - >
+      docker build
+      --pull
+      --push
+      --provenance false
+      --tag $IMAGE_NAME:dev
+      --tag $IMAGE_NAME:latest
+      --tag $IMAGE_NAME:$CI_COMMIT_SHA
+      --file $DOCKERFILE .

@@ -6,4 +6,3 @@ class OpenrRouting(IRoutingStrategy):
     """
     def setup_routes(self, network: 'INetwork'):  # type: ignore
         pass
-        
