@@ -1,12 +1,12 @@
 containernet:
   nuc_sz:
-    image: gitlab.app.n-hop.com:5005/n-hop/bats-protocol-framework/bats_containernet:dev
+    image: gitlab.app.n-hop.com:5005/dependencies/oasis/containernet:dev
     privileged: true
     network_mode: "host"
     mounts:
       - "/var/run/docker.sock:/var/run/docker.sock"
   nuc_sz_local_repo:
-    image: gitlab.app.n-hop.com:5005/n-hop/bats-protocol-framework/bats_containernet:dev
+    image: gitlab.app.n-hop.com:5005/dependencies/oasis/containernet:dev
     privileged: true
     containernet_repo_from_user: true # If true, will mount `containernet_repo_path`.
     containernet_repo_path: "/home/{user_name}/workspace/containernet"

@@ -1,6 +1,6 @@
 node_config:
   - name: n_hop
-    img: gitlab.app.n-hop.com:5005/n-hop/bats-protocol-framework/bats_protocol:dev
+    img: gitlab.app.n-hop.com:5005/dependencies/oasis/ubuntu-generic:latest
     vols:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/nix/store:/nix/store:ro"

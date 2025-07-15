@@ -1,0 +1,50 @@
+FROM ubuntu:22.04
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN set -eux; \
+        apt-get update; \
+        apt-get upgrade --yes; 
+
+# FIXME: are all these packages needed?
+RUN set -eux; \
+        apt-get install --yes \
+            net-tools \
+            iproute2 \
+            iputils-ping \
+            python3 \
+            libatomic1 \
+            iperf3 \
+            python3-pip \
+            vim \
+            openssh-server \
+            sysstat \
+            wkhtmltopdf \
+            curl
+
+## install olsr tools, iptables, tcpdump
+RUN apt-get install --yes \
+        netcat \
+        tcpdump \
+        iptables
+
+# FIXME: are all these packages needed?
+RUN pip3 install \
+        psutil==5.9.5 \
+        numpy==1.26.4 \
+        matplotlib==3.7.2 \
+        paramiko==2.8.1 \
+        prettytable==3.9.0 \
+        pdfkit==1.0.0 \
+        PyPDF2 \
+        reportlab==3.6.8 \
+        tqdm==4.65.0 \
+        markdown==3.4.4 \
+        python-markdown-math==0.8 \
+        PyYAML==6.0.1
+
+## Cleanup
+RUN set -eux; \
+        rm -rf /var/lib/apt/lists/*; \
+        rm -rf /tmp/*;
+
+WORKDIR /root

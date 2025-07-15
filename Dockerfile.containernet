@@ -1,0 +1,19 @@
+FROM gitlab.app.n-hop.com:5005/dependencies/containernet:latest
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TZ="Etc/UTC"
+
+RUN python3 -m pip install --upgrade pip
+
+## Pre-install containernet dependencies
+COPY src/containernet/requirements.txt /tmp/oasis_requirements.txt
+
+RUN pip3 install -r /tmp/oasis_requirements.txt
+
+# Cleanup
+RUN rm -rf /var/lib/apt/lists/*
+
+# override the entry point of containernet w/ absolute path to avoid
+# path not found err when changing workdir
+ENTRYPOINT [ "/containernet/util/docker/entrypoint.sh" ]
+
+WORKDIR /root
