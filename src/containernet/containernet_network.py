@@ -113,6 +113,7 @@ class ContainerizedNetwork (INetwork):
                 self._expand_network(-diff)
             else:
                 self._shrink_network(diff)
+            self.net_top_description = top.description()
 
     def get_link_table(self):
         return self.pair_to_link_ip
