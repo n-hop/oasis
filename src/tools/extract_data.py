@@ -63,7 +63,9 @@ def plot_compound_throughput(test_results_dir):
             logging.info(f"Loss rate: %s", loss_rate)
             for _, dirs, files in os.walk(f"{test_results_dir}/{dir_name}"):
                 for file_name in files:
-                    if "IperfTest" not in file_name:
+                    if not ("IperfBatsTest" in file_name or "IperfTest" in file_name):
+                        logging.info(
+                            f"Not a IperfBatsTest or IperfTest %s", file_name)
                         continue
                     protocol_name = file_name.split("_")[0]
                     if protocol_name not in protocols:
