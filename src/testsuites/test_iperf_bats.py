@@ -1,5 +1,6 @@
 import logging
 import time
+import os
 from interfaces.network import INetwork
 from protosuites.proto_info import IProtoInfo
 from .test import (ITestSuite)
@@ -12,7 +13,7 @@ class IperfBatsTest(ITestSuite):
     def pre_process(self):
         return True
 
-    def _run_iperf(self, client, server, args_from_proto: str):
+    def _run_iperf(self, client, server, args_from_proto: str, proto_name: str):
         if self.config is None:
             logging.error("IperfBatsTest config is None.")
             return False
@@ -24,14 +25,19 @@ class IperfBatsTest(ITestSuite):
                 "IperfBatsTest is running with parallel streams: %d", parallel)
         interval_num = self.config.interval_num or 10
         interval = self.config.interval or 1
+        base_path = os.path.dirname(os.path.abspath(self.result.record))
+        server_log_path = os.path.join(
+            base_path, f"{proto_name}_server/log/")
+        client_log_path = os.path.join(
+            base_path, f"{proto_name}_client/log/")
         for intf in server.getIntfs():
             bats_iperf_server_cmd = f'bats_iperf -s -p {receiver_port} -I {intf}' \
-                f' -l {self.result.record} &'
+                f' -l {self.result.record}  -L {server_log_path} &'
             logging.info(
                 'bats_iperf server cmd: %s', bats_iperf_server_cmd)
             server.cmd(f'{bats_iperf_server_cmd}')
         bats_iperf_client_cmd = f'bats_iperf -c {receiver_ip} {args_from_proto} -p {receiver_port} -P {parallel}' \
-            f' -i {int(interval)} -t {int(interval_num * interval)}'
+            f' -i {int(interval)} -t {int(interval_num * interval)} -L {client_log_path}'
         logging.info('bats_iperf client cmd: %s', bats_iperf_client_cmd)
         res = client.popen(
             f'{bats_iperf_client_cmd}').stdout.read().decode('utf-8')
@@ -53,4 +59,4 @@ class IperfBatsTest(ITestSuite):
         server = hosts[self.config.server_host]
         logging.info(
             "############### Oasis IperfBatsTest from %s to %s ###############", client.name(), server.name())
-        return self._run_iperf(client, server, proto_info.get_protocol_args(network))
+        return self._run_iperf(client, server, proto_info.get_protocol_args(network), proto_info.get_protocol_name())
