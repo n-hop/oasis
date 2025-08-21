@@ -6,7 +6,6 @@ from var.global_var import g_root_path
 class ContainernetHostAdapter(IHost):
     def __init__(self, containernet_host):
         self.containernet_host = containernet_host
-        self.__setup_ssh()
 
     def is_connected(self) -> bool:
         return True
@@ -67,21 +66,3 @@ class ContainernetHostAdapter(IHost):
 
     def popen(self, command):
         return self.containernet_host.popen(command)
-
-    def __setup_ssh(self):
-        self.containernet_host.cmd("rm -rf /root/.ssh/")
-        self.containernet_host.cmd("mkdir /root/.ssh/")
-        self.containernet_host.cmd(
-            f'cp {g_root_path}src/config/keys/* /root/.ssh/')
-        self.containernet_host.cmd(
-            "cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys")
-        # fix: Permissions 0644 for '/root/.ssh/id_rsa' are too open
-        self.containernet_host.cmd("chmod 600 /root/.ssh/id_rsa")
-        self.containernet_host.cmd("chmod 600 /root/.ssh/id_rsa.pub")
-        self.containernet_host.cmd(
-            "echo 'PermitRootLogin yes' | tee -a /etc/ssh/sshd_config")
-        self.containernet_host.cmd(
-            "echo 'PasswordAuthentication no' | tee -a /etc/ssh/sshd_config")
-        self.containernet_host.cmd(
-            "echo 'StrictModes no' | tee -a /etc/ssh/sshd_config")
-        self.containernet_host.cmd("service ssh start")

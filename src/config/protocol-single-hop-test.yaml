@@ -8,7 +8,7 @@ tests:
   test1:
     description: "Test protocol throughput/rtt on single hop"
     topology:
-      config_name: linear_network_1 
+      config_name: linear_network_1
       config_file: predefined.topology.yaml
     target_protocols: [btp, tcp-bbr, kcp]
     route: static_bfs

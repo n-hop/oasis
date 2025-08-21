@@ -43,6 +43,7 @@ class ContainerizedNetwork (INetwork):
         self.node_bind_port = node_config.bind_port
         self.node_name_prefix = node_config.name_prefix
         self.node_ip_range = node_config.ip_range or ""
+        self.node_init_script = node_config.init_script or ""
         logging.info('ContainerizedNetwork uses node_img %s', self.node_img)
         # `node_ip_start` init from node_ip_range
         base, _ = netParse(self.node_ip_range)
@@ -159,6 +160,18 @@ class ContainerizedNetwork (INetwork):
         self._setup_docker_nodes(0, self.num_of_hosts - 1)
         self._setup_topology()
         self.routing_strategy.setup_routes(self)
+        self._run_init_script(0, self.num_of_hosts - 1)
+
+    def _run_init_script(self, start_index, end_index):
+        if start_index > end_index:
+            return False
+        for i in range(start_index, end_index + 1):
+            if self.node_init_script:
+                logging.info("run init script %s on host %s",
+                             self.node_init_script, self.hosts[i].name())
+                self.hosts[i].cmd(self.node_init_script)
+        logging.info(
+            "############### Oasis Init Node Scripts done ###########")
 
     def _setup_docker_nodes(self, start_index, end_index):
         """
@@ -344,11 +357,15 @@ class ContainerizedNetwork (INetwork):
             "nodes increased by %s",
             diff)
         self._reset_network(self.num_of_hosts, diff)
-        self._setup_docker_nodes(self.num_of_hosts,
-                                 self.num_of_hosts + diff - 1)
+        host_start_index = self.num_of_hosts
+        host_end_index = self.num_of_hosts + diff - 1
+        self._setup_docker_nodes(host_start_index,
+                                 host_end_index)
         self.num_of_hosts += diff
         self._setup_topology()
         self.routing_strategy.setup_routes(self)
+        self._run_init_script(host_start_index,
+                              host_end_index)
         logging.info(
             "Expand the network. number of nodes increased by %s",
             diff)

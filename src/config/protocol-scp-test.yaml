@@ -3,6 +3,7 @@ containernet:
   node_config:
     config_name: default
     config_file: predefined.node_config.yaml
+    init_script: init_node.sh
 
 tests:
   test10:

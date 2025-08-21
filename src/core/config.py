@@ -24,6 +24,8 @@ class NodeConfig:
     bind_port: Optional[bool] = field(default=True)
     name_prefix: Optional[str] = field(default='h')  # h i j k.
     ip_range: Optional[str] = field(default='10.0.0.0/8')
+    # the script to run when the node starts(after routes are set)
+    init_script: Optional[str] = field(default="")
 
 
 @dataclass
@@ -52,7 +54,7 @@ class IConfig(ABC):
 
     @staticmethod
     def load_config_reference(config_base_path: str, yaml_config_file: str,
-                              config_name: str, config_key: str):
+                              config_name: str, scripts: str, config_key: str):
         if not IConfig.is_supported_config_key(config_key):
             logging.error(
                 f"load_config_reference: key %s is not supported.",
@@ -95,6 +97,7 @@ class IConfig(ABC):
                 config_name, full_yaml_config_file)
             return None
         if config_key == "node_config":
+            loaded_config["init_script"] = scripts
             return NodeConfig(**loaded_config)
         if config_key == "topology":
             return TopologyConfig(**loaded_config)
@@ -109,6 +112,7 @@ class IConfig(ABC):
                 f"load_yaml_config: key %s is not supported.",
                 config_key)
             return None
+        init_script = yaml_description.get('init_script', "")
         is_load_from_file = ["config_file", "config_name"]
         if all(key in yaml_description for key in is_load_from_file):
             # load from the yaml file `config_file`
@@ -116,6 +120,7 @@ class IConfig(ABC):
                 config_base_path,
                 yaml_description['config_file'],
                 yaml_description['config_name'],
+                init_script,
                 config_key)
         # load directly from the yaml_description
         logging.info('load_yaml_config: %s', yaml_description)
