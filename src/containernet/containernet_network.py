@@ -7,6 +7,8 @@ from core.topology import (ITopology, MatrixType)
 from containernet.containernet_host import ContainernetHostAdapter
 from interfaces.network import INetwork
 from interfaces.routing import IRoutingStrategy
+from var.global_var import g_oasis_root_fs
+from tools.util import (is_same_path)
 
 
 def subnets(base_ip, parent_ip):
@@ -44,6 +46,7 @@ class ContainerizedNetwork (INetwork):
         self.node_name_prefix = node_config.name_prefix
         self.node_ip_range = node_config.ip_range or ""
         self.node_init_script = node_config.init_script or ""
+        self.config_base_path = node_config.config_base_path or ""
         logging.info('ContainerizedNetwork uses node_img %s', self.node_img)
         # `node_ip_start` init from node_ip_range
         base, _ = netParse(self.node_ip_range)
@@ -158,18 +161,54 @@ class ContainerizedNetwork (INetwork):
 
     def _init_containernet(self):
         self._setup_docker_nodes(0, self.num_of_hosts - 1)
+        self._init_root_fs(0, self.num_of_hosts - 1)
         self._setup_topology()
         self.routing_strategy.setup_routes(self)
         self._run_init_script(0, self.num_of_hosts - 1)
 
+    def _init_root_fs(self, start_index, end_index):
+        """
+        Install the root filesystem for the docker nodes.
+        """
+        if start_index > end_index:
+            return False
+        # from oasis means it is mapped with oasis workspace
+        root_fs_from_oasis = g_oasis_root_fs
+        # from user means it is mapped by `-p config_folder`
+        root_fs_from_user = f"{self.config_base_path}rootfs"
+        # root_fs_from_user and root_fs_from_oasis may be the same
+        is_same_root_fs = is_same_path(
+            root_fs_from_oasis, root_fs_from_user)
+        if not os.path.exists(root_fs_from_oasis):
+            logging.error("Oasis Root fs not found at %s", root_fs_from_user)
+            return False
+        if not os.path.exists(root_fs_from_user):
+            logging.error("User Root fs not found at %s", root_fs_from_user)
+            return False
+        for i in range(start_index, end_index + 1):
+            # user's root fs can overwrite oasis's root fs
+            self.hosts[i].cmd("cp -r %s/* /" % root_fs_from_oasis)
+            if is_same_root_fs is False:
+                self.hosts[i].cmd("cp -r %s/* /" % root_fs_from_user)
+                logging.info(
+                    "############### Oasis Root fs %s %s installed on %s",
+                    root_fs_from_oasis, root_fs_from_user, self.hosts[i].name())
+            else:
+                logging.info(
+                    "############### Oasis Root fs %s installed on %s",
+                    root_fs_from_oasis, self.hosts[i].name())
+        return True
+
     def _run_init_script(self, start_index, end_index):
+        if not self.node_init_script:
+            logging.info("No init script to run on the hosts.")
+            return True
         if start_index > end_index:
             return False
         for i in range(start_index, end_index + 1):
-            if self.node_init_script:
-                logging.info("run init script %s on host %s",
-                             self.node_init_script, self.hosts[i].name())
-                self.hosts[i].cmd(self.node_init_script)
+            logging.info("run init script %s on host %s",
+                         self.node_init_script, self.hosts[i].name())
+            self.hosts[i].cmdPrint(self.node_init_script)
         logging.info(
             "############### Oasis Init Node Scripts done ###########")
 
@@ -359,13 +398,12 @@ class ContainerizedNetwork (INetwork):
         self._reset_network(self.num_of_hosts, diff)
         host_start_index = self.num_of_hosts
         host_end_index = self.num_of_hosts + diff - 1
-        self._setup_docker_nodes(host_start_index,
-                                 host_end_index)
+        self._setup_docker_nodes(host_start_index, host_end_index)
+        self._init_root_fs(host_start_index, host_end_index)
         self.num_of_hosts += diff
         self._setup_topology()
         self.routing_strategy.setup_routes(self)
-        self._run_init_script(host_start_index,
-                              host_end_index)
+        self._run_init_script(host_start_index, host_end_index)
         logging.info(
             "Expand the network. number of nodes increased by %s",
             diff)

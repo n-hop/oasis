@@ -26,6 +26,7 @@ class NodeConfig:
     ip_range: Optional[str] = field(default='10.0.0.0/8')
     # the script to run when the node starts(after routes are set)
     init_script: Optional[str] = field(default="")
+    config_base_path: Optional[str] = field(default="")
 
 
 @dataclass

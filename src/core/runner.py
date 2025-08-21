@@ -361,6 +361,7 @@ class TestRunner:
             if required_network_ins <= 1:
                 logging.warning(
                     "parallel execution mode is enabled, but only one protocol target is specified")
+        setattr(node_config, 'config_base_path', self.config_path)
         # 1.2 Build multiple network instances.
         self.is_ready_flag = self.network_mgr.build_networks(node_config,
                                                              topology,
