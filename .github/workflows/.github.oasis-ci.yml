@@ -80,7 +80,7 @@ jobs:
         working-directory: ${{github.workspace}}/
         run: |
           python3 ./src/start.py -p src/config \
-          --containernet=default \
+          --containernet=official \
           -t protocol-sshping-test.yaml
           if [ ! -f ${{github.workspace}}/test.success ]; then
             echo "oasis test failed"
@@ -91,7 +91,7 @@ jobs:
         working-directory: ${{github.workspace}}/
         run: |
           python3 ./src/start.py -p src/config \
-          --containernet=default \
+          --containernet=official \
           -t protocol-scp-test.yaml -d True
           if [ ! -f ${{github.workspace}}/test.success ]; then
             echo "oasis test failed"
@@ -102,7 +102,7 @@ jobs:
         working-directory: ${{github.workspace}}/
         run: |
           python3 ./src/start.py -p src/config \
-          --containernet=default \
+          --containernet=official \
           -t protocol-single-hop-test.yaml
           if [ ! -f ${{github.workspace}}/test.success ]; then
             echo "oasis test failed"

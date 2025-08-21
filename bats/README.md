@@ -116,7 +116,7 @@ Take `h0` as the sender and `h1` as the receiver.
 This test can be repeated in Oasis with running the following command:
 
 ```bash
-sudo python3 src/start.py --containernet=default -p src/config -t bats-protocol-rtt-loss-test.yaml
+sudo python3 src/start.py --containernet=official -p src/config -t bats-protocol-rtt-loss-test.yaml
 
 sudo python3 ./src/tools/extract_data.py test_results/test1000
 ```
@@ -176,7 +176,7 @@ The above tests can be repeated by Oasis with running the following table of tes
 Take `Multiple hops test` as an example:
 
 ```bash
-sudo python3 src/start.py -p src/config --containernet=default -t protocol-performance-comparison.yaml:test3
+sudo python3 src/start.py -p src/config --containernet=official -t protocol-performance-comparison.yaml:test3
 ```
 
 For usage instructions for Oasis, please refer to the [Get Started](../docs/get-started.md).

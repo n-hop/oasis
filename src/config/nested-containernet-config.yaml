@@ -1,11 +1,11 @@
 containernet:
-  nuc_sz:
+  default: # n-hop default containernet configuration
     image: gitlab.app.n-hop.com:5005/dependencies/oasis/containernet:latest
     privileged: true
     network_mode: "host"
     mounts:
       - "/var/run/docker.sock:/var/run/docker.sock"
-  nuc_sz_local_repo:
+  n-hop-local-dev: # n-hop dev containernet configuration for local development
     image: gitlab.app.n-hop.com:5005/dependencies/oasis/containernet:latest
     privileged: true
     containernet_repo_from_user: true # If true, will mount `containernet_repo_path`.
@@ -13,7 +13,7 @@ containernet:
     network_mode: "host"
     mounts:
       - "/var/run/docker.sock:/var/run/docker.sock"
-  default:
+  official:
     image: containernet:latest
     privileged: true
     network_mode: "host"
